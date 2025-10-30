@@ -1,0 +1,47 @@
+Job Description:
+
+Providing for loved ones, planning rewarding retirements, saving enough for whatever lies ahead – our policyholders count on us to be there when it matters most. It’s a big ask, but it’s one that we have the power to deliver when we work together. We collaborate and innovate – pushing one another to transform not just Pacific Life, but the entire industry for the better. Why? Because it’s the right thing to do. Pacific Life is more than a job, it’s a career with purpose. It’s a career where you have the support, balance, and resources to make a positive impact on the future – including your own. 
+
+Pacific Life is looking to invest in bright, agile new talent to ensure we continue to innovate and strengthen relationships with our policyholders. It’s in this spirit that we are currently looking to add a talented Database Administrator to our team in Newport Beach, CA.  
+
+As a seasoned talented Platform Engineer for Database Administration, you’ll play a key role in Pacific Life’s growth and long-term success by designing and implementing enterprise database solutions, ensuring optimal performance, reliability, and scalability of our data infrastructure. 
+  
+The experience you bring: 
+
+Serve as the technical subject matter expert for Oracle, Microsoft SQL Server, and related database technologies, ensuring high availability and optimal performance. 
+
+Design, implement, and support secure, scalable database environments aligned with business goals and industry best practices. 
+
+Automate recurring tasks and optimize workflows to improve efficiency and reduce manual effort. 
+
+Perform regular database maintenance, patching, upgrades, backup/recovery, and disaster recovery testing. 
+
+Monitor performance and capacity, proactively resolving issues and tuning for optimal efficiency. 
+
+Support development teams in production deployments and troubleshoot database-related issues. 
+
+Maintain up-to-date documentation, follow security standards, and coordinate with vendor support for issue resolution. 
+
+ 
+
+What makes you stand out: 
+
+ 
+
+Bachelor’s degree in Computer Science, Information Technology, or a related field—or equivalent hands-on experience. 
+
+5+ years of hands-on experience with Microsoft SQL Server and Oracle databases, including design, development, integration, testing, and deployment. 
+
+Deep expertise in Oracle and SQL Server administration, with a strong focus on performance tuning, SQL optimization, and database security. 
+
+Proficient in Oracle patching, monitoring, diagnostics, and implementing SQL Profiles for performance improvement. 
+
+Solid experience working in both Linux and Windows Server environments. 
+
+Familiarity with cloud-native database services and architectures in AWS. 
+
+Strong troubleshooting skills with the ability to quickly diagnose and resolve database performance issues. 
+
+Understanding of enterprise change management processes and how they apply to database environments. 
+
+Excellent verbal and written communication skills with the ability to convey complex technical concepts to various stakeholders. 

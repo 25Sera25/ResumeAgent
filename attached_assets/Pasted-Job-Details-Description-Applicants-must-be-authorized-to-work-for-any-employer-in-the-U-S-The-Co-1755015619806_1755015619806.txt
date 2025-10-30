@@ -1,0 +1,43 @@
+Job Details
+Description
+Applicants must be authorized to work for any employer in the U.S.  The Company is not able to take over sponsorship of an employment visa at this time for this position or commit to doing so in the future for individuals with current authorization to work via, for example, CPT or OPT, and would need sponsorship in the future.
+
+Position Summary:
+
+Tenaska is looking for a skilled Database Administrator to join our team. This person will play a pivotal role in managing and optimizing our database systems to support the company's critical operations. This role requires a self-motivated and innovative problem solver who is ready to manage standards and get hands-on with database management while also providing architectural guidance. The role is responsible for the support, maintenance, and administration of existing databases and associated processes for both first-party and third-party platforms and applications. The ideal candidate will have extensive experience with Microsoft SQL Server, data structure design, and ETL processes. This individual will collaborate with the Software Engineering Team and key business leaders to ensure the performance and reliability of our data systems.
+
+Essential Job Functions:
+
+Design and Develop: Create and implement database solutions for mission-critical applications.
+SQL Development: Develop SQL scripts and procedures for first-party applications, reporting, and ETL processes.
+Database Administration: Manage all facets of the administration and support of databases and data solutions.
+System Uptime: Assist in maintaining 99.99% (4 9s) uptime on critical data systems (e.g., SQL Server Clusters) through installation, maintenance, patching, and monitoring of SQL Server instances.
+High-Availability and Disaster-Recovery: Implement and troubleshoot high-availability and disaster-recovery methodologies.
+Quality Control: Test and ensure the quality of data systems and their interaction with the software development life cycle.
+Performance Monitoring: Monitor data storage, growth, and performance.
+On-Call Support: Provide on-call support for data systems supporting all Tenaska-developed applications as needed.
+Collaboration: Work closely with software developers and business users, quickly adapting to business software needs.
+Attendance: Maintain reliable, dependable, and predictable attendance.
+Perform other duties as assigned.
+Education/Experience/Skills:
+
+Basic Requirements:
+
+Bachelor’s degree in Computer Science, Data Science, Computer Information Systems or equivalent industry experience
+At least three years of experience in SQL development or other high-level programming language
+At least three years of experience working with data systems is necessary
+Preferred Requirements:
+
+Experience working with SQL Server Failover Clusters and multi-site HA/DR solutions
+Experience working with Azure SQL Database and Managed Instance, or additional AWS, GCP, or other cloud providers’ database platform offerings
+Experience deploying or working with PostgreSQL
+Good knowledge of hardware design concepts (optimizing for IO and CPU performance)
+SQL Server experience (5+ years)
+Understands data design principles and data interaction with .NET applications
+Knowledge of reporting tools
+Knowledge of isolation levels and how they impact the performance of queries, juxtaposed against data integrity
+Interested in learning additional data systems to expand Tenaska’s data platforms
+Strict adherence to best-practices/standards
+Good documentation habits
+Self-motivated, team player
+Excellent oral and written skills

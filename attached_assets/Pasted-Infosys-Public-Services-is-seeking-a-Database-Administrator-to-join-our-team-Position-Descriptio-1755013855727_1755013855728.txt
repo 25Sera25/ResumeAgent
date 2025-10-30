@@ -1,0 +1,44 @@
+Infosys Public Services is seeking a Database Administrator to join our team.
+
+Position Description (scope of work or brief narrative):
+
+The successful candidate will be able to perform complex functional activities in support of Oracle RDBMS products and services, including but not limited to the upgrade, installation and maintenance of Oracle RDBMS products and services in a complex Oracle RDBMS production environment. They should be able to diagnose and resolve complex problems in an Oracle RDBMS environment. They should also have a strong working knowledge, experience and ability with UNIX and Microsoft Windows operating systems as well as other database technologies such as Postgres, NoSQL, SQL and Cassandra DB.
+
+Required years of experience, training, technical skills, and other requirements for job performance:
+
+Provide day-to-day incident and deployment support of multiple database technologies, including Oracle, SQL Server, Postgres, which includes on-site and remote administration, user support, performance monitoring and tuning, and capacity planning.
+Manage incident response via the ServiceNow application in accordance with the published Change Management Service Level Agreements (SLAs)
+Perform a technical leadership role in incident response, maintenance, documentation, and support of a large, complex, distributed server environment
+Perform a technical leadership role in incident response, maintenance, documentation, and support of a large, complex, distributed database environment
+Perform a technical leadership role in incident response, including maintenance, documentation, and support of a large, complex, distributed middleware environment
+Develop growth plans as needed to ensure that the hosting environment can support the projected growth of the application environment
+Develop and implement procedures that support proactive problem detection and avoidance,
+including disaster recovery planning and implementation
+Create and maintain project plans as necessary in accordance with US Postal Service standards then keeps management notified of critical failures or potential missed milestones
+Works with Program Manager, Project Managers, Engineering staff, staff and vendors to manage projects, drive outcomes and lead teams
+Analyzes and resolves complex hardware and software problems issues
+Assists development community to perform tests and implement software, adds, and changes
+Develops and implements operational management process and procedures
+Tracks inventory and completes and provides documentation required for deploying servers
+Uses alert monitoring tools chosen by Management
+Uses systems management and software distribution tools chosen by Management
+Uses security management systems and facilitates in backups and restores of data and application code
+Escalates unusual or unexpected findings.
+Provides reports to users and managers of systems status on an as requested basis
+Provides weekly status reports and maintains hours worked on projects
+Uses change and case management procedures as required
+Provides action plan for resolution of any/all faults detected
+Performs isolation testing of problem equipment and/or software
+Provides documentation of all solutions to problems and document all application guidelines and issues
+Provides reports to the Management to share solutions found
+Provides and implements escalation process and/or procedures
+Follows the appropriate quality assurance program chosen by Management
+Provides on-site system or application support for deployment/installation as required
+Tracks inventory and completes and provides documentation required for deploying servers
+Interacts with all functional groups to accomplish objectives
+Creates and edits computer-based documentation and trouble ticket systems to document equipment configurations, track changes and problems, and compiles performance data
+Performs assistance, training and information sharing to users and other administrators
+Maintains leadership qualities and attitude in keeping with the standards.
+Educational Requirements:
+
+A Bachelor’s degree or foreign equivalent is required from an accredited institution. Will consider three years of progressive, relevant work experience instead of every year of education. Candidates who have completed a Master's degree program are strongly preferred.

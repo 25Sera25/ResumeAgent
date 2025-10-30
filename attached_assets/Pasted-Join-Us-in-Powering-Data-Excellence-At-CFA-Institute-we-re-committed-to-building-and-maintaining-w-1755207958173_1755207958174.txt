@@ -1,0 +1,73 @@
+Join Us in Powering Data Excellence
+At CFA Institute, we’re committed to building and maintaining world-class data infrastructure to support our global mission. As our Database Administrator, you’ll play a vital role in supporting and optimizing our cloud-based data systems, ensuring performance, availability, and data quality. You’ll collaborate across the organization to provide secure, accurate, and reliable data that drives operational excellence.
+
+Please note: CFA Institute will not be providing visa sponsorship now or in the future for this role (including student visas, temporary worker visas, etc.).
+
+What You’ll Do
+Support, monitor, and maintain database systems and integrations across a multi-cloud environment.
+
+Manage reliable backup processes and high-availability configurations.
+
+Collaborate with stakeholders to address data-related technical issues and infrastructure needs.
+
+Separate and secure data across multiple environments.
+
+Document the data environment using the data catalog and other tools for company-wide access.
+
+Prepare and deliver accurate data outputs to support operational and compliance functions.
+
+Provide and maintain automated, efficient, and fit-for-purpose data pipelines.
+
+Automate manual processes, optimize data delivery, and monitor performance and availability.
+
+Build and support infrastructure for extraction, load, and transformation from corporate data sources.
+
+Develop and implement analytical tools for operational efficiency, cost management, and data quality metrics.
+
+
+ 
+
+What You’ll Bring
+Minimum Qualifications
+5+ years of experience as a database administrator.
+
+Proficiency in MS Azure SQL (including high availability, linked servers, and elastic pools).
+
+Knowledge of Snowflake, Postgres, Mongo, FiveTran, dbt, Airflow, and MarkLogic.
+
+Experience with monitoring tools such as Grafana and SQL Diagnostic Manager.
+
+Familiarity with Python for data quality processes.
+
+Preferred Qualifications
+Experience in data systems within a multinational environment.
+
+Global cultural orientation and cross-cultural working experience.
+
+Why Join Us?
+At CFA Institute, we champion professional excellence and global impact. You’ll be part of a collaborative, innovative environment where your skills directly contribute to our mission. We offer a flexible work environment, opportunities for professional growth, and a chance to work on meaningful projects that impact financial professionals worldwide.
+
+At CFA Institute, we are committed to transparency and equity in our hiring process. In compliance with wage transparency laws in many of the jurisdictions in which we recruit, we provide the following information regarding compensation for this position:
+
+Expected Salary Range: $85,000 - $95,000 annually
+
+Other benefits include eligibility for annual incentives, 12% retirement employer contribution, and competitive medical benefits.
+
+All salary ranges are subject to adjustment based on experience, education, and other factors relevant to the position. CFA Institute is an equal opportunity employer and encourages applications from all qualified individuals.
+
+#LI-ML1
+
+
+About CFA Institute
+
+CFA Institute are the global leader in investment excellence and ethics. With nearly 200,000 charterholders across 160 markets, we drive professional growth, ethical behavior, and better markets. We care about our employees’ well-being, offering industry-leading benefits like:
+
+Comprehensive health coverage for you and your family
+
+Generous leave and time off
+
+Competitive retirement plans
+
+Flexible work options
+
+Wellness, education, and support programs

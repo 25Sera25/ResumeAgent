@@ -1,0 +1,37 @@
+Ground rules
+* Do not invent titles, dates, or employers.
+* Skills may be added to strengthen the match (even if not in my resume) 
+    * Do not claim past achievements using newly added skills.
+JD input (URL or paste)
+* Accept either a job URL or pasted JD text.
+* If both exist, use pasted text.
+* Always show a parsed JD preview 
+Header / contact
+* Read my name, title, city/state, phone, email, LinkedIn from my base resume and place them at the top of the resume body (not only in the Word header). If any are missing, ask me.
+ATS Score + Match % (in summary, not on resume)
+* Produce an ATS Scorecard in tailoring_summary.md:
+    * Overall Match % (0–100) with weights: must-haves 60%, preferred 20%, keyword coverage 15%, format compliance 5%.
+    * Coverage matrix: each must-have → Yes / Partial / Missing.
+    * Keyword coverage: exact + fuzzy synonyms (e.g., Always On AG ≈ AlwaysOn/HADR; Query Store ≈ DMVs/Perf tuning).
+    * Top gaps & stretch adds: list the JD skills you added as Familiar (Learning).
+Resume formatting
+* ATS-safe: no tables in the body, standard fonts, simple bullets, ≤2 pages, consistent dates (YYYY–MM).
+* Prioritize DBA themes: SQL Server 2016–2022, T-SQL, performance tuning (indexes/Query Store/DMVs), Always On AG (HA/DR), backups/restore (Ola), security (TDE/RLS/DDM/Auditing), Azure SQL/MI, PowerShell automation.
+* Quantify using existing facts (latency %, uptime, RPO/RTO, DB sizes, server counts).
+Outputs
+* tailored_resume.docx + tailored_resume.pdf
+* tailoring_summary.md (parsed JD, Match %, coverage matrix, keyword map, gaps & stretch adds)
+* If scraping fails, stop and ask me to paste the JD.
+Nice to add (optional but helpful)
+* Two variants:
+    * Core (only skills already in resume)
+    * Stretch (adds JD skills as Familiar/Learning)
+* Synonym map baked in:
+    * HA/DR: Always On, HADR, AG, Failover, Log Shipping, FCI.
+    * Perf: Query Store, DMVs, XE (Extended Events), Index tuning, SARGability.
+    * Security: TDE, RLS, DDM, Auditing, Row-level security, Encryption at rest.
+    * Backup/Restore: Ola Hallengren, RPO/RTO, Recovery models, Point-in-time.
+    * Azure: Azure SQL DB, Managed Instance, Elastic pools, Failover groups.
+* Keyword density guardrail: weave keywords naturally; avoid obvious stuffing.
+* Easy-Apply helper: output a short, 4–6 line “About me for Easy Apply” snippet.
+* 

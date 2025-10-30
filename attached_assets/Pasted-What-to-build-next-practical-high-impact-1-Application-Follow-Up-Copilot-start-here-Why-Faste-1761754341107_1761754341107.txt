@@ -1,0 +1,45 @@
+What to build next (practical, high-impact)
+1) Application Follow-Up Copilot (start here)
+Why: Fastest ROI. Keeps you top-of-mind and fixes the “black hole”.
+MVP:
+Add a followups table: job_id, due_at, type('1w','2w','thank_you'), status('pending','sent','skipped').
+Endpoint: POST /followups/schedule (sets 1-week + 2-week reminders on submit).
+UI: “Schedule follow-ups” toggle on the job card; a small queue view.
+Templates (LLM):
+“1-week check-in”
+“2-week nudge with value add”
+“post-interview thank-you (STAR recap)”
+Delivery: don’t auto-send; generate draft emails you copy-paste (keeps cost & risk low).
+Metric: show “follow-ups sent vs. interview callbacks”.
+2) Warm-Intro / Outreach Generator
+Why: Referrals beat cold applies.
+MVP:
+Field on job card: contacts[] (name, role, LinkedIn URL, relationship).
+Button: “Generate outreach” → LLM drafts 3 variants: recruiter, employee, hiring manager.
+Add a “Sequence” (Day 0, Day 4, Day 10) with a checkbox tracker.
+No scraping; you paste names—keeps it simple & safe.
+3) AI Interview Coach (lite)
+Why: You already get interviews; this makes you perform like your ATS score.
+MVP:
+From each tailored resume + JD, generate:
+6 technical questions (SQL internals, HA/DR, backup/RPO/RTO, indexing, perf tools).
+4 behavioral STAR prompts tailored to the JD.
+UI: single page with record button (browser mic/camera) and a timer (60–90s).
+Feedback (cheap): text-only rubric (“mentioned X/Y keywords; too long; missing RPO/RTO numbers”). No vision/voice analysis needed initially.
+4) Skills Gap Radar (rolling dashboard)
+Why: Skills-based hiring is real; lets you target learning.
+MVP:
+Aggregate required keywords across saved jobs; show “Missing in ≥ N jobs”.
+One-click “Add to Learning Plan” list with links you paste (MS Learn, official docs).
+Autocomplete “Skills” on your profile; when you mark a skill as “Working/Proficient”, the generator can include it truthfully next time.
+5) Salary & Market Intel (lightweight)
+Why: Better targeting + better negotiation.
+MVP:
+Manual entry fields on job card: posted range, location, onsite/remote.
+Show a simple band: “Your target ask: midpoint + 5–10% if you meet all must-haves.”
+Template: “negotiation opener” + “counter-offer” drafted by LLM.
+6) Personal Brand Mini-Portfolio (auto-assembled)
+Why: Differentiator; great post-interview leave-behind.
+MVP:
+From your bullet wins, generate 1–2 case studies (“Reduced query time 60%”, “Met RTO/RPO via AG + copy-only backups”).
+Export as single-page PDF (no CMS site yet). Link it in outreach or thank-you.

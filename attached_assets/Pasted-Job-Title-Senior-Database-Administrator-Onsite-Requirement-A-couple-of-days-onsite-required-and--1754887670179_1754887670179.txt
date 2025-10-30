@@ -1,0 +1,43 @@
+Job Title:  Senior Database Administrator
+
+Onsite Requirement: A couple of days onsite required and travel to different sites. 
+
+Job Summary: LCG is seeking a Senior Database Administrator (DBA) to lead the design, development, migration, and administration of modern SQL Server database systems in support of the client Applications Modernization Project. The Senior DBA will play a critical role in transitioning legacy DB2 systems to Microsoft SQL Server in a virtualized, scalable environment. This role also includes performance tuning, data modeling, backup strategy, and implementation of reporting services such as SSRS and SSAS. 
+
+Key Responsibilities
+
+Lead end-to-end database architecture design, implementation, and administration for the client’s system modernization. 
+Perform data modeling and optimization to support OLAP and OLTP workloads using ERWIN or similar tools. 
+Migrate legacy DB2 databases to Microsoft SQL Server (2014/2016/2019) ensuring data integrity, security, and performance. 
+Configure and maintain SQL Server in clustered and virtual environments, including high availability/disaster recovery solutions. 
+Develop and maintain SSIS packages for data migration, transformation, and system integration with client systems. 
+Implement and manage SQL Server Reporting Services (SSRS) and SQL Server Analysis Services (SSAS) solutions. 
+Conduct performance tuning, query optimization, and monitoring of SQL databases to ensure system reliability during peak periods (e.g., summer hiring). 
+Collaborate with development teams to integrate data solutions and ensure smooth backend operations. 
+Ensure cross-browser and cross-platform compatibility from a data layer perspective. 
+Define and enforce database security protocols and participate in system security audits. 
+Support functional and performance testing by managing realistic data sets and test environments. 
+Provide documentation, best practices, and training to development and support teams. 
+Qualifications
+
+Experience: Minimum 8+ years of hands-on database administration and development experience. 
+Technical Proficiency: 
+SQL Server (2014/2016/2019) 
+SSIS, SSRS, SSAS 
+DB2 (legacy system knowledge for migration purposes) 
+OLAP and OLTP modeling using ERWIN or similar tools 
+Windows Server environments and virtualization platforms 
+Proven experience designing and implementing database solutions in clustered and virtual environments. 
+Expertise in SQL Server performance tuning, indexing, query optimization, and backup/restore strategies. 
+Strong knowledge of system integration, workflow automation, and bulk email handling in high-volume environments. 
+Experience supporting large-scale modernization projects for public sector clients (preferred). 
+Excellent analytical, problem-solving, and communication skills. 
+Compensation and Benefits  
+
+The projected compensation range for this position is $128,500 to $154,800 per year benchmarked in the Washington DC/ Maryland area.  The salary range provided is a good faith estimate representative of all experience levels. Salary at LCG is determined by various factors, including but not limited to role, location, the combination of education/training, knowledge, skills, competencies, certifications, and work experience.  
+
+LCG offers a competitive, comprehensive benefits package which includes health insurance options (medical, dental, vision), life and disability insurance, retirement plan contributions, as well as paid leave, federal holidays, professional development, and lifestyle benefits.  
+
+Devoted to Fair and Inclusive Practices  
+
+All qualified applicants will receive consideration for employment without regard to sex, race, ethnicity, age, national origin, citizenship, religion, physical or mental disability, medical condition, genetic information, pregnancy, family structure, marital status, ancestry, domestic partner status, sexual orientation, gender identity or expression, veteran or military status, or any other basis prohibited by law.  

@@ -1,0 +1,72 @@
+Mid-Level Database Administrator
+Lititz, PA
+Job Description
+Job Summary
+WebstaurantStore, a Clark Associates Company and the Internet’s largest restaurant supplier, is looking for candidates who love technology to join our growing company as a Mid-Level Database Administrator (DBA).
+
+
+
+This role offers an excellent opportunity for DBAs at the early or intermediate stages of their career to advance their expertise. Working directly with experienced DBAs, Site Reliability Engineers, and System Engineers, you'll gain the knowledge and experience necessary to succeed in today's IT environment. If you love finding solutions to making complex business processes run more efficiently, this is the position for you!
+
+Remote Work Qualifications
+Access to a reliable and secure high-speed internet connection. Cable or fiber internet connections (at least 75mbps download/10mbps upload) are preferred, as satellite connections often cannot support the technologies used to perform day-to-day tasks.
+Access to a home router and modem.
+A dedicated home office space that is noise- and distraction-free. The space should have strong wireless connection or a wired Ethernet connection (wired connection is preferred, if possible).
+A valid, physical address (apartment, suite, etc.). PO Boxes are not supported, as a physical address is required for you to receive your computer equipment.
+The desire and ability to work and communicate with other team members via chat, webcam, etc.
+Legal residents of one of the following states: (AK, AL, AR, AZ, CT, DE, FL, GA, IA, ID, IN, KS, KY, LA, MD, ME, MI, MN, MO, MS, NC, ND, NH, NM, NV, OH, OK, PA, SC, SD, TN, TX, UT, VA, VT, WI, WV, and WY).
+Responsibilities
+Protect, preserve, and ensure the availability of the data
+Measure and monitor database performance to ensure optimal configuration settings are applied
+Document and automate processes to eliminate time spent on recurring tasks
+Build and maintain self-serve tools for application and database developers
+Become proficient with available in-house developed and 3rd party tools
+Assume responsibility for database security, backups, and maintenance tasks
+Identify and implement new relevant SQL Server features as they become available
+Participate in the on-call rotation
+Physical Requirements
+Work is performed while sitting/standing and interfacing with a personal computer.
+Requires the ability to communicate effectively using speech, vision, and hearing.
+Requires the regular use of hands for simple grasping and fine manipulations.
+Requires occasional bending, squatting, crawling, climbing, and reaching.
+Requires the ability to occasionally lift, carry, push, or pull medium weights, up to 50lbs.
+Qualifications
+Experience
+Minimum Qualifications:
+
+Have 2+ years of experience supporting Microsoft SQL Server
+Strong attention to detail
+
+
+Preferred Qualifications:
+
+Understand relational database theory and implementations
+Have setup, configured, and supported SQL Server Always On Availability Groups
+Possess experience with additional types of data stores and data models (MySQL, PostgreSQL, etc.)
+Strong experience with PowerShell
+Comfortable using git
+Familiar with job scheduling software
+Fundamental understanding of Windows and Linux operating systems
+Enjoy trying new technologies and techniques
+Education
+This role does not require a degree. We value relevant skills and experience and alignment with our core values above all else.
+
+
+Desired Traits & Skills
+Hungry:
+
+Passionate for their work.
+Goes above and beyond to get the job done.
+Looks for opportunities in all aspects of the company.
+Process improvement focus.
+Humble:
+
+Easily admits to mistakes.
+Acknowledges his/her weaknesses.
+Displays a grounded confidence but not arrogance.
+Smart:
+
+Shows empathy.
+Attentive listener.
+Adjusts his/her own behavior to fit the nature of a conversation.
+Understands what others are thinking.

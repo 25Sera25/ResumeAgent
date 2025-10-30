@@ -1,0 +1,37 @@
+Microsoft SQL Database Administrator
+Requisition ID:  667
+Location:  Camden, NJ, US
+Job Family Function:  Administrative & Professional
+Department:  Information Technology
+Division:  Nuclear Power Division
+Holtec International is currently seeking a Microsoft SQL Database Administrator to join the team in Camden, NJ. This is a fully on-site position. 
+
+We are proud of our reputation for professional and technical excellence, and we recognize that the key to upholding that reputation resides in the excellence of our employees. We are looking for talent who brings value to the organization and contributes to advancing our business and reputation. 
+
+Job Summary: 
+The Microsoft SQL DBA will be responsible for the maintenance, performance, and security of the SQL database environments throughout the enterprise. This role requires ensuring database availability, implementing backup and recovery strategies, and optimizing database performance.
+
+Key Responsibilities:
+
+Manage and maintain all SQL databases used throughout the organization including Enterprise applications, manufacturing and ERP systems.
+Implement and monitor SQL backups and restoration process.
+Familiarity with Veritas Netbackup to manage SQL backups.
+Implement and manage clusters for high availability. Configure SQL Always-On clustering.
+Perform routine database maintenance, including index tuning, query optimization, and performance monitoring.
+Collaborate with the engineering and development team members to ensure database integrity and security.
+Conduct regular audits and compliance checks according to regulatory requirements - SQL Database security management and analysis.
+Adhere to Change Control process and ensure system configurations are properly documented.
+Configure and manage database storage provisioned through Storage Area Network (SAN) over iSCSI.
+Minimum Qualification:
+
+Bachelor’s degree in Information Technology, Computer Science, or a related field.
+8+ years of experience as a Microsoft SQL DBA, with experience in high availability environments.
+Proficiency in SQL Backups, Veritas Netbackup, SQL Cluster configurations.
+Extensive experience with VMware and Windows environments.
+Automation experience using PowerShell.
+Strong analytical and problem-solving skills, SQL Performance tuning.
+Excellent communication and documentation skills.
+Preferred Qualifications:
+Knowledge of reporting services (SSIS, SSRS).
+Familiarity with database products such as Oracle, Postgres, MySQL.
+Experience in both on-premise and cloud environments (ie Azure).

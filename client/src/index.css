@@ -1,0 +1,164 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(248, 47%, 98%);
+  --foreground: hsl(208, 32%, 13%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(208, 32%, 13%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(208, 32%, 13%);
+  --primary: hsl(217, 78%, 57%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(159, 78%, 41%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --muted: hsl(210, 20%, 90%);
+  --muted-foreground: hsl(208, 32%, 13%);
+  --accent: hsl(42, 93%, 56%);
+  --accent-foreground: hsl(208, 32%, 13%);
+  --destructive: hsl(356, 91%, 54%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(214, 15%, 91%);
+  --input: hsl(212, 46%, 97%);
+  --ring: hsl(217, 78%, 57%);
+  --neutral-50: hsl(210, 33%, 98%);
+  --neutral-100: hsl(210, 22%, 96%);
+  --neutral-200: hsl(214, 15%, 91%);
+  --neutral-300: hsl(214, 12%, 82%);
+  --neutral-400: hsl(217, 10%, 58%);
+  --neutral-500: hsl(218, 11%, 45%);
+  --neutral-600: hsl(215, 14%, 34%);
+  --neutral-700: hsl(215, 19%, 26%);
+  --neutral-800: hsl(214, 28%, 16%);
+  --neutral-900: hsl(214, 34%, 10%);
+  --font-inter: 'Inter', sans-serif;
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: hsl(214, 34%, 10%);
+  --foreground: hsl(210, 22%, 96%);
+  --card: hsl(214, 28%, 16%);
+  --card-foreground: hsl(210, 22%, 96%);
+  --popover: hsl(214, 34%, 10%);
+  --popover-foreground: hsl(210, 22%, 96%);
+  --primary: hsl(217, 78%, 57%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(159, 78%, 41%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --muted: hsl(215, 19%, 26%);
+  --muted-foreground: hsl(217, 10%, 58%);
+  --accent: hsl(42, 93%, 56%);
+  --accent-foreground: hsl(214, 34%, 10%);
+  --destructive: hsl(356, 91%, 54%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(215, 19%, 26%);
+  --input: hsl(215, 14%, 34%);
+  --ring: hsl(217, 78%, 57%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-inter antialiased bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .font-inter {
+    font-family: var(--font-inter);
+  }
+  
+  .text-neutral-50 {
+    color: var(--neutral-50);
+  }
+  
+  .text-neutral-100 {
+    color: var(--neutral-100);
+  }
+  
+  .text-neutral-200 {
+    color: var(--neutral-200);
+  }
+  
+  .text-neutral-300 {
+    color: var(--neutral-300);
+  }
+  
+  .text-neutral-400 {
+    color: var(--neutral-400);
+  }
+  
+  .text-neutral-500 {
+    color: var(--neutral-500);
+  }
+  
+  .text-neutral-600 {
+    color: var(--neutral-600);
+  }
+  
+  .text-neutral-700 {
+    color: var(--neutral-700);
+  }
+  
+  .text-neutral-800 {
+    color: var(--neutral-800);
+  }
+  
+  .text-neutral-900 {
+    color: var(--neutral-900);
+  }
+  
+  .bg-neutral-50 {
+    background-color: var(--neutral-50);
+  }
+  
+  .bg-neutral-100 {
+    background-color: var(--neutral-100);
+  }
+  
+  .bg-neutral-200 {
+    background-color: var(--neutral-200);
+  }
+  
+  .bg-neutral-300 {
+    background-color: var(--neutral-300);
+  }
+  
+  .bg-neutral-400 {
+    background-color: var(--neutral-400);
+  }
+  
+  .bg-neutral-500 {
+    background-color: var(--neutral-500);
+  }
+  
+  .bg-neutral-600 {
+    background-color: var(--neutral-600);
+  }
+  
+  .bg-neutral-700 {
+    background-color: var(--neutral-700);
+  }
+  
+  .bg-neutral-800 {
+    background-color: var(--neutral-800);
+  }
+  
+  .bg-neutral-900 {
+    background-color: var(--neutral-900);
+  }
+  
+  .border-neutral-200 {
+    border-color: var(--neutral-200);
+  }
+  
+  .border-neutral-300 {
+    border-color: var(--neutral-300);
+  }
+}

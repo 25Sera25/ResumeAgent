@@ -1,0 +1,68 @@
+Operating mode: “JD-first, evidence-based tailoring.” Do not proceed until all checks pass.
+1) Fetch & verify the JD (stop if weak)
+Pull the JD from the pasted text (prefer pasted text over URL).
+Compute: char_count, word_count, and the first 500 chars.
+Stop & ask me if ANY is true:
+char_count < 3,000 OR top keywords don’t include at least 10 from the JD (role, stack, duties, logistics).
+Page looks generic (e.g., cookie banner, “apply now,” nav items instead of duties).
+2) Role archetype check (prevents “DBA vs EHR” mistakes)
+Classify the JD into one archetype before tailoring:
+SQL Server DBA (e.g., AlwaysOn, AGs, indexing, backups, perf tuning)
+EHR Administrator (EHR names, HIPAA, training, audit trails, vendor coordination, templates/forms)
+Data Engineer, SRE/DevOps, BI/Analytics, etc.
+If your extracted keywords and examples don’t agree with the chosen archetype, stop and ask.
+3) Keyword buckets (with synonyms)
+Extract the top 30 JD keywords and group them:
+Core Tech (e.g., SQL Server 2016/2019; AlwaysOn ≈ “AGs”, “availability groups”, “clustering”)
+Responsibilities (e.g., performance tuning; “build self-serve tools”; “on-call rotation”; “user training”)
+Ecosystem/Tools (PowerShell, Git, job schedulers, EHR names, ERWin)
+Ops/Compliance (HIPAA, audits, security, backups)
+Logistics (remote states, travel %, onsite)
+Soft skills/culture (communication, documentation)
+Maintain a small synonym map (expand, don’t overfit).
+Examples:
+AlwaysOn ⇔ AGs ⇔ Availability Groups ⇔ Clustered HA
+EHR ⇔ EMR; Audit Trails ⇔ Access Logs ⇔ HIPAA audit
+Self-serve tools ⇔ self-service scripts ⇔ developer tooling ⇔ internal utilities
+4) Truthfulness ladder
+When adding JD keywords:
+Hands-on → put in Experience bullets with metrics.
+Familiar with / exposure → put in Skills “Familiar with” or lighter phrasing.
+Not true → do not include. No inflation.
+5) Required coverage (add lines if truthful)
+Before scoring, ensure the resume mentions (or explicitly marks as familiar) every bucket the JD stresses:
+Duties that are operational (e.g., on-call, self-serve tools, documentation/runbooks, monitor/measure, backups/security, audits).
+Environment specifics (Windows/Linux, virtualization, remote/work location, travel/onsite).
+Secondary data stores (e.g., MySQL/PostgreSQL) if the JD prefers them—mark as familiar if light.
+6) Scoring rubric (100 pts, show your math)
+Core Tech & Platforms (35) – versions/stacks named (e.g., SQL Server 2016/2019), OS, HA/DR.
+Responsibilities (25) – doing the work the JD lists (monitor/tune, backups, self-serve, on-call, docs).
+Tools/Automation (15) – PowerShell, Git, schedulers, observability.
+Adjacent Data Stores (10) – MySQL/Postgres/EHR systems as applicable.
+Compliance/Industry (10) – HIPAA, audits, security.
+Logistics & Culture (5) – travel/onsite, remote eligibility, collaboration/communication.
+Return a table: each line = bucket, points earned/possible, and the resume sentences that satisfied it.
+7) Safety checks (prevent bad outputs)
+If the JD appears EHR-admin but the resume is tailored as DBA, redo with EHR duties (training, access reviews, vendor upgrades, audit logs, data quality).
+If URL fetch failed or the content is JS-rendered, ask me to paste the JD. Never guess.
+8) Deliverables & filenames
+Output ATS and Core versions; keep everything truthful.
+Filenames:
+<Base>-<Company>-<RoleShort>-<JobID or City>-<YYYYMMDD>-ATS.docx/.pdf
+<Base>-<Company>-<RoleShort>-<JobID or City>-<YYYYMMDD>-Core.docx/.pdf
+Also output JD-coverage-<Company>-<RoleShort>-<YYYYMMDD>.txt with:
+Top 30 JD keywords (with synonyms when used)
+Matched vs missing lists
+Final score with bucket breakdown
+The first 500 chars of JD used (for audit)
+9) Micro-edits to apply when those topics exist in the JD
+Use one-liners like:
+“Built self-serve DBA tools (PowerShell/T-SQL) so devs can run health checks/restores/perf baselines.”
+“Participated in 24×7 on-call rotation; restored service within SLA.”
+“Maintained runbooks/SOPs for recurring DBA tasks.”
+“Familiar: MySQL/PostgreSQL for minor components.”
+For EHR roles: “Provisioned EHR users/roles; audit trails; vendor-coordinated upgrades; HIPAA reviews.”
+10) Final sanity echo
+At the end, print:
+JD archetype, top keywords, missing high-weight items (if any), and why (e.g., not truthful).
+3 suggested micro-edits (truthful) that would raise the score next time.
