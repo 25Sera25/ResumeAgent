@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from "react";
 
 interface User {
   id: string;
@@ -20,32 +20,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
+  
+  // Use ref to track pending auth check and prevent race conditions
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isAuthenticatedRef = useRef(false);
 
   // Check if user is authenticated on mount
   useEffect(() => {
     checkAuth();
+    
+    // Cleanup: abort any pending auth check when component unmounts
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, []);
 
   const checkAuth = async () => {
+    // Don't overwrite if user just logged in
+    if (isAuthenticatedRef.current) {
+      return;
+    }
+    
+    // Cancel any pending auth check
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Create new abort controller for this request
+    abortControllerRef.current = new AbortController();
+    
     try {
       const res = await fetch("/api/auth/user", {
         credentials: "include",
+        signal: abortControllerRef.current.signal,
       });
       
       if (res.ok) {
         const data = await res.json();
         // Handle new format: { user: {...} } or { user: null }
-        if (data.user) {
-          setUser(data.user);
-        } else {
-          setUser(null);
+        // Only update if we haven't authenticated since starting this check
+        if (!isAuthenticatedRef.current) {
+          if (data.user) {
+            setUser(data.user);
+            isAuthenticatedRef.current = true;
+          } else {
+            setUser(null);
+          }
         }
       } else {
-        setUser(null);
+        if (!isAuthenticatedRef.current) {
+          setUser(null);
+        }
       }
     } catch (error) {
+      // Ignore abort errors - they're expected when we cancel pending requests
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
       console.error("Auth check failed:", error);
-      setUser(null);
+      if (!isAuthenticatedRef.current) {
+        setUser(null);
+      }
     } finally {
       setLoading(false);
       setInitialized(true);
@@ -53,6 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const login = async (username: string, password: string) => {
+    // Cancel any pending auth check to prevent race condition
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: {
@@ -68,6 +110,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const data = await res.json();
+    
+    // Mark as authenticated to prevent checkAuth from overwriting
+    isAuthenticatedRef.current = true;
+    
     // Immediately set user from login response to prevent race with checkAuth
     setUser(data);
     setLoading(false);
@@ -75,6 +121,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (username: string, password: string) => {
+    // Cancel any pending auth check to prevent race condition
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: {
@@ -90,6 +141,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const data = await res.json();
+    
+    // Mark as authenticated to prevent checkAuth from overwriting
+    isAuthenticatedRef.current = true;
+    
     // Immediately set user from registration response
     setUser(data);
     setLoading(false);
@@ -103,6 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (res.ok) {
+      isAuthenticatedRef.current = false;
       setUser(null);
     }
   };
