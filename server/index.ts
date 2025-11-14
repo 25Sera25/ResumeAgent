@@ -7,6 +7,11 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+
+// Trust proxy - Required for secure cookies when behind a reverse proxy (Render, Heroku, etc.)
+// This allows Express to trust the X-Forwarded-Proto header
+app.set('trust proxy', 1);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -42,14 +47,17 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// DEBUG: Log session status for auth endpoints
+// DEBUG: Log session status for auth endpoints and protected routes
 if (process.env.NODE_ENV === "production") {
   app.use((req, res, next) => {
-    if (req.path.startsWith("/api/auth") || req.path.startsWith("/api/sessions")) {
-      console.log(`[SESSION DEBUG] ${req.method} ${req.path}`);
-      console.log(`  SessionID: ${req.sessionID || 'none'}`);
-      console.log(`  Authenticated: ${req.isAuthenticated()}`);
-      console.log(`  User: ${req.user ? req.user.username : 'none'}`);
+    // Log authentication details for API endpoints
+    if (req.path.startsWith("/api/")) {
+      const isAuthEndpoint = req.path.startsWith("/api/auth");
+      const shouldLog = isAuthEndpoint || (!req.isAuthenticated() && req.method !== 'OPTIONS');
+      
+      if (shouldLog) {
+        console.log(`[SESSION] ${req.method} ${req.path} | SessionID: ${req.sessionID || 'none'} | Auth: ${req.isAuthenticated()} | User: ${req.user ? req.user.username : 'none'}`);
+      }
     }
     next();
   });

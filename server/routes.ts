@@ -64,6 +64,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isFirstUser) {
         req.login(user, (err) => {
           if (err) {
+            console.error("[AUTH] Login error after registration:", err);
             return res.status(500).json({ error: "Failed to log in after registration" });
           }
           // CRITICAL FIX: Force session save to database before responding
@@ -72,7 +73,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.error("[AUTH] Session save error after registration:", saveErr);
               return res.status(500).json({ error: "Failed to save session" });
             }
-            console.log("[AUTH] First user session saved. SessionID:", req.sessionID);
+            console.log(`[AUTH] First user registered and logged in. SessionID: ${req.sessionID}, User: ${user.username}`);
             res.json({ 
               id: user.id, 
               username: user.username,
@@ -105,6 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       req.login(user, (err) => {
         if (err) {
+          console.error("[AUTH] Login error:", err);
           return res.status(500).json({ error: "Failed to log in" });
         }
         // CRITICAL FIX: Force session save to database before responding
@@ -113,7 +115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.error("[AUTH] Session save error:", saveErr);
             return res.status(500).json({ error: "Failed to save session" });
           }
-          console.log("[AUTH] Session saved successfully. SessionID:", req.sessionID);
+          console.log(`[AUTH] User logged in successfully. SessionID: ${req.sessionID}, User: ${user.username}`);
           res.json({ 
             id: user.id, 
             username: user.username,

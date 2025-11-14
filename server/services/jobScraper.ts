@@ -98,5 +98,5 @@ export function extractJobKeywords(description: string): string[] {
     description.toLowerCase().includes(keyword.toLowerCase())
   );
 
-  return [...new Set(foundKeywords)]; // Remove duplicates
+  return Array.from(new Set(foundKeywords)); // Remove duplicates
 }
