@@ -62,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const data = await res.json();
     setUser(data);
+    setLoading(false); // Ensure loading is false after successful login
   };
 
   const register = async (username: string, password: string) => {
@@ -81,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const data = await res.json();
     setUser(data);
+    setLoading(false); // Ensure loading is false after successful registration
   };
 
   const logout = async () => {
