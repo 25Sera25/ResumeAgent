@@ -19,6 +19,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   // Check if user is authenticated on mount
   useEffect(() => {
@@ -33,7 +34,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (res.ok) {
         const data = await res.json();
-        setUser(data);
+        // Handle new format: { user: {...} } or { user: null }
+        if (data.user) {
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
       } else {
         setUser(null);
       }
@@ -42,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
     } finally {
       setLoading(false);
+      setInitialized(true);
     }
   };
 
@@ -61,8 +68,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const data = await res.json();
+    // Immediately set user from login response to prevent race with checkAuth
     setUser(data);
-    setLoading(false); // Ensure loading is false after successful login
+    setLoading(false);
+    setInitialized(true);
   };
 
   const register = async (username: string, password: string) => {
@@ -81,8 +90,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const data = await res.json();
+    // Immediately set user from registration response
     setUser(data);
-    setLoading(false); // Ensure loading is false after successful registration
+    setLoading(false);
+    setInitialized(true);
   };
 
   const logout = async () => {
