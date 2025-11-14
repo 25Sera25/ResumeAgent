@@ -66,11 +66,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (err) {
             return res.status(500).json({ error: "Failed to log in after registration" });
           }
-          res.json({ 
-            id: user.id, 
-            username: user.username,
-            isAdmin: user.isAdmin,
-            message: "First admin user created successfully"
+          // CRITICAL FIX: Force session save to database before responding
+          req.session.save((saveErr) => {
+            if (saveErr) {
+              console.error("[AUTH] Session save error after registration:", saveErr);
+              return res.status(500).json({ error: "Failed to save session" });
+            }
+            console.log("[AUTH] First user session saved. SessionID:", req.sessionID);
+            res.json({ 
+              id: user.id, 
+              username: user.username,
+              isAdmin: user.isAdmin,
+              message: "First admin user created successfully"
+            });
           });
         });
       } else {
@@ -99,10 +107,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (err) {
           return res.status(500).json({ error: "Failed to log in" });
         }
-        res.json({ 
-          id: user.id, 
-          username: user.username,
-          isAdmin: user.isAdmin
+        // CRITICAL FIX: Force session save to database before responding
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error("[AUTH] Session save error:", saveErr);
+            return res.status(500).json({ error: "Failed to save session" });
+          }
+          console.log("[AUTH] Session saved successfully. SessionID:", req.sessionID);
+          res.json({ 
+            id: user.id, 
+            username: user.username,
+            isAdmin: user.isAdmin
+          });
         });
       });
     })(req, res, next);
