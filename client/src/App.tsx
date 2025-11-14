@@ -10,14 +10,13 @@ import Home from "@/pages/home";
 import ResumeLibrary from "@/pages/ResumeLibrary";
 import JobTracker from "@/pages/JobTracker";
 import Login from "@/pages/Login";
-import Register from "@/pages/Register";
+import AdminUsers from "@/pages/AdminUsers";
 
 function Router() {
   return (
     <Switch>
       {/* Public routes */}
       <Route path="/login" component={Login} />
-      <Route path="/register" component={Register} />
       
       {/* Protected routes */}
       <Route path="/">
@@ -33,6 +32,11 @@ function Router() {
       <Route path="/job-tracker">
         <ProtectedRoute>
           <JobTracker />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/admin/users">
+        <ProtectedRoute>
+          <AdminUsers />
         </ProtectedRoute>
       </Route>
       

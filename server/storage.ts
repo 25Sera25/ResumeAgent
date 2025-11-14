@@ -7,7 +7,10 @@ import { eq, desc, sql, and, lte, gte } from "drizzle-orm";
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  createUser(user: InsertUser & { isAdmin?: boolean }): Promise<User>;
+  getUserCount(): Promise<number>;
+  getAllUsers(): Promise<User[]>;
+  deleteUser(userId: string): Promise<boolean>;
   
   createResumeSession(session: InsertResumeSession): Promise<ResumeSession>;
   getResumeSession(id: string, userId?: string): Promise<ResumeSession | undefined>;
@@ -101,11 +104,32 @@ export class MemStorage implements IStorage {
     );
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async createUser(insertUser: InsertUser & { isAdmin?: boolean }): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id };
+    const user: User = { 
+      ...insertUser, 
+      id,
+      isAdmin: insertUser.isAdmin || false,
+      createdAt: new Date(),
+    };
     this.users.set(id, user);
     return user;
+  }
+
+  async getUserCount(): Promise<number> {
+    return this.users.size;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values()).sort((a, b) => {
+      const aTime = a.createdAt?.getTime() || 0;
+      const bTime = b.createdAt?.getTime() || 0;
+      return bTime - aTime;
+    });
+  }
+
+  async deleteUser(userId: string): Promise<boolean> {
+    return this.users.delete(userId);
   }
 
   async createResumeSession(insertSession: InsertResumeSession): Promise<ResumeSession> {
@@ -527,9 +551,23 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async createUser(insertUser: InsertUser & { isAdmin?: boolean }): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
+  }
+
+  async getUserCount(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(users);
+    return Number(result[0].count);
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async deleteUser(userId: string): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, userId));
+    return (result.rowCount ?? 0) > 0;
   }
 
   async createResumeSession(insertSession: InsertResumeSession): Promise<ResumeSession> {
