@@ -5,7 +5,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Database, Bot, HelpCircle, Settings, Check, Loader2, WandSparkles, FileText, Library, BookOpen, BarChart3, LogOut, User } from "lucide-react";
+import { Database, Bot, HelpCircle, Settings, Check, Loader2, WandSparkles, FileText, Library, BookOpen, BarChart3, LogOut, User, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ProgressTracker from "@/components/ProgressTracker";
 import FileUpload from "@/components/FileUpload";
@@ -339,6 +339,14 @@ export default function Home() {
                   Job Tracker
                 </Button>
               </Link>
+              {user?.isAdmin && (
+                <Link href="/admin/users">
+                  <Button variant="ghost" size="sm" data-testid="button-admin">
+                    <Shield className="w-4 h-4 mr-2" />
+                    Admin
+                  </Button>
+                </Link>
+              )}
               <Button variant="ghost" size="sm" data-testid="button-help">
                 <HelpCircle className="text-lg" />
               </Button>

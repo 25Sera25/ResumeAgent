@@ -20,7 +20,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AUTHENTICATION ROUTES
   // ===================
   
-  // Register new user
+  // Register new user (admin-only, except first user)
   app.post("/api/auth/register", async (req, res) => {
     try {
       const { username, password } = req.body;
@@ -39,25 +39,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Username already exists" });
       }
 
+      // Check if this is the first user
+      const userCount = await storage.getUserCount();
+      const isFirstUser = userCount === 0;
+
+      // If not first user, require admin authentication
+      if (!isFirstUser) {
+        if (!req.isAuthenticated() || !req.user?.isAdmin) {
+          return res.status(403).json({ error: "Admin access required to create users" });
+        }
+      }
+
       // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Create user
+      // Create user - first user is admin
       const user = await storage.createUser({
         username,
         password: hashedPassword,
+        isAdmin: isFirstUser,
       });
 
-      // Auto-login after registration
-      req.login(user, (err) => {
-        if (err) {
-          return res.status(500).json({ error: "Failed to log in after registration" });
-        }
+      // Only auto-login if it's the first user
+      if (isFirstUser) {
+        req.login(user, (err) => {
+          if (err) {
+            return res.status(500).json({ error: "Failed to log in after registration" });
+          }
+          res.json({ 
+            id: user.id, 
+            username: user.username,
+            isAdmin: user.isAdmin,
+            message: "First admin user created successfully"
+          });
+        });
+      } else {
+        // Admin created a new user - don't auto-login
         res.json({ 
           id: user.id, 
-          username: user.username 
+          username: user.username,
+          message: "User created successfully"
         });
-      });
+      }
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
@@ -78,7 +101,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         res.json({ 
           id: user.id, 
-          username: user.username 
+          username: user.username,
+          isAdmin: user.isAdmin
         });
       });
     })(req, res, next);
@@ -99,10 +123,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (req.isAuthenticated() && req.user) {
       res.json({ 
         id: req.user.id, 
-        username: req.user.username 
+        username: req.user.username,
+        isAdmin: req.user.isAdmin
       });
     } else {
       res.status(401).json({ error: "Not authenticated" });
+    }
+  });
+
+  // ===================
+  // ADMIN ROUTES
+  // ===================
+  
+  // Import admin middleware
+  const { requireAdmin } = await import("./middleware/requireAdmin");
+
+  // Get all users (admin only)
+  app.get("/api/admin/users", requireAdmin, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      // Don't send password hashes to client
+      const sanitizedUsers = users.map(({ password, ...user }) => user);
+      res.json(sanitizedUsers);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Delete user (admin only)
+  app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const userId = req.params.id;
+      
+      // Prevent admin from deleting themselves
+      if (userId === req.user!.id) {
+        return res.status(400).json({ error: "Cannot delete your own account" });
+      }
+
+      const success = await storage.deleteUser(userId);
+      if (!success) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
     }
   });
 
