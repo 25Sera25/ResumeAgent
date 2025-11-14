@@ -11,7 +11,7 @@ export const users = pgTable("users", {
 
 export const resumeSessions = pgTable("resume_sessions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id"),
+  userId: varchar("user_id").references(() => users.id),
   baseResumeFile: text("base_resume_file"),
   baseResumeContent: json("base_resume_content"),
   profileJson: json("profile_json"),
@@ -39,6 +39,7 @@ export const jobPostings = pgTable("job_postings", {
 
 export const storedResumes = pgTable("stored_resumes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id),
   name: text("name").notNull(),
   originalFilename: text("original_filename").notNull(),
   content: text("content").notNull(),
@@ -51,6 +52,7 @@ export const storedResumes = pgTable("stored_resumes", {
 // New table for permanently saved tailored resumes
 export const tailoredResumes = pgTable("tailored_resumes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id),
   sessionId: varchar("session_id").notNull(),
   jobTitle: text("job_title").notNull(),
   company: text("company").notNull(),
@@ -74,6 +76,7 @@ export const tailoredResumes = pgTable("tailored_resumes", {
 // Enhanced job application tracking
 export const jobApplications = pgTable("job_applications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id),
   tailoredResumeId: varchar("tailored_resume_id").notNull(),
   jobTitle: text("job_title").notNull(),
   company: text("company").notNull(),

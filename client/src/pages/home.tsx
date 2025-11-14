@@ -2,9 +2,10 @@ import { useState, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Database, Bot, HelpCircle, Settings, Check, Loader2, WandSparkles, FileText, Library, BookOpen, BarChart3 } from "lucide-react";
+import { Database, Bot, HelpCircle, Settings, Check, Loader2, WandSparkles, FileText, Library, BookOpen, BarChart3, LogOut, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ProgressTracker from "@/components/ProgressTracker";
 import FileUpload from "@/components/FileUpload";
@@ -27,6 +28,7 @@ export default function Home() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user, logout } = useAuth();
 
   // Get current session data
   const { data: session, isLoading: sessionLoading } = useQuery<ResumeSession>({
@@ -47,6 +49,23 @@ export default function Home() {
       followUpsScheduled: 0
     }
   });
+
+  // Logout handler
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast({
+        title: "Logged out",
+        description: "You have been logged out successfully."
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to log out",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Create session mutation
   const createSessionMutation = useMutation({
@@ -326,6 +345,22 @@ export default function Home() {
               <Button variant="ghost" size="sm" data-testid="button-settings">
                 <Settings className="text-lg" />
               </Button>
+              <div className="flex items-center gap-2 ml-2 pl-4 border-l border-neutral-200">
+                <div className="flex items-center gap-2 text-sm text-neutral-600">
+                  <User className="w-4 h-4" />
+                  <span>{user?.username}</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleLogout}
+                  data-testid="button-logout"
+                  className="text-neutral-600 hover:text-neutral-900"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
             </div>
           </div>
         </div>
