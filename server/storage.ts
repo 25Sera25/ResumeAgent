@@ -10,7 +10,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   
   createResumeSession(session: InsertResumeSession): Promise<ResumeSession>;
-  getResumeSession(id: string): Promise<ResumeSession | undefined>;
+  getResumeSession(id: string, userId?: string): Promise<ResumeSession | undefined>;
   updateResumeSession(id: string, updates: Partial<ResumeSession>): Promise<ResumeSession | undefined>;
   getUserResumeSessions(userId?: string): Promise<ResumeSession[]>;
   
@@ -21,28 +21,28 @@ export interface IStorage {
   
   // Stored resume operations
   createStoredResume(resume: InsertStoredResume): Promise<StoredResume>;
-  getStoredResumes(): Promise<StoredResume[]>;
-  getStoredResume(id: string): Promise<StoredResume | undefined>;
-  getDefaultResume(): Promise<StoredResume | undefined>;
+  getStoredResumes(userId?: string): Promise<StoredResume[]>;
+  getStoredResume(id: string, userId?: string): Promise<StoredResume | undefined>;
+  getDefaultResume(userId?: string): Promise<StoredResume | undefined>;
   updateStoredResume(id: string, updates: Partial<StoredResume>): Promise<StoredResume | undefined>;
-  deleteStoredResume(id: string): Promise<boolean>;
-  setDefaultResume(id: string): Promise<boolean>;
+  deleteStoredResume(id: string, userId?: string): Promise<boolean>;
+  setDefaultResume(id: string, userId?: string): Promise<boolean>;
   
   // Tailored resume operations (permanent storage)
   saveTailoredResume(resume: InsertTailoredResume): Promise<TailoredResume>;
-  getTailoredResumes(): Promise<TailoredResume[]>;
-  getTailoredResume(id: string): Promise<TailoredResume | undefined>;
+  getTailoredResumes(userId?: string): Promise<TailoredResume[]>;
+  getTailoredResume(id: string, userId?: string): Promise<TailoredResume | undefined>;
   updateTailoredResume(id: string, updates: Partial<TailoredResume>): Promise<TailoredResume | undefined>;
-  deleteTailoredResume(id: string): Promise<boolean>;
+  deleteTailoredResume(id: string, userId?: string): Promise<boolean>;
   markAsApplied(id: string, notes?: string): Promise<TailoredResume | undefined>;
   
   // Job application tracking
   createJobApplication(application: InsertJobApplication): Promise<JobApplication>;
-  getJobApplications(): Promise<JobApplication[]>;
-  getJobApplication(id: string): Promise<JobApplication | undefined>;
+  getJobApplications(userId?: string): Promise<JobApplication[]>;
+  getJobApplication(id: string, userId?: string): Promise<JobApplication | undefined>;
   updateJobApplication(id: string, updates: Partial<JobApplication>): Promise<JobApplication | undefined>;
-  deleteJobApplication(id: string): Promise<boolean>;
-  getApplicationStats(): Promise<{
+  deleteJobApplication(id: string, userId?: string): Promise<boolean>;
+  getApplicationStats(userId?: string): Promise<{
     total: number;
     applied: number;
     interviews: number;
@@ -52,15 +52,23 @@ export interface IStorage {
   
   // Follow-up tracking
   createFollowUp(followUp: InsertFollowUp): Promise<FollowUp>;
-  getFollowUps(jobApplicationId?: string): Promise<FollowUp[]>;
+  getFollowUps(jobApplicationId?: string, userId?: string): Promise<FollowUp[]>;
   getFollowUp(id: string): Promise<FollowUp | undefined>;
-  getPendingFollowUps(): Promise<FollowUp[]>;
+  getPendingFollowUps(userId?: string): Promise<FollowUp[]>;
   updateFollowUp(id: string, updates: Partial<FollowUp>): Promise<FollowUp | undefined>;
   deleteFollowUp(id: string): Promise<boolean>;
-  getFollowUpStats(): Promise<{
+  getFollowUpStats(userId?: string): Promise<{
     pending: number;
     sent: number;
     total: number;
+  }>;
+  
+  // Overall stats
+  getOverallStats(userId?: string): Promise<{
+    jobsAnalyzed: number;
+    resumesGenerated: number;
+    applicationsSent: number;
+    followUpsScheduled: number;
   }>;
 }
 
@@ -123,8 +131,12 @@ export class MemStorage implements IStorage {
     return session;
   }
 
-  async getResumeSession(id: string): Promise<ResumeSession | undefined> {
-    return this.resumeSessions.get(id);
+  async getResumeSession(id: string, userId?: string): Promise<ResumeSession | undefined> {
+    const session = this.resumeSessions.get(id);
+    if (session && userId && session.userId !== userId) {
+      return undefined;
+    }
+    return session;
   }
 
   async updateResumeSession(id: string, updates: Partial<ResumeSession>): Promise<ResumeSession | undefined> {
@@ -199,6 +211,7 @@ export class MemStorage implements IStorage {
     
     const resume: StoredResume = {
       ...insertResume,
+      userId: insertResume.userId || null,
       name: insertResume.name,
       originalFilename: insertResume.originalFilename,
       content: insertResume.content,
@@ -212,18 +225,26 @@ export class MemStorage implements IStorage {
     return resume;
   }
 
-  async getStoredResumes(): Promise<StoredResume[]> {
-    return Array.from(this.storedResumes.values()).sort((a, b) => 
+  async getStoredResumes(userId?: string): Promise<StoredResume[]> {
+    const allResumes = Array.from(this.storedResumes.values());
+    const filteredResumes = userId ? allResumes.filter(r => r.userId === userId) : allResumes;
+    return filteredResumes.sort((a, b) => 
       new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
     );
   }
 
-  async getStoredResume(id: string): Promise<StoredResume | undefined> {
-    return this.storedResumes.get(id);
+  async getStoredResume(id: string, userId?: string): Promise<StoredResume | undefined> {
+    const resume = this.storedResumes.get(id);
+    if (resume && userId && resume.userId !== userId) {
+      return undefined;
+    }
+    return resume;
   }
 
-  async getDefaultResume(): Promise<StoredResume | undefined> {
-    return Array.from(this.storedResumes.values()).find(resume => resume.isDefault);
+  async getDefaultResume(userId?: string): Promise<StoredResume | undefined> {
+    return Array.from(this.storedResumes.values()).find(resume => 
+      resume.isDefault && (!userId || resume.userId === userId)
+    );
   }
 
   async updateStoredResume(id: string, updates: Partial<StoredResume>): Promise<StoredResume | undefined> {
@@ -248,17 +269,21 @@ export class MemStorage implements IStorage {
     return updatedResume;
   }
 
-  async deleteStoredResume(id: string): Promise<boolean> {
+  async deleteStoredResume(id: string, userId?: string): Promise<boolean> {
+    const resume = this.storedResumes.get(id);
+    if (!resume) return false;
+    if (userId && resume.userId !== userId) return false;
     return this.storedResumes.delete(id);
   }
 
-  async setDefaultResume(id: string): Promise<boolean> {
+  async setDefaultResume(id: string, userId?: string): Promise<boolean> {
     const resume = this.storedResumes.get(id);
     if (!resume) return false;
+    if (userId && resume.userId !== userId) return false;
 
-    // Unset all other defaults
+    // Unset all other defaults for this user
     for (const [key, r] of Array.from(this.storedResumes.entries())) {
-      if (r.isDefault) {
+      if (r.isDefault && (!userId || r.userId === userId)) {
         this.storedResumes.set(key, { ...r, isDefault: false });
       }
     }
@@ -274,6 +299,7 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const resume: TailoredResume = {
       ...insertResume,
+      userId: insertResume.userId || null,
       id,
       jobUrl: insertResume.jobUrl || null,
       originalJobDescription: insertResume.originalJobDescription || null,
@@ -291,14 +317,20 @@ export class MemStorage implements IStorage {
     return resume;
   }
 
-  async getTailoredResumes(): Promise<TailoredResume[]> {
-    return Array.from(this.tailoredResumes.values()).sort(
+  async getTailoredResumes(userId?: string): Promise<TailoredResume[]> {
+    const allResumes = Array.from(this.tailoredResumes.values());
+    const filteredResumes = userId ? allResumes.filter(r => r.userId === userId) : allResumes;
+    return filteredResumes.sort(
       (a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
     );
   }
 
-  async getTailoredResume(id: string): Promise<TailoredResume | undefined> {
-    return this.tailoredResumes.get(id);
+  async getTailoredResume(id: string, userId?: string): Promise<TailoredResume | undefined> {
+    const resume = this.tailoredResumes.get(id);
+    if (resume && userId && resume.userId !== userId) {
+      return undefined;
+    }
+    return resume;
   }
 
   async updateTailoredResume(id: string, updates: Partial<TailoredResume>): Promise<TailoredResume | undefined> {
@@ -310,7 +342,10 @@ export class MemStorage implements IStorage {
     return updatedResume;
   }
 
-  async deleteTailoredResume(id: string): Promise<boolean> {
+  async deleteTailoredResume(id: string, userId?: string): Promise<boolean> {
+    const resume = this.tailoredResumes.get(id);
+    if (!resume) return false;
+    if (userId && resume.userId !== userId) return false;
     return this.tailoredResumes.delete(id);
   }
 
@@ -328,6 +363,7 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const application: JobApplication = {
       ...insertApplication,
+      userId: insertApplication.userId || null,
       id,
       jobUrl: insertApplication.jobUrl || null,
       applicationStatus: insertApplication.applicationStatus || "applied",
@@ -346,14 +382,20 @@ export class MemStorage implements IStorage {
     return application;
   }
 
-  async getJobApplications(): Promise<JobApplication[]> {
-    return Array.from(this.jobApplications.values()).sort(
+  async getJobApplications(userId?: string): Promise<JobApplication[]> {
+    const allApps = Array.from(this.jobApplications.values());
+    const filteredApps = userId ? allApps.filter(a => a.userId === userId) : allApps;
+    return filteredApps.sort(
       (a, b) => new Date(b.appliedDate!).getTime() - new Date(a.appliedDate!).getTime()
     );
   }
 
-  async getJobApplication(id: string): Promise<JobApplication | undefined> {
-    return this.jobApplications.get(id);
+  async getJobApplication(id: string, userId?: string): Promise<JobApplication | undefined> {
+    const app = this.jobApplications.get(id);
+    if (app && userId && app.userId !== userId) {
+      return undefined;
+    }
+    return app;
   }
 
   async updateJobApplication(id: string, updates: Partial<JobApplication>): Promise<JobApplication | undefined> {
@@ -365,18 +407,22 @@ export class MemStorage implements IStorage {
     return updatedApplication;
   }
 
-  async deleteJobApplication(id: string): Promise<boolean> {
+  async deleteJobApplication(id: string, userId?: string): Promise<boolean> {
+    const app = this.jobApplications.get(id);
+    if (!app) return false;
+    if (userId && app.userId !== userId) return false;
     return this.jobApplications.delete(id);
   }
 
-  async getApplicationStats(): Promise<{
+  async getApplicationStats(userId?: string): Promise<{
     total: number;
     applied: number;
     interviews: number;
     offers: number;
     rejected: number;
   }> {
-    const applications = Array.from(this.jobApplications.values());
+    const allApps = Array.from(this.jobApplications.values());
+    const applications = userId ? allApps.filter(a => a.userId === userId) : allApps;
     return {
       total: applications.length,
       applied: applications.filter(app => app.applicationStatus === "applied").length,
@@ -404,7 +450,7 @@ export class MemStorage implements IStorage {
     return followUp;
   }
 
-  async getFollowUps(jobApplicationId?: string): Promise<FollowUp[]> {
+  async getFollowUps(jobApplicationId?: string, userId?: string): Promise<FollowUp[]> {
     const allFollowUps = Array.from(this.followUps.values());
     if (jobApplicationId) {
       return allFollowUps
@@ -418,7 +464,7 @@ export class MemStorage implements IStorage {
     return this.followUps.get(id);
   }
 
-  async getPendingFollowUps(): Promise<FollowUp[]> {
+  async getPendingFollowUps(userId?: string): Promise<FollowUp[]> {
     return Array.from(this.followUps.values())
       .filter(f => f.status === "pending")
       .sort((a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime());
@@ -437,7 +483,7 @@ export class MemStorage implements IStorage {
     return this.followUps.delete(id);
   }
 
-  async getFollowUpStats(): Promise<{
+  async getFollowUpStats(userId?: string): Promise<{
     pending: number;
     sent: number;
     total: number;
@@ -447,6 +493,25 @@ export class MemStorage implements IStorage {
       pending: allFollowUps.filter(f => f.status === "pending").length,
       sent: allFollowUps.filter(f => f.status === "sent").length,
       total: allFollowUps.length,
+    };
+  }
+
+  async getOverallStats(userId?: string): Promise<{
+    jobsAnalyzed: number;
+    resumesGenerated: number;
+    applicationsSent: number;
+    followUpsScheduled: number;
+  }> {
+    const sessions = Array.from(this.resumeSessions.values()).filter(s => s.jobAnalysis !== null && (!userId || s.userId === userId));
+    const resumes = Array.from(this.tailoredResumes.values()).filter(r => !userId || r.userId === userId);
+    const applications = Array.from(this.jobApplications.values()).filter(a => !userId || a.userId === userId);
+    const followUpsList = Array.from(this.followUps.values());
+    
+    return {
+      jobsAnalyzed: sessions.length,
+      resumesGenerated: resumes.length,
+      applicationsSent: applications.length,
+      followUpsScheduled: followUpsList.length,
     };
   }
 }
@@ -472,7 +537,11 @@ export class DatabaseStorage implements IStorage {
     return session;
   }
 
-  async getResumeSession(id: string): Promise<ResumeSession | undefined> {
+  async getResumeSession(id: string, userId?: string): Promise<ResumeSession | undefined> {
+    if (userId) {
+      const [session] = await db.select().from(resumeSessions).where(and(eq(resumeSessions.id, id), eq(resumeSessions.userId, userId)));
+      return session || undefined;
+    }
     const [session] = await db.select().from(resumeSessions).where(eq(resumeSessions.id, id));
     return session || undefined;
   }
@@ -523,16 +592,27 @@ export class DatabaseStorage implements IStorage {
     return resume;
   }
 
-  async getStoredResumes(): Promise<StoredResume[]> {
+  async getStoredResumes(userId?: string): Promise<StoredResume[]> {
+    if (userId) {
+      return await db.select().from(storedResumes).where(eq(storedResumes.userId, userId)).orderBy(desc(storedResumes.createdAt));
+    }
     return await db.select().from(storedResumes).orderBy(desc(storedResumes.createdAt));
   }
 
-  async getStoredResume(id: string): Promise<StoredResume | undefined> {
+  async getStoredResume(id: string, userId?: string): Promise<StoredResume | undefined> {
+    if (userId) {
+      const [resume] = await db.select().from(storedResumes).where(and(eq(storedResumes.id, id), eq(storedResumes.userId, userId)));
+      return resume || undefined;
+    }
     const [resume] = await db.select().from(storedResumes).where(eq(storedResumes.id, id));
     return resume || undefined;
   }
 
-  async getDefaultResume(): Promise<StoredResume | undefined> {
+  async getDefaultResume(userId?: string): Promise<StoredResume | undefined> {
+    if (userId) {
+      const [resume] = await db.select().from(storedResumes).where(and(eq(storedResumes.isDefault, true), eq(storedResumes.userId, userId)));
+      return resume || undefined;
+    }
     const [resume] = await db.select().from(storedResumes).where(eq(storedResumes.isDefault, true));
     return resume || undefined;
   }
@@ -546,12 +626,23 @@ export class DatabaseStorage implements IStorage {
     return resume || undefined;
   }
 
-  async deleteStoredResume(id: string): Promise<boolean> {
+  async deleteStoredResume(id: string, userId?: string): Promise<boolean> {
+    if (userId) {
+      const result = await db.delete(storedResumes).where(and(eq(storedResumes.id, id), eq(storedResumes.userId, userId)));
+      return result.rowCount! > 0;
+    }
     const result = await db.delete(storedResumes).where(eq(storedResumes.id, id));
     return result.rowCount! > 0;
   }
 
-  async setDefaultResume(id: string): Promise<boolean> {
+  async setDefaultResume(id: string, userId?: string): Promise<boolean> {
+    // First, unset all defaults for this user
+    if (userId) {
+      await db.update(storedResumes).set({ isDefault: false }).where(eq(storedResumes.userId, userId));
+      // Then set the new default
+      const result = await db.update(storedResumes).set({ isDefault: true }).where(and(eq(storedResumes.id, id), eq(storedResumes.userId, userId)));
+      return result.rowCount! > 0;
+    }
     // First, unset all defaults
     await db.update(storedResumes).set({ isDefault: false });
     // Then set the new default
@@ -565,11 +656,18 @@ export class DatabaseStorage implements IStorage {
     return resume;
   }
 
-  async getTailoredResumes(): Promise<TailoredResume[]> {
+  async getTailoredResumes(userId?: string): Promise<TailoredResume[]> {
+    if (userId) {
+      return await db.select().from(tailoredResumes).where(eq(tailoredResumes.userId, userId)).orderBy(desc(tailoredResumes.createdAt));
+    }
     return await db.select().from(tailoredResumes).orderBy(desc(tailoredResumes.createdAt));
   }
 
-  async getTailoredResume(id: string): Promise<TailoredResume | undefined> {
+  async getTailoredResume(id: string, userId?: string): Promise<TailoredResume | undefined> {
+    if (userId) {
+      const [resume] = await db.select().from(tailoredResumes).where(and(eq(tailoredResumes.id, id), eq(tailoredResumes.userId, userId)));
+      return resume || undefined;
+    }
     const [resume] = await db.select().from(tailoredResumes).where(eq(tailoredResumes.id, id));
     return resume || undefined;
   }
@@ -583,7 +681,11 @@ export class DatabaseStorage implements IStorage {
     return resume || undefined;
   }
 
-  async deleteTailoredResume(id: string): Promise<boolean> {
+  async deleteTailoredResume(id: string, userId?: string): Promise<boolean> {
+    if (userId) {
+      const result = await db.delete(tailoredResumes).where(and(eq(tailoredResumes.id, id), eq(tailoredResumes.userId, userId)));
+      return result.rowCount! > 0;
+    }
     const result = await db.delete(tailoredResumes).where(eq(tailoredResumes.id, id));
     return result.rowCount! > 0;
   }
@@ -602,11 +704,18 @@ export class DatabaseStorage implements IStorage {
     return application;
   }
 
-  async getJobApplications(): Promise<JobApplication[]> {
+  async getJobApplications(userId?: string): Promise<JobApplication[]> {
+    if (userId) {
+      return await db.select().from(jobApplications).where(eq(jobApplications.userId, userId)).orderBy(desc(jobApplications.appliedDate));
+    }
     return await db.select().from(jobApplications).orderBy(desc(jobApplications.appliedDate));
   }
 
-  async getJobApplication(id: string): Promise<JobApplication | undefined> {
+  async getJobApplication(id: string, userId?: string): Promise<JobApplication | undefined> {
+    if (userId) {
+      const [application] = await db.select().from(jobApplications).where(and(eq(jobApplications.id, id), eq(jobApplications.userId, userId)));
+      return application || undefined;
+    }
     const [application] = await db.select().from(jobApplications).where(eq(jobApplications.id, id));
     return application || undefined;
   }
@@ -620,19 +729,25 @@ export class DatabaseStorage implements IStorage {
     return application || undefined;
   }
 
-  async deleteJobApplication(id: string): Promise<boolean> {
+  async deleteJobApplication(id: string, userId?: string): Promise<boolean> {
+    if (userId) {
+      const result = await db.delete(jobApplications).where(and(eq(jobApplications.id, id), eq(jobApplications.userId, userId)));
+      return result.rowCount! > 0;
+    }
     const result = await db.delete(jobApplications).where(eq(jobApplications.id, id));
     return result.rowCount! > 0;
   }
 
-  async getApplicationStats(): Promise<{
+  async getApplicationStats(userId?: string): Promise<{
     total: number;
     applied: number;
     interviews: number;
     offers: number;
     rejected: number;
   }> {
-    const applications = await db.select().from(jobApplications);
+    const applications = userId 
+      ? await db.select().from(jobApplications).where(eq(jobApplications.userId, userId))
+      : await db.select().from(jobApplications);
     return {
       total: applications.length,
       applied: applications.filter(app => app.applicationStatus === "applied").length,
@@ -643,12 +758,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   // NEW: Get overall statistics for homepage
-  async getOverallStats(): Promise<{
+  async getOverallStats(userId?: string): Promise<{
     jobsAnalyzed: number;
     resumesGenerated: number;
     applicationsSent: number;
     followUpsScheduled: number;
   }> {
+    if (userId) {
+      const [sessions, resumes, applications, followUpsList] = await Promise.all([
+        db.select().from(resumeSessions).where(and(sql`job_analysis IS NOT NULL`, eq(resumeSessions.userId, userId))),
+        db.select().from(tailoredResumes).where(eq(tailoredResumes.userId, userId)),
+        db.select().from(jobApplications).where(eq(jobApplications.userId, userId)),
+        db.select().from(followUps)
+      ]);
+
+      return {
+        jobsAnalyzed: sessions.length,
+        resumesGenerated: resumes.length,
+        applicationsSent: applications.length,
+        followUpsScheduled: followUpsList.length,
+      };
+    }
+
     const [sessions, resumes, applications, followUpsList] = await Promise.all([
       db.select().from(resumeSessions).where(sql`job_analysis IS NOT NULL`),
       db.select().from(tailoredResumes),
@@ -670,7 +801,9 @@ export class DatabaseStorage implements IStorage {
     return followUp;
   }
 
-  async getFollowUps(jobApplicationId?: string): Promise<FollowUp[]> {
+  async getFollowUps(jobApplicationId?: string, userId?: string): Promise<FollowUp[]> {
+    // Follow-ups are linked to job applications, which are linked to users
+    // For now, we'll filter by jobApplicationId if provided
     if (jobApplicationId) {
       return await db.select().from(followUps)
         .where(eq(followUps.jobApplicationId, jobApplicationId))
@@ -684,7 +817,9 @@ export class DatabaseStorage implements IStorage {
     return followUp || undefined;
   }
 
-  async getPendingFollowUps(): Promise<FollowUp[]> {
+  async getPendingFollowUps(userId?: string): Promise<FollowUp[]> {
+    // For now, we'll return all pending followups
+    // In production, we'd join with jobApplications to filter by userId
     return await db.select().from(followUps)
       .where(eq(followUps.status, "pending"))
       .orderBy(followUps.dueAt);
@@ -704,11 +839,13 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount! > 0;
   }
 
-  async getFollowUpStats(): Promise<{
+  async getFollowUpStats(userId?: string): Promise<{
     pending: number;
     sent: number;
     total: number;
   }> {
+    // For now, we'll return all followup stats
+    // In production, we'd join with jobApplications to filter by userId
     const allFollowUps = await db.select().from(followUps);
     return {
       pending: allFollowUps.filter(f => f.status === "pending").length,

@@ -1,5 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import bcrypt from "bcrypt";
+import passport from "./auth";
+import { requireAuth } from "./middleware/requireAuth";
 import { storage } from "./storage";
 import { upload } from "./services/fileProcessor";
 import { validateProfileJSON } from "./services/fileProcessor";
@@ -13,10 +16,105 @@ import {
 } from "./services/resumeTailor";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Create a new tailoring session
-  app.post("/api/sessions", async (req, res) => {
+  // ===================
+  // AUTHENTICATION ROUTES
+  // ===================
+  
+  // Register new user
+  app.post("/api/auth/register", async (req, res) => {
     try {
-      const session = await createTailoringSession(req.body.userId);
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ error: "Username and password are required" });
+      }
+
+      if (password.length < 8) {
+        return res.status(400).json({ error: "Password must be at least 8 characters long" });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(400).json({ error: "Username already exists" });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create user
+      const user = await storage.createUser({
+        username,
+        password: hashedPassword,
+      });
+
+      // Auto-login after registration
+      req.login(user, (err) => {
+        if (err) {
+          return res.status(500).json({ error: "Failed to log in after registration" });
+        }
+        res.json({ 
+          id: user.id, 
+          username: user.username 
+        });
+      });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Login
+  app.post("/api/auth/login", (req, res, next) => {
+    passport.authenticate("local", (err: any, user: Express.User | false, info: any) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      if (!user) {
+        return res.status(401).json({ error: info?.message || "Invalid credentials" });
+      }
+      req.login(user, (err) => {
+        if (err) {
+          return res.status(500).json({ error: "Failed to log in" });
+        }
+        res.json({ 
+          id: user.id, 
+          username: user.username 
+        });
+      });
+    })(req, res, next);
+  });
+
+  // Logout
+  app.post("/api/auth/logout", (req, res) => {
+    req.logout((err) => {
+      if (err) {
+        return res.status(500).json({ error: "Failed to log out" });
+      }
+      res.json({ message: "Logged out successfully" });
+    });
+  });
+
+  // Get current user
+  app.get("/api/auth/user", (req, res) => {
+    if (req.isAuthenticated() && req.user) {
+      res.json({ 
+        id: req.user.id, 
+        username: req.user.username 
+      });
+    } else {
+      res.status(401).json({ error: "Not authenticated" });
+    }
+  });
+
+  // ===================
+  // PROTECTED ROUTES
+  // ===================
+  
+  // Create a new tailoring session
+  app.post("/api/sessions", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const session = await createTailoringSession(userId);
       res.json(session);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -24,9 +122,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get session details
-  app.get("/api/sessions/:id", async (req, res) => {
+  app.get("/api/sessions/:id", requireAuth, async (req, res) => {
     try {
-      const session = await storage.getResumeSession(req.params.id);
+      const userId = req.user!.id;
+      const session = await storage.getResumeSession(req.params.id, userId);
       if (!session) {
         return res.status(404).json({ error: "Session not found" });
       }
@@ -37,9 +136,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user's sessions
-  app.get("/api/sessions", async (req, res) => {
+  app.get("/api/sessions", requireAuth, async (req, res) => {
     try {
-      const sessions = await storage.getUserResumeSessions(req.query.userId as string);
+      const userId = req.user!.id;
+      const sessions = await storage.getUserResumeSessions(userId);
       res.json(sessions);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -47,7 +147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload resume file
-  app.post("/api/sessions/:id/resume", upload.single('resume'), async (req, res) => {
+  app.post("/api/sessions/:id/resume", requireAuth, upload.single('resume'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -61,7 +161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload profile JSON
-  app.post("/api/sessions/:id/profile", async (req, res) => {
+  app.post("/api/sessions/:id/profile", requireAuth, async (req, res) => {
     try {
       const { profileJson } = req.body;
       
@@ -78,7 +178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Analyze job posting
-  app.post("/api/sessions/:id/analyze-job", async (req, res) => {
+  app.post("/api/sessions/:id/analyze-job", requireAuth, async (req, res) => {
     try {
       const { jobUrl, jobDescription } = req.body;
       
@@ -94,7 +194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Tailor resume
-  app.post("/api/sessions/:id/tailor", async (req, res) => {
+  app.post("/api/sessions/:id/tailor", requireAuth, async (req, res) => {
     try {
       const result = await tailorResumeForSession(req.params.id);
       res.json(result);
@@ -104,7 +204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Download tailored resume
-  app.get("/api/sessions/:id/download/:format", async (req, res) => {
+  app.get("/api/sessions/:id/download/:format", requireAuth, async (req, res) => {
     try {
       const { format } = req.params;
       
@@ -154,7 +254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get job posting analysis
-  app.get("/api/jobs/:id", async (req, res) => {
+  app.get("/api/jobs/:id", requireAuth, async (req, res) => {
     try {
       const jobPosting = await storage.getJobPostingById(req.params.id);
       if (!jobPosting) {
@@ -171,9 +271,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =====================
 
   // Get all stored resumes
-  app.get("/api/resumes", async (req, res) => {
+  app.get("/api/resumes", requireAuth, async (req, res) => {
     try {
-      const resumes = await storage.getStoredResumes();
+      const userId = req.user!.id;
+      const resumes = await storage.getStoredResumes(userId);
       res.json(resumes);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -181,7 +282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload and store a resume
-  app.post("/api/resumes", upload.single('resume'), async (req, res) => {
+  app.post("/api/resumes", requireAuth, upload.single('resume'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -198,7 +299,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contactInfo = await extractContactInformation(processed.text);
 
       // Store the resume
+      const userId = req.user!.id;
       const storedResume = await storage.createStoredResume({
+        userId,
         name,
         originalFilename: req.file.originalname,
         content: processed.text,
@@ -213,9 +316,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get stored resume by ID
-  app.get("/api/resumes/:id", async (req, res) => {
+  app.get("/api/resumes/:id", requireAuth, async (req, res) => {
     try {
-      const resume = await storage.getStoredResume(req.params.id);
+      const userId = req.user!.id;
+      const resume = await storage.getStoredResume(req.params.id, userId);
       if (!resume) {
         return res.status(404).json({ error: "Resume not found" });
       }
@@ -226,7 +330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update stored resume (name, default status)
-  app.patch("/api/resumes/:id", async (req, res) => {
+  app.patch("/api/resumes/:id", requireAuth, async (req, res) => {
     try {
       const resume = await storage.updateStoredResume(req.params.id, req.body);
       if (!resume) {
@@ -239,9 +343,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete stored resume
-  app.delete("/api/resumes/:id", async (req, res) => {
+  app.delete("/api/resumes/:id", requireAuth, async (req, res) => {
     try {
-      const deleted = await storage.deleteStoredResume(req.params.id);
+      const userId = req.user!.id;
+      const deleted = await storage.deleteStoredResume(req.params.id, userId);
       if (!deleted) {
         return res.status(404).json({ error: "Resume not found" });
       }
@@ -252,9 +357,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Set resume as default
-  app.post("/api/resumes/:id/set-default", async (req, res) => {
+  app.post("/api/resumes/:id/set-default", requireAuth, async (req, res) => {
     try {
-      const success = await storage.setDefaultResume(req.params.id);
+      const userId = req.user!.id;
+      const success = await storage.setDefaultResume(req.params.id, userId);
       if (!success) {
         return res.status(404).json({ error: "Resume not found" });
       }
@@ -265,9 +371,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Use stored resume for session
-  app.post("/api/sessions/:sessionId/use-resume/:resumeId", async (req, res) => {
+  app.post("/api/sessions/:sessionId/use-resume/:resumeId", requireAuth, async (req, res) => {
     try {
-      const storedResume = await storage.getStoredResume(req.params.resumeId);
+      const userId = req.user!.id;
+      const storedResume = await storage.getStoredResume(req.params.resumeId, userId);
       if (!storedResume) {
         return res.status(404).json({ error: "Resume not found" });
       }
@@ -293,10 +400,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===========================================
 
   // Save tailored resume permanently
-  app.post('/api/sessions/:sessionId/save', async (req, res) => {
+  app.post('/api/sessions/:sessionId/save', requireAuth, async (req, res) => {
     try {
       const { sessionId } = req.params;
-      const session = await storage.getResumeSession(sessionId);
+      const userId = req.user!.id;
+      const session = await storage.getResumeSession(sessionId, userId);
       
       if (!session || !session.tailoredContent || !session.jobAnalysis) {
         return res.status(400).json({ error: 'Session not found or tailored content not available' });
@@ -319,6 +427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const filename = `${cleanName}_DBA_Resume_${cleanCompany}`;
 
       const savedResume = await storage.saveTailoredResume({
+        userId,
         sessionId,
         jobTitle: jobAnalysis.title || 'Unknown Position',
         company: jobAnalysis.company || 'Unknown Company',
@@ -345,7 +454,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all saved tailored resumes
-  app.get('/api/tailored-resumes', async (req, res) => {
+  app.get('/api/tailored-resumes', requireAuth, async (req, res) => {
     try {
       const resumes = await storage.getTailoredResumes();
       res.json(resumes);
