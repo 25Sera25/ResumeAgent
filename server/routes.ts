@@ -456,7 +456,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all saved tailored resumes
   app.get('/api/tailored-resumes', requireAuth, async (req, res) => {
     try {
-      const resumes = await storage.getTailoredResumes();
+      const userId = req.user!.id;
+      const resumes = await storage.getTailoredResumes(userId);
       res.json(resumes);
     } catch (error) {
       console.error('Error fetching tailored resumes:', error);
@@ -465,9 +466,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get specific tailored resume
-  app.get('/api/tailored-resumes/:id', async (req, res) => {
+  app.get('/api/tailored-resumes/:id', requireAuth, async (req, res) => {
     try {
-      const resume = await storage.getTailoredResume(req.params.id);
+      const userId = req.user!.id;
+      const resume = await storage.getTailoredResume(req.params.id, userId);
       if (!resume) {
         return res.status(404).json({ error: 'Tailored resume not found' });
       }
@@ -479,12 +481,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Mark as applied with job tracking
-  app.post('/api/tailored-resumes/:id/mark-applied', async (req, res) => {
+  app.post('/api/tailored-resumes/:id/mark-applied', requireAuth, async (req, res) => {
     try {
       const { notes, priority = 'medium', source } = req.body;
       const resumeId = req.params.id;
+      const userId = req.user!.id;
       
-      const resume = await storage.getTailoredResume(resumeId);
+      const resume = await storage.getTailoredResume(resumeId, userId);
       if (!resume) {
         return res.status(404).json({ error: 'Tailored resume not found' });
       }
@@ -494,6 +497,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create job application tracking entry
       const application = await storage.createJobApplication({
+        userId,
         tailoredResumeId: resumeId,
         jobTitle: resume.jobTitle,
         company: resume.company,
@@ -521,7 +525,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update tailored resume
-  app.put('/api/tailored-resumes/:id', async (req, res) => {
+  app.put('/api/tailored-resumes/:id', requireAuth, async (req, res) => {
     try {
       const updates = req.body;
       const updatedResume = await storage.updateTailoredResume(req.params.id, updates);
@@ -536,9 +540,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete tailored resume
-  app.delete('/api/tailored-resumes/:id', async (req, res) => {
+  app.delete('/api/tailored-resumes/:id', requireAuth, async (req, res) => {
     try {
-      const success = await storage.deleteTailoredResume(req.params.id);
+      const userId = req.user!.id;
+      const success = await storage.deleteTailoredResume(req.params.id, userId);
       if (!success) {
         return res.status(404).json({ error: 'Tailored resume not found' });
       }
@@ -554,9 +559,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===========================================
 
   // Get all job applications
-  app.get('/api/job-applications', async (req, res) => {
+  app.get('/api/job-applications', requireAuth, async (req, res) => {
     try {
-      const applications = await storage.getJobApplications();
+      const userId = req.user!.id;
+      const applications = await storage.getJobApplications(userId);
       res.json(applications);
     } catch (error) {
       console.error('Error fetching job applications:', error);
@@ -565,9 +571,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get application statistics
-  app.get('/api/job-applications/stats', async (req, res) => {
+  app.get('/api/job-applications/stats', requireAuth, async (req, res) => {
     try {
-      const stats = await storage.getApplicationStats();
+      const userId = req.user!.id;
+      const stats = await storage.getApplicationStats(userId);
       res.json(stats);
     } catch (error) {
       console.error('Error fetching application stats:', error);
@@ -576,9 +583,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get overall session statistics (for homepage)
-  app.get('/api/session-stats', async (req, res) => {
+  app.get('/api/session-stats', requireAuth, async (req, res) => {
     try {
-      const stats = await storage.getOverallStats();
+      const userId = req.user!.id;
+      const stats = await storage.getOverallStats(userId);
       res.json(stats);
     } catch (error) {
       console.error('Error fetching session stats:', error);
@@ -587,7 +595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update job application status
-  app.put('/api/job-applications/:id', async (req, res) => {
+  app.put('/api/job-applications/:id', requireAuth, async (req, res) => {
     try {
       const updates = req.body;
       const updatedApplication = await storage.updateJobApplication(req.params.id, updates);
@@ -602,9 +610,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete job application
-  app.delete('/api/job-applications/:id', async (req, res) => {
+  app.delete('/api/job-applications/:id', requireAuth, async (req, res) => {
     try {
-      const success = await storage.deleteJobApplication(req.params.id);
+      const userId = req.user!.id;
+      const success = await storage.deleteJobApplication(req.params.id, userId);
       if (!success) {
         return res.status(404).json({ error: 'Job application not found' });
       }
@@ -616,10 +625,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Download tailored resume from saved library
-  app.get('/api/tailored-resumes/:id/download/:format', async (req, res) => {
+  app.get('/api/tailored-resumes/:id/download/:format', requireAuth, async (req, res) => {
     try {
       const { id, format } = req.params;
-      const resume = await storage.getTailoredResume(id);
+      const userId = req.user!.id;
+      const resume = await storage.getTailoredResume(id, userId);
       
       if (!resume) {
         return res.status(404).json({ error: 'Tailored resume not found' });
@@ -664,7 +674,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Follow-up Management Routes
 
   // Schedule follow-ups for a job application
-  app.post('/api/followups/schedule', async (req, res) => {
+  app.post('/api/followups/schedule', requireAuth, async (req, res) => {
     try {
       const { jobApplicationId, types } = req.body;
       
@@ -726,7 +736,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all follow-ups or filter by job application
-  app.get('/api/followups', async (req, res) => {
+  app.get('/api/followups', requireAuth, async (req, res) => {
     try {
       const { jobApplicationId } = req.query;
       const followUps = await storage.getFollowUps(jobApplicationId as string);
@@ -738,7 +748,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get pending follow-ups
-  app.get('/api/followups/pending', async (req, res) => {
+  app.get('/api/followups/pending', requireAuth, async (req, res) => {
     try {
       const followUps = await storage.getPendingFollowUps();
       res.json(followUps);
@@ -749,7 +759,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get follow-up statistics
-  app.get('/api/followups/stats', async (req, res) => {
+  app.get('/api/followups/stats', requireAuth, async (req, res) => {
     try {
       const stats = await storage.getFollowUpStats();
       res.json(stats);
@@ -760,7 +770,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update a follow-up (mark as sent, skip, etc.)
-  app.patch('/api/followups/:id', async (req, res) => {
+  app.patch('/api/followups/:id', requireAuth, async (req, res) => {
     try {
       const updates = req.body;
       
@@ -786,7 +796,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete a follow-up
-  app.delete('/api/followups/:id', async (req, res) => {
+  app.delete('/api/followups/:id', requireAuth, async (req, res) => {
     try {
       const success = await storage.deleteFollowUp(req.params.id);
       if (!success) {
@@ -800,7 +810,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate email content for a follow-up
-  app.post('/api/followups/:id/generate-email', async (req, res) => {
+  app.post('/api/followups/:id/generate-email', requireAuth, async (req, res) => {
     try {
       const followUp = await storage.getFollowUp(req.params.id);
       if (!followUp) {
