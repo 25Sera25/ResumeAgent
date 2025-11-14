@@ -8,6 +8,7 @@ declare global {
       id: string;
       username: string;
       password: string;
+      isAdmin?: boolean | null;
     }
   }
 }

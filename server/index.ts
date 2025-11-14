@@ -20,6 +20,10 @@ app.use(
       pool,
       tableName: "session",
       createTableIfMissing: true,
+      // Add error logging
+      errorLog: (err: Error) => {
+        console.error("[SESSION STORE ERROR]:", err);
+      },
     }),
     secret: process.env.SESSION_SECRET || "default-secret-change-in-production",
     resave: false,
@@ -37,6 +41,19 @@ app.use(
 // Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
+
+// DEBUG: Log session status for auth endpoints
+if (process.env.NODE_ENV === "production") {
+  app.use((req, res, next) => {
+    if (req.path.startsWith("/api/auth") || req.path.startsWith("/api/sessions")) {
+      console.log(`[SESSION DEBUG] ${req.method} ${req.path}`);
+      console.log(`  SessionID: ${req.sessionID || 'none'}`);
+      console.log(`  Authenticated: ${req.isAuthenticated()}`);
+      console.log(`  User: ${req.user ? req.user.username : 'none'}`);
+    }
+    next();
+  });
+}
 
 app.use((req, res, next) => {
   const start = Date.now();
