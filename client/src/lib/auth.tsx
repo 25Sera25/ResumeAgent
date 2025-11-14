@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from "react";
 
 interface User {
   id: string;
@@ -20,6 +20,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
+  
+  // Track pending checkAuth requests to prevent race conditions
+  const checkAuthAbortController = useRef<AbortController | null>(null);
+  const checkAuthInProgress = useRef(false);
 
   // Check if user is authenticated on mount
   useEffect(() => {
@@ -27,32 +31,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const checkAuth = async () => {
+    // Prevent duplicate simultaneous requests
+    if (checkAuthInProgress.current) {
+      return;
+    }
+
+    // Cancel any previous pending request
+    if (checkAuthAbortController.current) {
+      checkAuthAbortController.current.abort();
+    }
+
+    // Create new abort controller for this request
+    const controller = new AbortController();
+    checkAuthAbortController.current = controller;
+    checkAuthInProgress.current = true;
+
     try {
       const res = await fetch("/api/auth/user", {
         credentials: "include",
+        signal: controller.signal,
       });
       
-      if (res.ok) {
-        const data = await res.json();
-        // Handle new format: { user: {...} } or { user: null }
-        if (data.user) {
-          setUser(data.user);
+      // Only update state if this request wasn't aborted
+      if (!controller.signal.aborted) {
+        if (res.ok) {
+          const data = await res.json();
+          // Handle new format: { user: {...} } or { user: null }
+          if (data.user) {
+            setUser(data.user);
+          } else {
+            setUser(null);
+          }
         } else {
           setUser(null);
         }
-      } else {
-        setUser(null);
       }
     } catch (error) {
-      console.error("Auth check failed:", error);
-      setUser(null);
+      // Ignore abort errors - they're expected when canceling
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
+      
+      // Only log and update state if not aborted
+      if (!controller.signal.aborted) {
+        console.error("Auth check failed:", error);
+        setUser(null);
+      }
     } finally {
-      setLoading(false);
-      setInitialized(true);
+      // Only update loading/initialized if this request wasn't aborted
+      if (!controller.signal.aborted) {
+        setLoading(false);
+        setInitialized(true);
+      }
+      checkAuthInProgress.current = false;
     }
   };
 
   const login = async (username: string, password: string) => {
+    // Cancel any pending checkAuth request to prevent race condition
+    if (checkAuthAbortController.current) {
+      checkAuthAbortController.current.abort();
+      checkAuthAbortController.current = null;
+    }
+    
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: {
@@ -75,6 +116,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (username: string, password: string) => {
+    // Cancel any pending checkAuth request to prevent race condition
+    if (checkAuthAbortController.current) {
+      checkAuthAbortController.current.abort();
+      checkAuthAbortController.current = null;
+    }
+    
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: {
