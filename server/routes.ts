@@ -598,7 +598,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .replace(/\s+/g, '')
         .substring(0, 20);
       
-      const filename = `${cleanName}_DBA_${cleanCompany}`;
+      const filename = `${cleanName}_DBA_Resume_${cleanCompany}`;
       
       console.log(`[SAVE] Saving resume with filename: ${filename}`);
       console.log(`[SAVE] Data being saved:`, {
@@ -873,10 +873,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .replace(/[^a-zA-Z0-9\s]/g, '')
               .replace(/\s+/g, '')
               .substring(0, 20);
-            filename = `${firstName}_DBA_${cleanCompany}.${format}`;
+            filename = `${firstName}_DBA_Resume_${cleanCompany}.${format}`;
           } else if (contact?.name) {
             const firstName = contact.name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
-            filename = `${firstName}_DBA.${format}`;
+            filename = `${firstName}_DBA_Resume.${format}`;
           }
         }
         

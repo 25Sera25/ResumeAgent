@@ -5,87 +5,150 @@ This document summarizes the fixes for production-blocking bugs in the ResumeAge
 
 ---
 
-## Latest Fixes - Session Download Filenames & Production DB Schema (Current PR)
+## Latest Fixes - Resume Download Filenames & Analytics Schema (Current PR - FINAL FIX)
+
+### Critical Changes Made
+1. **Fixed filename pattern inconsistency** - Save endpoint was using `FirstName_DBA_Company` instead of `FirstName_DBA_Resume_Company`
+2. **Unified filename pattern across all endpoints** - All download and save operations now use consistent `FirstName_DBA_Resume_Company` pattern
+3. **Migration already exists** - Analytics columns migration (0001) is ready to run on production
+4. **Error handling in place** - getOverallStats has defensive error handling to prevent homepage crashes
+
+---
+
+## Previous Fixes - Session Download Filenames & Production DB Schema
 
 ### Problem
-1. **Session downloads use generic `tailored_resume.pdf` filenames** - When downloading a tailored resume from an active session (before saving to library), the filename was always `tailored_resume.pdf` or `tailored_resume.docx` instead of a meaningful name like `Ayele_DBA_Resume_SQLWatchmen.pdf`.
-2. **Production DB schema out of sync** - Render production database was missing analytics columns (`response_received`, `response_date`, `source`, `referral`, `micro_edits`, `ai_improvements`), causing `getOverallStats` to fail with "column does not exist" errors.
+1. **Download filenames are still `tailored_resume` in some flows**
+   - The user can now successfully save resumes to the library after adding columns, but downloaded resumes still often come down with the generic name `tailored_resume`.
+   - The user notes a difference:
+     - If the resume is saved to the library **and then downloaded from the library**, the filename is correct (e.g. `Ayele_DBA_Resume_SQLWatchmen.pdf`).
+     - The problematic case is **downloading directly from an active session** (tailoring flow) and possibly other library flows that still hit a generic filename path.
+   - Network devtools screenshots show that when the library route is used correctly, the `Content-Disposition` header is:
+     `attachment; filename*=UTF-8''Ayele_DBA_Resume_SQLWatchmen.pdf`
+   - But in other flows, the browser still names the file `tailored_resume.pdf`, proving some endpoint still hard-codes that default.
 
-### Root Cause
-1. **Session download endpoint** (`GET /api/sessions/:id/download/:format`) had filename generation logic, but it wasn't being triggered properly because:
-   - It didn't pass `userId` when fetching the session
-   - It had no logging to debug why fallback was being used
-   - It didn't check if the session was already saved to library (which would have a proper filename)
+2. **Render logs show analytics schema error**
+   - From Render logs:
+     ```
+     Error fetching session stats: error: column "response_received" does not exist
+       at ... DatabaseStorage.getOverallStats ...
+     ```
+   - This means the production DB schema (Render Postgres) does not have one or more analytics columns that the code expects on `tailored_resumes`.
+   - The user previously added columns locally (e.g., `micro_edits`, `ai_improvements`, `response_received`, `response_date`, `source`, `referral`) to get saving working, but **Render's DB is still missing at least `response_received`**.
 
-2. **Database schema mismatch** - Migration 0001 exists with all necessary columns, but hadn't been run on Render's production database yet. The `getOverallStats` method would crash if any column was missing, breaking the homepage.
+### Root Cause - ACTUAL ISSUES FOUND
 
-### Solution
+**Primary Issue: Filename Pattern Inconsistency**
+1. **Save endpoint** (`POST /api/sessions/:id/save` line 601) was generating:
+   - `${cleanName}_DBA_${cleanCompany}` 
+   - Example: `Ayele_DBA_SQLWatchmen` ✗ WRONG
+   - Comment claimed it should be "Ayele_DBA_Resume_Microsoft" but code didn't match
 
-#### 1. Session Download Filename Fix (`server/routes.ts` lines 300-388)
+2. **Library download fallback** (`GET /api/tailored-resumes/:id/download/:format` line 876) was generating:
+   - `${firstName}_DBA_${cleanCompany}.${format}`
+   - Example: `Ayele_DBA_SQLWatchmen.pdf` ✗ WRONG
+   - Missing the "_Resume_" part
 
-**Enhanced the session download endpoint with:**
+3. **Session download** was already correct:
+   - `${firstName}_DBA_Resume_${cleanCompany}` ✓ CORRECT
+   - Example: `Ayele_DBA_Resume_SQLWatchmen.pdf`
 
-- **Priority 1: Reuse saved resume filename** if the session has already been saved to the library
-  - Queries `getTailoredResumes` to find a saved resume matching the session ID
-  - Uses the stored `filename` field from the database
-  - Strips any existing extension before adding the requested format
+**Result:** When a resume was saved to library, it got stored with filename `Ayele_DBA_SQLWatchmen`. When downloaded from library, the stored filename was used (still wrong pattern). When downloaded from session, the correct pattern was generated but didn't match the saved filename.
 
-- **Priority 2: Generate from session data** if not saved yet
-  - Extracts contact name from `session.tailoredContent.contact.name`
-  - Extracts company from `session.jobAnalysis.company`
-  - Creates filename pattern: `FirstName_DBA_Resume_Company` (e.g., `Ayele_DBA_Resume_Microsoft`)
-  - Sanitizes company name (removes special chars, limits to 20 chars)
+**Secondary Issue: Production DB Schema Missing Columns**
+- Migration 0001 exists with all required analytics columns
+- Migration has NOT been run on Render production database
+- When `getOverallStats` tries to select from `tailored_resumes`, it fails because columns don't exist
+- Error handling prevents homepage crash but logs show schema errors
 
-- **Priority 3: Fallback to `tailored_resume`** only if all data is missing
+### Solution - COMPREHENSIVE FIX
 
-- **Comprehensive logging** with `[SESSION_DOWNLOAD]` prefix for debugging:
-  - Logs whether saved resume filename was reused
-  - Logs session data availability (hasTailoredContent, hasJobAnalysis, contactName, company)
-  - Logs filename generation decision at each step
-  - Logs final filename being used
+#### 1. Fixed Save Filename Pattern (`server/routes.ts` line 601)
 
-**Example filename progression:**
-```
-Session not saved yet → Ayele_DBA_Resume_Microsoft.pdf
-Session saved to library → Ayele_DBA_SQLWatchmen.pdf (reuses saved filename)
-No contact/company data → tailored_resume.pdf (fallback)
-```
-
-#### 2. Production DB Schema Fix (`server/storage.ts` lines 803-850)
-
-**Added error handling to `getOverallStats`:**
-
+**Changed:**
 ```typescript
-async getOverallStats(userId?: string): Promise<{...}> {
-  try {
-    // ... existing query logic
-  } catch (error) {
-    console.error('[STATS] Error fetching overall stats:', error);
-    console.error('[STATS] This may indicate a database schema mismatch. Please run migrations: npm run db:migrate');
-    // Return safe defaults instead of throwing
-    return {
-      jobsAnalyzed: 0,
-      resumesGenerated: 0,
-      applicationsSent: 0,
-      followUpsScheduled: 0,
-    };
-  }
-}
+// BEFORE (WRONG)
+const filename = `${cleanName}_DBA_${cleanCompany}`;
+// Result: "Ayele_DBA_SQLWatchmen"
+
+// AFTER (CORRECT)
+const filename = `${cleanName}_DBA_Resume_${cleanCompany}`;
+// Result: "Ayele_DBA_Resume_SQLWatchmen"
 ```
 
-**Benefits:**
-- Homepage no longer crashes if DB schema is out of sync
-- Clear error message in logs indicates the solution (run migrations)
-- Safe defaults (all zeros) allow app to continue functioning
-- User sees empty stats instead of a broken page
+**Impact:**
+- All newly saved resumes now get the correct filename pattern stored in the database
+- Matches the pattern used by session downloads
+- Consistent `FirstName_DBA_Resume_Company` pattern across the entire application
 
-#### 3. Library Download Verification (No Changes Needed)
+#### 2. Fixed Library Download Fallback Pattern (`server/routes.ts` lines 876, 879)
 
-**Verified that library download endpoint already correctly:**
-- Strips existing extensions from stored filename (line 862)
-- Uses stored `filename` if available (line 860-864)
-- Falls back to generating from contact/company if needed (line 866-881)
-- Has proper logging with `[DOWNLOAD]` prefix (line 864, 883)
+**Changed:**
+```typescript
+// BEFORE (WRONG)
+filename = `${firstName}_DBA_${cleanCompany}.${format}`;
+// Result: "Ayele_DBA_SQLWatchmen.pdf"
+
+filename = `${firstName}_DBA.${format}`;
+// Result: "Ayele_DBA.pdf"
+
+// AFTER (CORRECT)
+filename = `${firstName}_DBA_Resume_${cleanCompany}.${format}`;
+// Result: "Ayele_DBA_Resume_SQLWatchmen.pdf"
+
+filename = `${firstName}_DBA_Resume.${format}`;
+// Result: "Ayele_DBA_Resume.pdf"
+```
+
+**Impact:**
+- If a resume doesn't have a stored filename, the fallback now uses the correct pattern
+- Handles edge cases where old resumes exist without the `filename` field
+- Ensures consistency even for legacy data
+
+#### 3. Session Download Already Correct (`server/routes.ts` lines 360, 365)
+
+**Already uses correct pattern:**
+```typescript
+filename = `${firstName}_DBA_Resume_${cleanCompany}`;
+filename = `${firstName}_DBA_Resume`;
+```
+
+**Features already in place:**
+- Priority 1: Reuses saved resume filename if session already saved to library
+- Priority 2: Generates from contact name + company
+- Priority 3: Falls back to `tailored_resume` only if all data missing
+- Comprehensive logging with `[SESSION_DOWNLOAD]` prefix
+
+#### 4. Analytics Schema Migration Ready (`migrations/0001_add_tailored_resumes_columns.sql`)
+
+**Migration is complete and safe:**
+- ✅ Uses `DO` blocks with `IF NOT EXISTS` checks (idempotent)
+- ✅ Adds all 6 required columns: `micro_edits`, `ai_improvements`, `response_received`, `response_date`, `source`, `referral`
+- ✅ Safe to run multiple times (won't duplicate columns)
+- ✅ Safe to run on production (won't break existing data)
+
+**Error handling in place:**
+- `getOverallStats` has try-catch block
+- Returns safe defaults (all zeros) if query fails
+- Logs clear error message suggesting to run migrations
+- Homepage doesn't crash even if migration not run yet
+
+### Unified Filename Pattern
+
+**Now consistent across ALL endpoints:**
+
+| Endpoint | Pattern | Example |
+|----------|---------|---------|
+| Save to library | `FirstName_DBA_Resume_Company` | `Ayele_DBA_Resume_SQLWatchmen` |
+| Session download | `FirstName_DBA_Resume_Company.ext` | `Ayele_DBA_Resume_SQLWatchmen.pdf` |
+| Library download (stored) | Uses stored filename + ext | `Ayele_DBA_Resume_SQLWatchmen.pdf` |
+| Library download (fallback) | `FirstName_DBA_Resume_Company.ext` | `Ayele_DBA_Resume_SQLWatchmen.pdf` |
+
+**Fallback hierarchy:**
+1. If saved to library → use `resume.filename` from database
+2. Else if have contact name + company → `FirstName_DBA_Resume_Company`
+3. Else if have contact name only → `FirstName_DBA_Resume`
+4. Else → `tailored_resume` (last resort)
 
 ### Migration Status
 
@@ -102,15 +165,63 @@ async getOverallStats(userId?: string): Promise<{...}> {
 ### Files Changed
 
 **Modified:**
-1. `server/routes.ts` - Enhanced session download endpoint with priority-based filename logic and comprehensive logging
-2. `server/storage.ts` - Added error handling to `getOverallStats` to prevent schema errors from breaking homepage
-3. `BUG_FIXES_SUMMARY.md` - This file, documenting the fixes
+1. `server/routes.ts` - Fixed filename pattern in save endpoint (line 601) and library download fallback (lines 876, 879)
+2. `client/src/pages/home.tsx` - Fixed client-side download to respect server's Content-Disposition header instead of hardcoding filename
+3. `client/src/pages/ResumeLibrary.tsx` - Fixed client-side download to respect server's Content-Disposition header for consistency
+4. `BUG_FIXES_SUMMARY.md` - This file, documenting the actual root cause and fixes
 
 **No New Files** - Migration 0001 already exists with all required columns
+
+### Critical Client-Side Fix
+
+**Problem:** Even though the server was setting the correct `Content-Disposition` header with the right filename, the client-side code was overriding it by explicitly setting `a.download = 'tailored_resume.${format}'`.
+
+**Solution:** Updated both download handlers to:
+1. Extract filename from `Content-Disposition` header
+2. Use the extracted filename for the download
+3. Fall back to a default only if header is missing
+
+**Code Example:**
+```typescript
+// Extract filename from Content-Disposition header
+const contentDisposition = response.headers.get('Content-Disposition');
+let filename = `tailored_resume.${format}`; // fallback
+
+if (contentDisposition) {
+  // Parse Content-Disposition header: attachment; filename*=UTF-8''encoded_filename
+  const filenameMatch = contentDisposition.match(/filename\*=UTF-8''(.+)|filename="?(.+?)"?$/);
+  if (filenameMatch) {
+    filename = decodeURIComponent(filenameMatch[1] || filenameMatch[2]);
+  }
+}
+
+a.download = filename; // Use server-provided filename
+```
+
+This ensures the browser respects the server's carefully-generated filename instead of replacing it with a hardcoded value.
+
+### What Was Already Correct
+
+**These were already implemented correctly in previous work:**
+1. ✅ Session download endpoint - Already had priority-based filename logic
+2. ✅ Library download stored filename - Already strips extensions and uses stored name
+3. ✅ Analytics migration - Already exists and is idempotent
+4. ✅ Error handling - getOverallStats already has defensive try-catch
+5. ✅ Comprehensive logging - All endpoints have detailed logging
 
 ---
 
 ## Deployment Checklist for Production (Render)
+
+### ⚠️ CRITICAL PRE-DEPLOYMENT STEP
+
+**MUST run database migration before deploying code changes:**
+
+```bash
+npm run db:migrate
+```
+
+This migration (`0001_add_tailored_resumes_columns.sql`) adds required analytics columns to the `tailored_resumes` table. Without these columns, the application will log schema errors (though it won't crash thanks to defensive error handling).
 
 ### Critical Steps:
 1. ✅ Review code changes

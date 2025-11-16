@@ -112,12 +112,24 @@ export default function ResumeLibrary() {
     try {
       const response = await fetch(`/api/tailored-resumes/${resumeId}/download/${format}`);
       if (response.ok) {
+        // Extract filename from Content-Disposition header (server handles the full filename)
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let downloadFilename = `${filename}.${format}`; // fallback
+        
+        if (contentDisposition) {
+          // Parse Content-Disposition header: attachment; filename*=UTF-8''encoded_filename
+          const filenameMatch = contentDisposition.match(/filename\*=UTF-8''(.+)|filename="?(.+?)"?$/);
+          if (filenameMatch) {
+            downloadFilename = decodeURIComponent(filenameMatch[1] || filenameMatch[2]);
+          }
+        }
+        
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = `${filename}.${format}`;
+        a.download = downloadFilename;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -125,7 +137,7 @@ export default function ResumeLibrary() {
         
         toast({
           title: "Download Started",
-          description: `${filename}.${format} is downloading`,
+          description: `${downloadFilename} is downloading`,
           variant: "default",
         });
       }

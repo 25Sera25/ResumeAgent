@@ -254,11 +254,23 @@ export default function Home() {
         throw new Error('Download failed');
       }
       
+      // Extract filename from Content-Disposition header
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = `tailored_resume.${format}`; // fallback
+      
+      if (contentDisposition) {
+        // Parse Content-Disposition header: attachment; filename*=UTF-8''encoded_filename
+        const filenameMatch = contentDisposition.match(/filename\*=UTF-8''(.+)|filename="?(.+?)"?$/);
+        if (filenameMatch) {
+          filename = decodeURIComponent(filenameMatch[1] || filenameMatch[2]);
+        }
+      }
+      
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `tailored_resume.${format}`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
