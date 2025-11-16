@@ -1260,16 +1260,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate skill explanations
   app.post('/api/interview-prep/skills-explanations', requireAuth, async (req, res) => {
     try {
-      const { skills, jobId } = req.body;
+      const { skills, jobId, mode = 'general' } = req.body;
       const userId = req.user!.id;
       
       let skillsList: string[] = [];
       let context: any = {};
       
       // If skills provided directly, use them
-      if (skills && Array.isArray(skills)) {
+      if (skills && Array.isArray(skills) && skills.length > 0) {
         skillsList = skills;
-      } else if (jobId) {
+      } else if (mode === 'job' && jobId) {
         // Get skills from job
         const tailoredResume = await storage.getTailoredResume(jobId, userId);
         if (tailoredResume) {
@@ -1287,16 +1287,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       } else {
-        // Get top skills from insights
-        const { getSkillsInsights } = await import('./services/insights');
-        const insights = await getSkillsInsights(userId);
-        if (insights?.topSkills) {
-          skillsList = insights.topSkills.slice(0, 8).map((s: any) => s.skill);
+        // Try to get top skills from insights first
+        try {
+          const { getSkillsInsights } = await import('./services/insights');
+          const insights = await getSkillsInsights(userId);
+          if (insights?.topSkills && insights.topSkills.length > 0) {
+            skillsList = insights.topSkills.slice(0, 8).map((s: any) => s.skill);
+          }
+        } catch (insightsError) {
+          console.log('Could not fetch insights, using default DBA skills:', insightsError);
         }
       }
       
+      // If still no skills, use default DBA skills for general mode
       if (skillsList.length === 0) {
-        return res.status(400).json({ error: 'No skills found to explain' });
+        skillsList = [
+          'SQL Server Administration',
+          'High Availability & Disaster Recovery',
+          'Performance Tuning',
+          'T-SQL',
+          'Backup & Restore',
+          'Security & Compliance',
+          'Azure SQL Database',
+          'PowerShell Automation'
+        ];
+        console.log('Using default DBA skills for general mode');
       }
       
       const { generateSkillExplanations } = await import('./services/openai');
@@ -1312,18 +1327,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate STAR stories
   app.post('/api/interview-prep/star-stories', requireAuth, async (req, res) => {
     try {
-      const { resumeId, sessionId, jobId, skill } = req.body;
+      const { resumeId, sessionId, jobId, skill, mode = 'general' } = req.body;
       const userId = req.user!.id;
       
       let resumeContent: any = null;
       let context: any = {};
       
-      if (context.skill) {
+      if (skill) {
         context.skill = skill;
       }
       
       // Get resume content from various sources
-      if (jobId) {
+      if (mode === 'job' && jobId) {
         const tailoredResume = await storage.getTailoredResume(jobId, userId);
         if (tailoredResume) {
           resumeContent = tailoredResume.tailoredContent;
@@ -1353,7 +1368,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
         }
       } else {
-        // Get most recent tailored resume
+        // Get most recent tailored resume for general mode
         const tailoredResumes = await storage.getTailoredResumes(userId);
         if (tailoredResumes && tailoredResumes.length > 0) {
           const latest = tailoredResumes[0];
@@ -1363,7 +1378,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       if (!resumeContent) {
-        return res.status(400).json({ error: 'No resume content found' });
+        return res.status(400).json({ 
+          error: 'no_resume_content',
+          message: 'No resume content available. Save a tailored resume or select a specific job first.' 
+        });
       }
       
       const { generateStarStories } = await import('./services/openai');
