@@ -193,16 +193,23 @@ export async function tailorResumeForSession(sessionId: string): Promise<Tailori
     // Generate tailored content with contact information
     const tailoredContent = await tailorResumeContent(resumeContent, jobAnalysis, resumeAnalysis, contactInfo);
 
-    // Update session with results
+    // Update session with results, including keyword match data in jobAnalysis
+    const updatedJobAnalysis = {
+      ...jobAnalysis,
+      matchedKeywords: resumeAnalysis.matchedKeywords,
+      missingKeywords: resumeAnalysis.missingKeywords
+    };
+
     const updatedSession = await storage.updateResumeSession(sessionId, {
       tailoredContent,
       matchScore: resumeAnalysis.matchScore,
+      jobAnalysis: updatedJobAnalysis,
       status: 'tailored'
     });
 
     return {
       sessionId,
-      jobAnalysis,
+      jobAnalysis: updatedJobAnalysis,
       resumeAnalysis,
       tailoredContent,
       matchScore: resumeAnalysis.matchScore
