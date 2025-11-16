@@ -1,0 +1,14 @@
+{
+  "id": "0000_add_interview_prep_column",
+  "prevId": "",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {},
+  "enums": {},
+  "schemas": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  }
+}
