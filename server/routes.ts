@@ -1210,6 +1210,172 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===========================================
+  // INTERVIEW PREP HUB
+  // ===========================================
+
+  // Generate interview questions and answers
+  app.post('/api/interview-prep/questions', requireAuth, async (req, res) => {
+    try {
+      const { jobId, skill, mode = 'general' } = req.body;
+      const userId = req.user!.id;
+      
+      let context: any = { mode };
+      
+      // Resolve context based on mode
+      if (mode === 'job' && jobId) {
+        // Try to get tailored resume first, then session
+        const tailoredResume = await storage.getTailoredResume(jobId, userId);
+        if (tailoredResume) {
+          context.jobDescription = tailoredResume.originalJobDescription || '';
+          context.jobAnalysis = {
+            title: tailoredResume.jobTitle,
+            company: tailoredResume.company,
+            technologies: (tailoredResume.tailoredContent as any)?.skills || []
+          };
+          context.tailoredContent = tailoredResume.tailoredContent;
+        } else {
+          // Fall back to session
+          const session = await storage.getResumeSession(jobId, userId);
+          if (session) {
+            context.jobDescription = session.jobDescription || '';
+            context.jobAnalysis = session.jobAnalysis;
+            context.tailoredContent = session.tailoredContent;
+          }
+        }
+      } else if (mode === 'skill' && skill) {
+        context.skills = Array.isArray(skill) ? skill : [skill];
+      }
+      
+      const { generateInterviewPrepQuestions } = await import('./services/openai');
+      const result = await generateInterviewPrepQuestions(context);
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Error generating interview questions:', error);
+      res.status(500).json({ error: 'Failed to generate interview questions' });
+    }
+  });
+
+  // Generate skill explanations
+  app.post('/api/interview-prep/skills-explanations', requireAuth, async (req, res) => {
+    try {
+      const { skills, jobId } = req.body;
+      const userId = req.user!.id;
+      
+      let skillsList: string[] = [];
+      let context: any = {};
+      
+      // If skills provided directly, use them
+      if (skills && Array.isArray(skills)) {
+        skillsList = skills;
+      } else if (jobId) {
+        // Get skills from job
+        const tailoredResume = await storage.getTailoredResume(jobId, userId);
+        if (tailoredResume) {
+          const content = tailoredResume.tailoredContent as any;
+          skillsList = content?.skills || [];
+          context.jobDescription = tailoredResume.originalJobDescription;
+          context.tailoredContent = tailoredResume.tailoredContent;
+        } else {
+          const session = await storage.getResumeSession(jobId, userId);
+          if (session) {
+            const content = session.tailoredContent as any;
+            skillsList = content?.skills || [];
+            context.jobDescription = session.jobDescription;
+            context.tailoredContent = session.tailoredContent;
+          }
+        }
+      } else {
+        // Get top skills from insights
+        const { getSkillsInsights } = await import('./services/insights');
+        const insights = await getSkillsInsights(userId);
+        if (insights?.topSkills) {
+          skillsList = insights.topSkills.slice(0, 8).map((s: any) => s.skill);
+        }
+      }
+      
+      if (skillsList.length === 0) {
+        return res.status(400).json({ error: 'No skills found to explain' });
+      }
+      
+      const { generateSkillExplanations } = await import('./services/openai');
+      const result = await generateSkillExplanations(skillsList, context);
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Error generating skill explanations:', error);
+      res.status(500).json({ error: 'Failed to generate skill explanations' });
+    }
+  });
+
+  // Generate STAR stories
+  app.post('/api/interview-prep/star-stories', requireAuth, async (req, res) => {
+    try {
+      const { resumeId, sessionId, jobId, skill } = req.body;
+      const userId = req.user!.id;
+      
+      let resumeContent: any = null;
+      let context: any = {};
+      
+      if (context.skill) {
+        context.skill = skill;
+      }
+      
+      // Get resume content from various sources
+      if (jobId) {
+        const tailoredResume = await storage.getTailoredResume(jobId, userId);
+        if (tailoredResume) {
+          resumeContent = tailoredResume.tailoredContent;
+          context.jobDescription = tailoredResume.originalJobDescription;
+        } else {
+          const session = await storage.getResumeSession(jobId, userId);
+          if (session) {
+            resumeContent = session.tailoredContent;
+            context.jobDescription = session.jobDescription;
+          }
+        }
+      } else if (sessionId) {
+        const session = await storage.getResumeSession(sessionId, userId);
+        if (session) {
+          resumeContent = session.tailoredContent;
+          context.jobDescription = session.jobDescription;
+        }
+      } else if (resumeId) {
+        const storedResume = await storage.getStoredResume(resumeId, userId);
+        if (storedResume) {
+          // For stored resumes, we need to parse the content differently
+          // They don't have structured experience like tailored resumes
+          resumeContent = {
+            experience: [{
+              achievements: [storedResume.content]
+            }]
+          };
+        }
+      } else {
+        // Get most recent tailored resume
+        const tailoredResumes = await storage.getTailoredResumes(userId);
+        if (tailoredResumes && tailoredResumes.length > 0) {
+          const latest = tailoredResumes[0];
+          resumeContent = latest.tailoredContent;
+          context.jobDescription = latest.originalJobDescription;
+        }
+      }
+      
+      if (!resumeContent) {
+        return res.status(400).json({ error: 'No resume content found' });
+      }
+      
+      const { generateStarStories } = await import('./services/openai');
+      const result = await generateStarStories(resumeContent, context);
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Error generating STAR stories:', error);
+      res.status(500).json({ error: 'Failed to generate STAR stories' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

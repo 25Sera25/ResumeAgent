@@ -20,7 +20,8 @@ import {
   Search,
   ArrowLeft,
   Bell,
-  Mail
+  Mail,
+  Brain
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -445,6 +446,17 @@ export default function JobTracker() {
                       <ExternalLink className="w-4 h-4" />
                     </Button>
                   )}
+                  
+                  <Link href={`/interview-prep?jobId=${application.tailoredResumeId}`}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      data-testid={`button-prep-interview-${application.id}`}
+                      title="Prepare for interview"
+                    >
+                      <Brain className="w-4 h-4" />
+                    </Button>
+                  </Link>
                   
                   <Button
                     variant="outline"

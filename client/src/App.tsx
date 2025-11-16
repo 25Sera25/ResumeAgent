@@ -15,6 +15,7 @@ import Login from "@/pages/Login";
 import AdminUsers from "@/pages/AdminUsers";
 import Insights from "@/pages/Insights";
 import ResumeAnalytics from "@/pages/ResumeAnalytics";
+import InterviewPrep from "@/pages/InterviewPrep";
 
 function Router() {
   return (
@@ -51,6 +52,11 @@ function Router() {
       <Route path="/resume-analytics">
         <ProtectedRoute>
           <ResumeAnalytics />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/interview-prep">
+        <ProtectedRoute>
+          <InterviewPrep />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/users">
