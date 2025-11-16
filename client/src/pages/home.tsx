@@ -13,6 +13,7 @@ import JobAnalysis from "@/components/JobAnalysis";
 import ResumePreview from "@/components/ResumePreview";
 import StoredResumeSelector from "@/components/StoredResumeSelector";
 import FollowUpQueue from "@/components/FollowUpQueue";
+import { ThemeToggle } from "@/components/theme-toggle";
 import type { ResumeSession } from "@shared/schema";
 
 interface SessionStats {
@@ -312,9 +313,9 @@ export default function Home() {
   }
 
   return (
-    <div className="font-inter bg-neutral-50 min-h-screen">
+    <div className="font-inter bg-neutral-50 dark:bg-neutral-900 min-h-screen">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-neutral-200">
+      <header className="bg-white dark:bg-neutral-800 shadow-sm border-b border-neutral-200 dark:border-neutral-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
@@ -322,8 +323,8 @@ export default function Home() {
                 <Database className="text-xl" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-neutral-800">Resume Tailor Agent</h1>
-                <p className="text-sm text-neutral-500">MS SQL Server DBA Specialist</p>
+                <h1 className="text-xl font-bold text-neutral-800 dark:text-neutral-100">Resume Tailor Agent</h1>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">MS SQL Server DBA Specialist</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -353,8 +354,9 @@ export default function Home() {
               <Button variant="ghost" size="sm" data-testid="button-settings">
                 <Settings className="text-lg" />
               </Button>
-              <div className="flex items-center gap-2 ml-2 pl-4 border-l border-neutral-200">
-                <div className="flex items-center gap-2 text-sm text-neutral-600">
+              <ThemeToggle />
+              <div className="flex items-center gap-2 ml-2 pl-4 border-l border-neutral-200 dark:border-neutral-700">
+                <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300">
                   <User className="w-4 h-4" />
                   <span>{user?.username}</span>
                 </div>
@@ -363,7 +365,7 @@ export default function Home() {
                   size="sm" 
                   onClick={handleLogout}
                   data-testid="button-logout"
-                  className="text-neutral-600 hover:text-neutral-900"
+                  className="text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
