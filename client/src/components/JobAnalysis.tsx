@@ -92,8 +92,8 @@ export default function JobAnalysis({
   const getStatusBadge = () => {
     if (isAnalyzing) {
       return (
-        <div className="flex items-center space-x-1 px-3 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded-full">
-          <Loader2 className="w-3 h-3 animate-spin" />
+        <div className="flex items-center space-x-2 px-4 py-1.5 bg-status-warning text-white text-sm font-semibold rounded-full shadow-sm animate-pulse">
+          <Loader2 className="w-4 h-4 animate-spin" />
           <span>Processing</span>
         </div>
       );
@@ -101,44 +101,44 @@ export default function JobAnalysis({
     
     if (result) {
       return (
-        <div className="flex items-center space-x-1 px-3 py-1 bg-secondary text-secondary-foreground text-xs font-medium rounded-full">
-          <CheckCircle className="w-3 h-3" />
+        <div className="flex items-center space-x-2 px-4 py-1.5 bg-status-success text-white text-sm font-semibold rounded-full shadow-sm">
+          <CheckCircle className="w-4 h-4" />
           <span>Complete</span>
         </div>
       );
     }
 
     return (
-      <div className="flex items-center space-x-1 px-3 py-1 bg-neutral-200 text-neutral-600 text-xs font-medium rounded-full">
-        <Clock className="w-3 h-3" />
+      <div className="flex items-center space-x-2 px-4 py-1.5 bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 text-sm font-semibold rounded-full">
+        <Clock className="w-4 h-4" />
         <span>Waiting</span>
       </div>
     );
   };
 
   return (
-    <Card className={cn("border border-neutral-200 dark:border-neutral-700 overflow-hidden", className)}>
-      <CardHeader className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900">
+    <Card className={cn("border border-neutral-200 dark:border-neutral-700 overflow-hidden card-hover shadow-md rounded-xl animate-slide-in", className)}>
+      <CardHeader className="px-8 py-5 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-medium">
+          <div className="flex items-center space-x-4">
+            <div className="w-10 h-10 bg-gradient-primary text-white rounded-full flex items-center justify-center text-lg font-bold shadow-lg">
               2
             </div>
-            <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-100">Job Posting Analysis</h3>
+            <h3 className="text-xl font-bold text-neutral-800 dark:text-neutral-100">Job Posting Analysis</h3>
           </div>
           {getStatusBadge()}
         </div>
       </CardHeader>
       
-      <CardContent className="p-5 space-y-5">
+      <CardContent className="p-8 space-y-6">
         {/* Input Mode Selection */}
         <Tabs value={inputMode} onValueChange={(value) => setInputMode(value as "url" | "text")} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="url" className="flex items-center space-x-2" data-testid="tab-url">
+          <TabsList className="grid w-full grid-cols-2 p-1 bg-neutral-100 dark:bg-neutral-800">
+            <TabsTrigger value="url" className="flex items-center space-x-2 data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-700" data-testid="tab-url">
               <Link className="w-4 h-4" />
               <span>Job URL</span>
             </TabsTrigger>
-            <TabsTrigger value="text" className="flex items-center space-x-2" data-testid="tab-text">
+            <TabsTrigger value="text" className="flex items-center space-x-2 data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-700" data-testid="tab-text">
               <FileText className="w-4 h-4" />
               <span>Job Description</span>
             </TabsTrigger>
@@ -146,40 +146,40 @@ export default function JobAnalysis({
           
           <TabsContent value="url" className="space-y-4 mt-6">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+              <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">
                 Job Posting URL
               </label>
-              <div className="flex space-x-2">
+              <div className="flex space-x-3">
                 <Input
                   type="url"
                   placeholder="https://company.com/careers/sql-dba-position"
                   value={jobUrl}
                   onChange={handleUrlChange}
-                  className="flex-1 h-10"
+                  className="flex-1 h-11 text-base"
                   disabled={isAnalyzing}
                   data-testid="input-job-url"
                 />
                 <Button
                   onClick={handleAnalyze}
                   disabled={!isReadyToAnalyze() || isAnalyzing}
-                  size="sm"
-                  className="h-10"
+                  size="lg"
+                  className="bg-gradient-primary hover:opacity-90 button-hover text-white px-6 h-11 shadow-md"
                   data-testid="button-analyze-job"
                 >
                   {isAnalyzing ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                       Analyzing
                     </>
                   ) : (
                     <>
-                      <Search className="w-4 h-4 mr-2" />
+                      <Search className="w-5 h-5 mr-2" />
                       Analyze
                     </>
                   )}
                 </Button>
               </div>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1.5">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-2">
                 Paste the URL of the job posting you want to tailor your resume for
               </p>
             </div>
@@ -187,16 +187,16 @@ export default function JobAnalysis({
           
           <TabsContent value="text" className="space-y-4 mt-6">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+              <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">
                 Job Description
               </label>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Textarea
                   placeholder="Paste the full job description here including requirements, skills, and responsibilities..."
                   value={jobDescription}
                   onChange={handleDescriptionChange}
                   rows={6}
-                  className="resize-none"
+                  className="resize-none text-base"
                   disabled={isAnalyzing}
                   data-testid="textarea-job-description"
                 />
@@ -207,18 +207,18 @@ export default function JobAnalysis({
                   <Button
                     onClick={handleAnalyze}
                     disabled={!isReadyToAnalyze() || isAnalyzing}
-                    size="sm"
-                    className="h-10"
+                    size="lg"
+                    className="bg-gradient-primary hover:opacity-90 button-hover text-white px-6 h-11 shadow-md"
                     data-testid="button-analyze-job-text"
                   >
                     {isAnalyzing ? (
                       <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                         Analyzing
                       </>
                     ) : (
                       <>
-                        <Search className="w-4 h-4 mr-2" />
+                        <Search className="w-5 h-5 mr-2" />
                         Analyze Text
                       </>
                     )}
@@ -231,59 +231,59 @@ export default function JobAnalysis({
 
         {/* Analysis Results */}
         {(result || isAnalyzing) && (
-          <Card className="border border-neutral-200">
-            <CardHeader className="bg-neutral-50 px-4 py-3 border-b border-neutral-200">
+          <Card className="border border-neutral-200 dark:border-neutral-700 shadow-sm rounded-lg overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 px-6 py-4 border-b border-neutral-200 dark:border-neutral-700">
               <div className="flex items-center justify-between">
-                <h4 className="font-medium text-neutral-800">Analysis Results</h4>
+                <h4 className="font-bold text-neutral-800 dark:text-neutral-100 text-lg">Analysis Results</h4>
                 {isAnalyzing && (
                   <div className="flex items-center space-x-2">
-                    <span className="w-2 h-2 bg-secondary rounded-full animate-pulse"></span>
-                    <span className="text-xs text-neutral-600">Processing...</span>
+                    <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+                    <span className="text-xs text-neutral-600 dark:text-neutral-400">Processing...</span>
                   </div>
                 )}
               </div>
             </CardHeader>
             
-            <CardContent className="p-4 space-y-4">
+            <CardContent className="p-6 space-y-6">
               {result && (
                 <>
                   {/* Quality Gates & Archetype */}
                   {result.qualityGates && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                      <h5 className="text-xs font-medium text-amber-800 uppercase tracking-wide mb-2">
+                    <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
+                      <h5 className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider mb-3">
                         JD Quality Assessment
                       </h5>
-                      <div className="grid grid-cols-3 gap-3 text-sm">
+                      <div className="grid grid-cols-3 gap-4 text-sm">
                         <div className="flex items-center space-x-2">
                           {result.qualityGates.sufficientLength ? (
-                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                           ) : (
-                            <Clock className="w-4 h-4 text-red-600" />
+                            <Clock className="w-5 h-5 text-red-600 dark:text-red-400" />
                           )}
-                          <span className="text-xs">
+                          <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
                             Length: {result.charCount || 0} chars
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">
                           {result.qualityGates.roleSpecific ? (
-                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                           ) : (
-                            <Clock className="w-4 h-4 text-red-600" />
+                            <Clock className="w-5 h-5 text-red-600 dark:text-red-400" />
                           )}
-                          <span className="text-xs">Role-Specific</span>
+                          <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">Role-Specific</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           {result.qualityGates.notGeneric ? (
-                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                           ) : (
-                            <Clock className="w-4 h-4 text-red-600" />
+                            <Clock className="w-5 h-5 text-red-600 dark:text-red-400" />
                           )}
-                          <span className="text-xs">Not Generic</span>
+                          <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">Not Generic</span>
                         </div>
                       </div>
                       {result.roleArchetype && (
-                        <div className="mt-2">
-                          <Badge variant="outline" className="bg-amber-100 text-amber-800">
+                        <div className="mt-3">
+                          <Badge variant="outline" className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700">
                             {result.roleArchetype}
                           </Badge>
                         </div>
@@ -292,20 +292,20 @@ export default function JobAnalysis({
                   )}
 
                   {/* Job Title & Company */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-4">
+                      <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                         Job Title
                       </label>
-                      <p className="text-sm font-medium text-neutral-800 mt-1" data-testid="text-job-title">
+                      <p className="text-base font-semibold text-neutral-800 dark:text-neutral-100 mt-2" data-testid="text-job-title">
                         {result.title || "Not detected"}
                       </p>
                     </div>
-                    <div>
-                      <label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+                    <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-4">
+                      <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                         Company
                       </label>
-                      <p className="text-sm font-medium text-neutral-800 mt-1" data-testid="text-company">
+                      <p className="text-base font-semibold text-neutral-800 dark:text-neutral-100 mt-2" data-testid="text-company">
                         {result.company || "Not detected"}
                       </p>
                     </div>
