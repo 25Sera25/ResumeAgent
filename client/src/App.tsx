@@ -10,6 +10,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import ResumeLibrary from "@/pages/ResumeLibrary";
 import JobTracker from "@/pages/JobTracker";
+import FollowUps from "@/pages/FollowUps";
 import Login from "@/pages/Login";
 import AdminUsers from "@/pages/AdminUsers";
 import Insights from "@/pages/Insights";
@@ -35,6 +36,11 @@ function Router() {
       <Route path="/job-tracker">
         <ProtectedRoute>
           <JobTracker />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/follow-ups">
+        <ProtectedRoute>
+          <FollowUps />
         </ProtectedRoute>
       </Route>
       <Route path="/insights">

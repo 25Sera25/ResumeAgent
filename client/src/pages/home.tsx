@@ -5,7 +5,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Database, Bot, HelpCircle, Settings, Check, Loader2, WandSparkles, FileText, Library, BookOpen, BarChart3, LogOut, User, Shield, Sparkles, Brain } from "lucide-react";
+import { Database, Bot, HelpCircle, Settings, Check, Loader2, WandSparkles, FileText, Library, BookOpen, BarChart3, LogOut, User, Shield, Sparkles, Brain, Mail, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Sidebar from "@/components/Sidebar";
@@ -13,7 +13,6 @@ import FileUpload from "@/components/FileUpload";
 import JobAnalysis from "@/components/JobAnalysis";
 import ResumePreview from "@/components/ResumePreview";
 import StoredResumeSelector from "@/components/StoredResumeSelector";
-import FollowUpQueue from "@/components/FollowUpQueue";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { KeyboardShortcutsDialog } from "@/components/KeyboardShortcutsDialog";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
@@ -82,6 +81,11 @@ export default function Home() {
       applicationsSent: 0,
       followUpsScheduled: 0
     }
+  });
+
+  // Get pending follow-ups count
+  const { data: pendingFollowUps = [] } = useQuery<any[]>({
+    queryKey: ['/api/followups/pending'],
   });
 
   // Logout handler
@@ -378,6 +382,17 @@ export default function Home() {
                     <span className="hidden sm:inline">Tracker</span>
                   </Button>
                 </Link>
+                <Link href="/follow-ups">
+                  <Button variant="ghost" size="sm" className="button-hover relative" data-testid="button-follow-ups">
+                    <Mail className="w-4 h-4 mr-2" />
+                    <span className="hidden sm:inline">Follow-Ups</span>
+                    {pendingFollowUps.length > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        {pendingFollowUps.length}
+                      </span>
+                    )}
+                  </Button>
+                </Link>
                 <Link href="/insights">
                   <Button variant="ghost" size="sm" className="button-hover" data-testid="button-insights">
                     <Brain className="w-4 h-4 mr-2" />
@@ -651,10 +666,36 @@ export default function Home() {
           </div>
         </main>
 
-        {/* Follow-Up Queue Section */}
-        <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 mt-8">
-          <FollowUpQueue compact />
-        </div>
+        {/* Follow-Ups Widget - Small card with link to dedicated page */}
+        {pendingFollowUps.length > 0 && (
+          <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 mt-8 mb-24">
+            <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 border-blue-200 dark:border-blue-900">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-500 p-2 rounded-lg">
+                      <Mail className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-neutral-800 dark:text-neutral-100">
+                        You have {pendingFollowUps.length} pending follow-up{pendingFollowUps.length !== 1 ? 's' : ''}
+                      </h3>
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                        Stay top-of-mind with employers
+                      </p>
+                    </div>
+                  </div>
+                  <Link href="/follow-ups">
+                    <Button className="gap-2">
+                      View All
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Action Bar - Fixed at bottom */}
         <div className="fixed bottom-0 left-0 lg:left-[280px] right-0 bg-white/90 dark:bg-neutral-800/90 backdrop-blur-lg border-t border-neutral-200 dark:border-neutral-700 shadow-lg z-20">

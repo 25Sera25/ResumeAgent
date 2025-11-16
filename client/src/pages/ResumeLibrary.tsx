@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Eye, CheckCircle, Trash2, Filter, Search, Sparkles, FileText, ArrowLeft, Home } from "lucide-react";
+import { Download, Eye, CheckCircle, Trash2, Filter, Search, Sparkles, FileText, ArrowLeft, Home, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -195,6 +195,12 @@ export default function ResumeLibrary() {
           <Link href="/job-tracker">
             <Button variant="ghost" size="sm" data-testid="link-job-tracker">
               Job Tracker
+            </Button>
+          </Link>
+          <Link href="/follow-ups">
+            <Button variant="ghost" size="sm" className="gap-2" data-testid="link-follow-ups">
+              <Mail className="h-4 w-4" />
+              Follow-Ups
             </Button>
           </Link>
           <Link href="/resume-analytics">
