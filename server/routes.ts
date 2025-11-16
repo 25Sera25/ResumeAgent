@@ -564,29 +564,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const filename = `${cleanName}_DBA_${cleanCompany}`;
       
       console.log(`[SAVE] Saving resume with filename: ${filename}`);
-
-      const savedResume = await storage.saveTailoredResume({
+      console.log(`[SAVE] Data being saved:`, {
         userId,
         sessionId,
         jobTitle: jobAnalysis.title || 'Unknown Position',
         company: jobAnalysis.company || 'Unknown Company',
-        jobUrl: session.jobUrl || null,
-        // SAVE ORIGINAL JOB DESCRIPTION for interview preparation
-        originalJobDescription: session.jobDescription || jobAnalysis.description || null,
-        tailoredContent: session.tailoredContent,
-        atsScore: tailoredContent.atsScore || tailoredContent.coreScore || 85,
         filename,
-        appliedToJob: false,
-        applicationDate: null,
-        notes: null,
-        tags: ['DBA', cleanCompany, 'Generated'].filter(Boolean),
-        // SAVE AI IMPROVEMENTS PERMANENTLY for future reference
-        microEdits: tailoredContent.appliedMicroEdits || [],
-        aiImprovements: tailoredContent.improvements || [],
+        hasTailoredContent: !!session.tailoredContent,
+        hasMicroEdits: !!(tailoredContent.appliedMicroEdits),
+        hasImprovements: !!(tailoredContent.improvements),
       });
 
-      console.log(`[SAVE] Successfully saved resume ${savedResume.id} for session ${sessionId}`);
-      res.json({ id: savedResume.id, filename: savedResume.filename, message: 'Resume saved permanently!' });
+      try {
+        const savedResume = await storage.saveTailoredResume({
+          userId,
+          sessionId,
+          jobTitle: jobAnalysis.title || 'Unknown Position',
+          company: jobAnalysis.company || 'Unknown Company',
+          jobUrl: session.jobUrl || null,
+          // SAVE ORIGINAL JOB DESCRIPTION for interview preparation
+          originalJobDescription: session.jobDescription || jobAnalysis.description || null,
+          tailoredContent: session.tailoredContent,
+          atsScore: tailoredContent.atsScore || tailoredContent.coreScore || 85,
+          filename,
+          appliedToJob: false,
+          applicationDate: null,
+          notes: null,
+          tags: ['DBA', cleanCompany, 'Generated'].filter(Boolean),
+          // SAVE AI IMPROVEMENTS PERMANENTLY for future reference
+          microEdits: tailoredContent.appliedMicroEdits || [],
+          aiImprovements: tailoredContent.improvements || [],
+        });
+
+        console.log(`[SAVE] Successfully saved resume ${savedResume.id} for session ${sessionId}`);
+        res.json({ id: savedResume.id, filename: savedResume.filename, message: 'Resume saved permanently!' });
+      } catch (saveError) {
+        console.error('[SAVE] Database error details:', {
+          error: saveError,
+          message: saveError instanceof Error ? saveError.message : 'Unknown',
+          stack: saveError instanceof Error ? saveError.stack : undefined,
+        });
+        throw saveError; // Re-throw to be caught by outer catch
+      }
     } catch (error) {
       console.error('[SAVE] Error saving tailored resume:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -802,8 +821,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let filename = `tailored_resume.${format}`; // fallback
         
         if (resume.filename) {
-          // Use the stored filename and add the format extension
-          filename = `${resume.filename}.${format}`;
+          // Strip any existing extension from stored filename before adding format extension
+          const baseFilename = resume.filename.replace(/\.(pdf|docx)$/i, '');
+          filename = `${baseFilename}.${format}`;
+          console.log(`[DOWNLOAD] Using stored filename: ${resume.filename} -> ${filename}`);
         } else {
           // Fallback: generate from contact and company info
           const contact = tailoredContent?.contact;
