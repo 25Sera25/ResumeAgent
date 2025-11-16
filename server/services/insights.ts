@@ -174,6 +174,25 @@ export async function getSkillsInsights(userId?: string): Promise<SkillsInsights
     // Get all tailored resumes and job postings for the user
     const tailoredResumes = await storage.getTailoredResumes(userId);
     
+    // If no tailored resumes exist, return empty but valid response
+    if (!tailoredResumes || tailoredResumes.length === 0) {
+      const emptyInsights: SkillsInsights = {
+        topRequestedSkills: [],
+        missingSkills: [],
+        learningRoadmap: [],
+        stats: {
+          totalJobsAnalyzed: 0,
+          totalResumesGenerated: 0,
+          averageCoverage: 0
+        }
+      };
+      
+      // Cache the empty results
+      insightsCache.set(cacheKey, { data: emptyInsights, timestamp: Date.now() });
+      
+      return emptyInsights;
+    }
+    
     // For now, we'll analyze from tailored resume data since jobPostings may not be populated
     // In a full implementation, we'd also query jobPostings table
     
