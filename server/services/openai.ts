@@ -792,3 +792,355 @@ IMPORTANT: Only suggest quantifications that are reasonable based on the resume 
     throw new Error("Failed to quantify achievements: " + (error as Error).message);
   }
 }
+
+// ============================================
+// INTERVIEW PREP HUB FEATURES
+// ============================================
+
+export interface InterviewPrepQuestion {
+  id: string;
+  question: string;
+  type: 'technical' | 'behavioral';
+  topic: string;
+  difficulty: 'junior' | 'mid' | 'senior';
+  suggestedAnswer: string;
+  star?: {
+    situation: string;
+    task: string;
+    action: string;
+    result: string;
+  };
+}
+
+export interface InterviewPrepQuestionsResponse {
+  questions: InterviewPrepQuestion[];
+}
+
+export interface SkillExplanationLevel {
+  label: '30s' | '2min' | 'deepDive';
+  text: string;
+}
+
+export interface SkillExplanation {
+  skill: string;
+  levels: SkillExplanationLevel[];
+  pitfalls: string[];
+  examplesFromResume?: string[];
+}
+
+export interface SkillExplanationsResponse {
+  skills: SkillExplanation[];
+}
+
+export interface StarStory {
+  id: string;
+  title: string;
+  skill: string;
+  situation: string;
+  task: string;
+  action: string;
+  result: string;
+  conciseVersion: string;
+  extendedVersion: string;
+}
+
+export interface StarStoriesResponse {
+  stories: StarStory[];
+}
+
+/**
+ * Generate structured interview questions and answers
+ */
+export async function generateInterviewPrepQuestions(
+  context: {
+    jobDescription?: string;
+    jobAnalysis?: any;
+    skills?: string[];
+    tailoredContent?: any;
+    mode: 'job' | 'skill' | 'general';
+  }
+): Promise<InterviewPrepQuestionsResponse> {
+  try {
+    let contextDescription = '';
+    
+    if (context.mode === 'job' && context.jobDescription) {
+      contextDescription = `Job Description:\n${context.jobDescription}\n\n`;
+      if (context.jobAnalysis) {
+        contextDescription += `Job Title: ${context.jobAnalysis.title || 'DBA'}\n`;
+        contextDescription += `Company: ${context.jobAnalysis.company || 'Target Company'}\n`;
+        contextDescription += `Key Technologies: ${(context.jobAnalysis.technologies || []).join(', ')}\n\n`;
+      }
+    } else if (context.mode === 'skill' && context.skills && context.skills.length > 0) {
+      contextDescription = `Focus Skills: ${context.skills.join(', ')}\n\n`;
+    } else {
+      contextDescription = 'General SQL Server DBA Interview Preparation\n\n';
+    }
+
+    if (context.tailoredContent) {
+      contextDescription += `Candidate Background:\n`;
+      contextDescription += `Skills: ${(context.tailoredContent.skills || []).join(', ')}\n`;
+      if (context.tailoredContent.experience && context.tailoredContent.experience.length > 0) {
+        contextDescription += `Recent Experience: ${context.tailoredContent.experience[0].company || 'N/A'}\n`;
+      }
+    }
+
+    const prompt = `Generate interview preparation questions for a SQL Server DBA position.
+
+${contextDescription}
+
+Generate 12-15 high-quality interview questions covering:
+1. Technical Questions (40%): SQL Server administration, performance tuning, HA/DR, security
+2. Behavioral Questions (40%): Past experience using STAR method
+3. System Design (20%): Architecture and scalability
+
+For each question provide:
+- id: unique identifier (e.g., "tech-1", "behav-1")
+- question: The interview question text
+- type: "technical" or "behavioral"
+- topic: Category (e.g., "HA/DR", "Performance Tuning", "Leadership")
+- difficulty: "junior", "mid", or "senior"
+- suggestedAnswer: A comprehensive answer with specific SQL Server details
+- star: For behavioral questions, include {situation, task, action, result} breakdown
+
+Return JSON in this exact format:
+{
+  "questions": [
+    {
+      "id": "tech-1",
+      "question": "How would you troubleshoot a slowly performing query in SQL Server?",
+      "type": "technical",
+      "topic": "Performance Tuning",
+      "difficulty": "mid",
+      "suggestedAnswer": "I would use a systematic approach: 1) Check execution plans using SQL Server Management Studio... 2) Use Dynamic Management Views (DMVs) like sys.dm_exec_query_stats... 3) Analyze wait statistics... 4) Review indexes and statistics...",
+      "star": null
+    },
+    {
+      "id": "behav-1",
+      "question": "Tell me about a time when you had to recover from a major database failure.",
+      "type": "behavioral",
+      "topic": "HA/DR",
+      "difficulty": "senior",
+      "suggestedAnswer": "In my previous role, I successfully recovered from a critical database corruption incident...",
+      "star": {
+        "situation": "Production SQL Server experienced corruption during peak hours affecting 10,000+ users",
+        "task": "Restore service within 2-hour SLA while ensuring no data loss",
+        "action": "Executed disaster recovery plan: verified backups, initiated failover to secondary node, ran DBCC CHECKDB, coordinated with application teams",
+        "result": "Restored service in 90 minutes, zero data loss, documented incident for future prevention"
+      }
+    }
+  ]
+}`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert SQL Server DBA interviewer and technical coach. Generate realistic, practical interview questions with detailed answers."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || "{}");
+    
+    return {
+      questions: Array.isArray(result.questions) ? result.questions : []
+    };
+  } catch (error) {
+    throw new Error("Failed to generate interview prep questions: " + (error as Error).message);
+  }
+}
+
+/**
+ * Generate multi-level skill explanations
+ */
+export async function generateSkillExplanations(
+  skills: string[],
+  context?: {
+    jobDescription?: string;
+    tailoredContent?: any;
+  }
+): Promise<SkillExplanationsResponse> {
+  try {
+    const skillsList = skills.slice(0, 8); // Limit to top 8 skills
+    
+    let contextInfo = '';
+    if (context?.jobDescription) {
+      contextInfo += `Job Context:\n${context.jobDescription.substring(0, 500)}...\n\n`;
+    }
+    if (context?.tailoredContent?.experience) {
+      const exp = context.tailoredContent.experience[0];
+      if (exp) {
+        contextInfo += `Candidate's Recent Experience:\n${exp.company || 'N/A'}: ${(exp.achievements || []).slice(0, 2).join('; ')}\n\n`;
+      }
+    }
+
+    const prompt = `Generate multi-level explanations for these SQL Server DBA skills: ${skillsList.join(', ')}
+
+${contextInfo}
+
+For EACH skill, provide three levels of explanation:
+1. 30s: Elevator pitch (1-2 sentences) - what it is and why it matters
+2. 2min: Practical explanation (3-4 sentences) - how it's used in real scenarios
+3. deepDive: Technical deep-dive (5-6 sentences) - architecture, best practices, advanced concepts
+
+Also include:
+- pitfalls: Common mistakes or misconceptions (3-5 items)
+- examplesFromResume: If the candidate's experience mentions this skill, reference it briefly (optional)
+
+Return JSON in this exact format:
+{
+  "skills": [
+    {
+      "skill": "Always On Availability Groups",
+      "levels": [
+        {
+          "label": "30s",
+          "text": "Always On Availability Groups is SQL Server's high availability solution that provides database-level failover with minimal downtime, ensuring business continuity."
+        },
+        {
+          "label": "2min",
+          "text": "Always On AGs replicate databases across multiple SQL Server instances in real-time. When the primary fails, automatic failover redirects connections to a secondary replica within seconds. This is crucial for mission-critical applications requiring 99.99% uptime."
+        },
+        {
+          "label": "deepDive",
+          "text": "Always On uses synchronous or asynchronous data movement to secondary replicas. Key components include the Windows Server Failover Cluster (WSFC), availability group listeners for automatic connection redirection, and read-only routing for load distribution. Best practices include using synchronous commit for zero data loss, configuring appropriate failover policies, and monitoring replica health with DMVs like sys.dm_hadr_availability_replica_states."
+        }
+      ],
+      "pitfalls": [
+        "Not configuring automatic seeding can lead to manual initialization headaches",
+        "Mixing synchronous and asynchronous replicas without understanding performance impact",
+        "Forgetting to update connection strings to use AG listener instead of server names",
+        "Overlooking transaction log growth on secondary replicas during heavy write operations"
+      ],
+      "examplesFromResume": [
+        "Configured and maintained Always On Availability Groups for 99.99% uptime"
+      ]
+    }
+  ]
+}`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are a senior SQL Server DBA and technical instructor. Explain complex database concepts at multiple levels of depth with practical examples."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || "{}");
+    
+    return {
+      skills: Array.isArray(result.skills) ? result.skills : []
+    };
+  } catch (error) {
+    throw new Error("Failed to generate skill explanations: " + (error as Error).message);
+  }
+}
+
+/**
+ * Generate STAR stories from resume content
+ */
+export async function generateStarStories(
+  resumeContent: any,
+  context?: {
+    skill?: string;
+    jobDescription?: string;
+  }
+): Promise<StarStoriesResponse> {
+  try {
+    let experienceBullets: string[] = [];
+    
+    if (resumeContent?.experience && Array.isArray(resumeContent.experience)) {
+      resumeContent.experience.forEach((exp: any) => {
+        if (exp.achievements && Array.isArray(exp.achievements)) {
+          experienceBullets.push(...exp.achievements);
+        }
+      });
+    }
+
+    let focusInstruction = '';
+    if (context?.skill) {
+      focusInstruction = `Focus on stories that demonstrate expertise in: ${context.skill}\n\n`;
+    }
+    if (context?.jobDescription) {
+      focusInstruction += `Align stories with this job description:\n${context.jobDescription.substring(0, 400)}...\n\n`;
+    }
+
+    const prompt = `Generate STAR (Situation, Task, Action, Result) interview stories from these resume achievements.
+
+${focusInstruction}
+
+Resume Achievements:
+${experienceBullets.map((b, i) => `${i + 1}. ${b}`).join('\n')}
+
+Generate 5-7 compelling STAR stories that:
+1. Transform resume bullets into interview narratives
+2. Include specific technical details and metrics
+3. Demonstrate problem-solving and impact
+4. Cover different skill areas (performance, HA/DR, migration, security, etc.)
+
+For each story provide:
+- id: unique identifier
+- title: Catchy story title (e.g., "Production Database Recovery Under Pressure")
+- skill: Primary skill demonstrated
+- situation: What was the context/problem
+- task: What needed to be done
+- action: Specific steps taken (use "I" statements)
+- result: Measurable outcome
+- conciseVersion: 30-60 second version for quick answers
+- extendedVersion: 2-3 minute detailed version
+
+Return JSON in this exact format:
+{
+  "stories": [
+    {
+      "id": "story-1",
+      "title": "Production Database Performance Rescue",
+      "skill": "Performance Tuning",
+      "situation": "Our main customer database was experiencing severe slowdowns during peak hours, with queries timing out and users unable to complete transactions. The issue was impacting revenue and customer satisfaction.",
+      "task": "I was tasked with identifying and resolving the performance bottleneck within 24 hours to avoid business impact.",
+      "action": "I used SQL Server Profiler and Extended Events to capture slow queries, analyzed execution plans to identify missing indexes and parameter sniffing issues, implemented index recommendations, and updated statistics. I also configured Query Store for ongoing monitoring.",
+      "result": "Reduced average query response time by 75%, eliminated timeouts, and prevented an estimated $50K in lost revenue. Established monitoring alerts to prevent future issues.",
+      "conciseVersion": "Our production database had severe performance issues during peak hours. I used Extended Events and execution plan analysis to identify missing indexes and parameter sniffing. After implementing optimizations, we achieved 75% faster query times and eliminated timeouts.",
+      "extendedVersion": "In my role as SQL Server DBA, our primary customer-facing database started experiencing critical performance degradation during peak business hours. Users were reporting transaction timeouts, and our support team was overwhelmed with complaints. The situation was urgent because it was directly impacting revenue. I immediately began investigating using SQL Server Extended Events to capture the problematic queries without adding overhead. Through execution plan analysis, I discovered several issues: missing indexes on frequently queried tables, parameter sniffing causing poor plan choices, and outdated statistics. I carefully implemented index recommendations during a maintenance window, used query hints to address parameter sniffing, and rebuilt statistics. I also configured Query Store to monitor query performance going forward. The results were dramatic - average query response time improved by 75%, we eliminated all timeout errors, and our monitoring showed we prevented approximately $50,000 in lost revenue during the next peak period. I documented the entire process and set up automated alerts to catch similar issues early."
+    }
+  ]
+}`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert interview coach specializing in behavioral interviews for technical roles. Transform resume bullets into compelling STAR stories."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || "{}");
+    
+    return {
+      stories: Array.isArray(result.stories) ? result.stories : []
+    };
+  } catch (error) {
+    throw new Error("Failed to generate STAR stories: " + (error as Error).message);
+  }
+}
