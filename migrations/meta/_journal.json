@@ -8,6 +8,13 @@
       "when": 1731767940000,
       "tag": "0000_add_interview_prep_column",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1731773940000,
+      "tag": "0001_add_tailored_resumes_columns",
+      "breakpoints": true
     }
   ]
 }

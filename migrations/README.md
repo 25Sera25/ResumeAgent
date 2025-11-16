@@ -15,6 +15,7 @@ Make sure you have set the `DATABASE_URL` environment variable before running mi
 ## Migration Files
 
 - `0000_add_interview_prep_column.sql` - Adds the `interview_prep` column to the `resume_sessions` table
+- `0001_add_tailored_resumes_columns.sql` - Adds missing columns to the `tailored_resumes` table (micro_edits, ai_improvements, response_received, response_date, source, referral)
 
 ## Migration Format
 
