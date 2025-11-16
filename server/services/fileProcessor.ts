@@ -790,9 +790,6 @@ export function generatePlainTextPreview(resumeContent: string): string {
     // Normalize email and phone patterns
     plainText = plainText.replace(/\s*\|\s*/g, ' | ');
     
-    // Add section separators for readability
-    plainText = plainText.replace(/\n/g, '\n');
-    
     // Trim and clean up
     plainText = plainText.trim();
     
