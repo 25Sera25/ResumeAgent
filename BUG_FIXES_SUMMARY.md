@@ -213,6 +213,16 @@ This ensures the browser respects the server's carefully-generated filename inst
 
 ## Deployment Checklist for Production (Render)
 
+### ⚠️ CRITICAL PRE-DEPLOYMENT STEP
+
+**MUST run database migration before deploying code changes:**
+
+```bash
+npm run db:migrate
+```
+
+This migration (`0001_add_tailored_resumes_columns.sql`) adds required analytics columns to the `tailored_resumes` table. Without these columns, the application will log schema errors (though it won't crash thanks to defensive error handling).
+
 ### Critical Steps:
 1. ✅ Review code changes
 2. ✅ TypeScript compilation passes
