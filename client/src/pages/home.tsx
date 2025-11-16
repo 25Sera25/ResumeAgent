@@ -411,6 +411,12 @@ export default function Home() {
                     <span className="hidden sm:inline">Insights</span>
                   </Button>
                 </Link>
+                <Link href="/interview-prep">
+                  <Button variant="ghost" size="sm" className="button-hover" data-testid="button-interview-prep">
+                    <Brain className="w-4 h-4 mr-2" />
+                    <span className="hidden sm:inline">Interview Prep</span>
+                  </Button>
+                </Link>
                 {user?.isAdmin && (
                   <Link href="/admin/users">
                     <Button variant="ghost" size="sm" className="button-hover" data-testid="button-admin">

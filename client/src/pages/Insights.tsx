@@ -223,6 +223,12 @@ export default function Insights() {
                           }`}>
                             {skill.coveragePercent}%
                           </span>
+                          <Link href={`/interview-prep?skill=${encodeURIComponent(skill.skill)}`}>
+                            <Button variant="outline" size="sm">
+                              <Brain className="h-3 w-3 mr-1" />
+                              Prepare
+                            </Button>
+                          </Link>
                         </div>
                       </div>
                       <Progress value={skill.coveragePercent} className="h-2" />

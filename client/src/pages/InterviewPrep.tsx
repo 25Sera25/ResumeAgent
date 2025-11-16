@@ -1,0 +1,744 @@
+import { useState, useEffect } from "react";
+import { useLocation, Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { 
+  Brain, 
+  ArrowLeft, 
+  Loader2, 
+  MessageSquare, 
+  BookOpen, 
+  Star,
+  CheckCircle,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  Calendar
+} from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useAuth } from "@/lib/auth";
+
+interface InterviewPrepQuestion {
+  id: string;
+  question: string;
+  type: 'technical' | 'behavioral';
+  topic: string;
+  difficulty: 'junior' | 'mid' | 'senior';
+  suggestedAnswer: string;
+  star?: {
+    situation: string;
+    task: string;
+    action: string;
+    result: string;
+  };
+}
+
+interface SkillExplanation {
+  skill: string;
+  levels: Array<{
+    label: '30s' | '2min' | 'deepDive';
+    text: string;
+  }>;
+  pitfalls: string[];
+  examplesFromResume?: string[];
+}
+
+interface StarStory {
+  id: string;
+  title: string;
+  skill: string;
+  situation: string;
+  task: string;
+  action: string;
+  result: string;
+  conciseVersion: string;
+  extendedVersion: string;
+}
+
+export default function InterviewPrep() {
+  const [, navigate] = useLocation();
+  const { toast } = useToast();
+  const { user, logout } = useAuth();
+  
+  // Parse query params
+  const searchParams = new URLSearchParams(window.location.search);
+  const jobId = searchParams.get('jobId');
+  const skill = searchParams.get('skill');
+  
+  const [focusMode, setFocusMode] = useState<'job' | 'skill' | 'general'>(
+    jobId ? 'job' : skill ? 'skill' : 'general'
+  );
+  const [questions, setQuestions] = useState<InterviewPrepQuestion[]>([]);
+  const [skills, setSkills] = useState<SkillExplanation[]>([]);
+  const [stories, setStories] = useState<StarStory[]>([]);
+  
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [loadingSkills, setLoadingSkills] = useState(false);
+  const [loadingStories, setLoadingStories] = useState(false);
+  
+  const [openQuestions, setOpenQuestions] = useState<Set<string>>(new Set());
+  const [practiceStatus, setPracticeStatus] = useState<Map<string, 'needs-practice' | 'confident'>>(new Map());
+  
+  // Fetch job/resume context if jobId is provided
+  const { data: jobContext } = useQuery<any>({
+    queryKey: ['/api/tailored-resumes', jobId],
+    enabled: !!jobId && focusMode === 'job',
+  });
+
+  useEffect(() => {
+    // Auto-load on mount based on mode
+    if (focusMode === 'job' && jobId) {
+      fetchQuestions();
+      fetchSkills();
+      fetchStories();
+    } else if (focusMode === 'skill' && skill) {
+      fetchQuestions();
+      fetchSkills();
+    }
+  }, []);
+
+  const fetchQuestions = async () => {
+    setLoadingQuestions(true);
+    try {
+      const response = await apiRequest('/api/interview-prep/questions', {
+        method: 'POST',
+        body: JSON.stringify({
+          jobId: jobId || undefined,
+          skill: skill || undefined,
+          mode: focusMode
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setQuestions(data.questions || []);
+      } else {
+        throw new Error('Failed to generate questions');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate interview questions",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingQuestions(false);
+    }
+  };
+
+  const fetchSkills = async () => {
+    setLoadingSkills(true);
+    try {
+      const response = await apiRequest('/api/interview-prep/skills-explanations', {
+        method: 'POST',
+        body: JSON.stringify({
+          jobId: jobId || undefined,
+          skills: skill ? [skill] : undefined
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSkills(data.skills || []);
+      } else {
+        throw new Error('Failed to generate skill explanations');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate skill explanations",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingSkills(false);
+    }
+  };
+
+  const fetchStories = async () => {
+    setLoadingStories(true);
+    try {
+      const response = await apiRequest('/api/interview-prep/star-stories', {
+        method: 'POST',
+        body: JSON.stringify({
+          jobId: jobId || undefined,
+          skill: skill || undefined
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setStories(data.stories || []);
+      } else {
+        throw new Error('Failed to generate STAR stories');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate STAR stories",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingStories(false);
+    }
+  };
+
+  const toggleQuestion = (id: string) => {
+    const newOpen = new Set(openQuestions);
+    if (newOpen.has(id)) {
+      newOpen.delete(id);
+    } else {
+      newOpen.add(id);
+    }
+    setOpenQuestions(newOpen);
+  };
+
+  const togglePracticeStatus = (id: string) => {
+    const newStatus = new Map(practiceStatus);
+    const current = newStatus.get(id);
+    if (current === 'needs-practice') {
+      newStatus.set(id, 'confident');
+    } else if (current === 'confident') {
+      newStatus.delete(id);
+    } else {
+      newStatus.set(id, 'needs-practice');
+    }
+    setPracticeStatus(newStatus);
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied!",
+      description: `${label} copied to clipboard`
+    });
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to logout",
+        variant: "destructive"
+      });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-purple-500 to-blue-500 p-2 rounded-lg">
+                  <Brain className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-neutral-800 dark:text-neutral-100">
+                    Interview Prep Hub
+                  </h1>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                    Practice questions, skill explanations, and STAR stories
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {user && (
+                <span className="text-sm text-neutral-600 dark:text-neutral-300 mr-2">
+                  {user.username}
+                </span>
+              )}
+              <ThemeToggle />
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                Logout
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Context Panel */}
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <span>Preparation Context</span>
+                  {jobContext && (
+                    <Badge variant="secondary">
+                      {jobContext.company} - {jobContext.jobTitle}
+                    </Badge>
+                  )}
+                  {skill && (
+                    <Badge variant="secondary">{skill}</Badge>
+                  )}
+                </CardTitle>
+                <CardDescription className="mt-2">
+                  {focusMode === 'job' && jobContext
+                    ? `Preparing for ${jobContext.jobTitle} at ${jobContext.company}`
+                    : focusMode === 'skill' && skill
+                    ? `Focused on ${skill} skills`
+                    : 'General SQL Server DBA interview preparation'}
+                </CardDescription>
+              </div>
+              <Select value={focusMode} onValueChange={(v: any) => setFocusMode(v)}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select focus" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="job">Job-Specific</SelectItem>
+                  <SelectItem value="skill">Skill-Specific</SelectItem>
+                  <SelectItem value="general">General DBA</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Tabs */}
+        <Tabs defaultValue="questions" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger value="questions" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Questions & Answers
+            </TabsTrigger>
+            <TabsTrigger value="skills" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Explain These Skills
+            </TabsTrigger>
+            <TabsTrigger value="stories" className="flex items-center gap-2">
+              <Star className="h-4 w-4" />
+              STAR Story Builder
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Questions & Answers Tab */}
+          <TabsContent value="questions">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Interview Questions & Answers</CardTitle>
+                    <CardDescription>
+                      Practice technical and behavioral questions with suggested answers
+                    </CardDescription>
+                  </div>
+                  <Button onClick={fetchQuestions} disabled={loadingQuestions}>
+                    {loadingQuestions ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>Generate Questions</>
+                    )}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loadingQuestions ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : questions.length === 0 ? (
+                  <div className="text-center py-12">
+                    <MessageSquare className="h-12 w-12 mx-auto text-neutral-400 mb-4" />
+                    <p className="text-neutral-600 dark:text-neutral-400">
+                      Click "Generate Questions" to create interview questions
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {questions.map((q) => {
+                      const isOpen = openQuestions.has(q.id);
+                      const status = practiceStatus.get(q.id);
+                      
+                      return (
+                        <Card key={q.id} className="border-2">
+                          <Collapsible open={isOpen} onOpenChange={() => toggleQuestion(q.id)}>
+                            <CardHeader className="pb-3">
+                              <div className="flex items-start justify-between gap-4">
+                                <CollapsibleTrigger asChild>
+                                  <Button variant="ghost" className="flex-1 justify-start p-0 h-auto hover:bg-transparent text-left">
+                                    <div className="flex items-start gap-3 w-full">
+                                      <div className="mt-1">
+                                        {isOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                                      </div>
+                                      <div className="flex-1">
+                                        <p className="font-medium text-sm leading-relaxed">{q.question}</p>
+                                        <div className="flex gap-2 mt-2">
+                                          <Badge variant={q.type === 'technical' ? 'default' : 'secondary'}>
+                                            {q.type}
+                                          </Badge>
+                                          <Badge variant="outline">{q.topic}</Badge>
+                                          <Badge variant={
+                                            q.difficulty === 'senior' ? 'destructive' :
+                                            q.difficulty === 'mid' ? 'default' : 'secondary'
+                                          }>
+                                            {q.difficulty}
+                                          </Badge>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </Button>
+                                </CollapsibleTrigger>
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant={status === 'needs-practice' ? 'destructive' : status === 'confident' ? 'default' : 'outline'}
+                                    onClick={() => togglePracticeStatus(q.id)}
+                                  >
+                                    {status === 'needs-practice' ? (
+                                      <>
+                                        <AlertCircle className="h-3 w-3 mr-1" />
+                                        Practice
+                                      </>
+                                    ) : status === 'confident' ? (
+                                      <>
+                                        <CheckCircle className="h-3 w-3 mr-1" />
+                                        Confident
+                                      </>
+                                    ) : (
+                                      'Mark'
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardHeader>
+                            <CollapsibleContent>
+                              <CardContent className="pt-0 space-y-4">
+                                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 flex items-center gap-1">
+                                      <Brain className="h-4 w-4" />
+                                      Suggested Answer
+                                    </p>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => copyToClipboard(q.suggestedAnswer, 'Answer')}
+                                    >
+                                      <Copy className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                  <p className="text-sm text-blue-900 dark:text-blue-100 whitespace-pre-line">
+                                    {q.suggestedAnswer}
+                                  </p>
+                                </div>
+                                
+                                {q.star && (
+                                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                                    <p className="text-xs font-semibold text-amber-900 dark:text-amber-100 flex items-center gap-1 mb-3">
+                                      <Star className="h-4 w-4" />
+                                      STAR Framework Example
+                                    </p>
+                                    <div className="space-y-2 text-sm">
+                                      <div>
+                                        <span className="font-semibold text-amber-900 dark:text-amber-100">Situation:</span>
+                                        <p className="text-amber-800 dark:text-amber-200">{q.star.situation}</p>
+                                      </div>
+                                      <div>
+                                        <span className="font-semibold text-amber-900 dark:text-amber-100">Task:</span>
+                                        <p className="text-amber-800 dark:text-amber-200">{q.star.task}</p>
+                                      </div>
+                                      <div>
+                                        <span className="font-semibold text-amber-900 dark:text-amber-100">Action:</span>
+                                        <p className="text-amber-800 dark:text-amber-200">{q.star.action}</p>
+                                      </div>
+                                      <div>
+                                        <span className="font-semibold text-amber-900 dark:text-amber-100">Result:</span>
+                                        <p className="text-amber-800 dark:text-amber-200">{q.star.result}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </CardContent>
+                            </CollapsibleContent>
+                          </Collapsible>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Explain These Skills Tab */}
+          <TabsContent value="skills">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Skill Explanations</CardTitle>
+                    <CardDescription>
+                      Multi-level explanations for key DBA skills
+                    </CardDescription>
+                  </div>
+                  <Button onClick={fetchSkills} disabled={loadingSkills}>
+                    {loadingSkills ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>Generate Explanations</>
+                    )}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loadingSkills ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : skills.length === 0 ? (
+                  <div className="text-center py-12">
+                    <BookOpen className="h-12 w-12 mx-auto text-neutral-400 mb-4" />
+                    <p className="text-neutral-600 dark:text-neutral-400">
+                      Click "Generate Explanations" to create skill explanations
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {skills.map((skill, idx) => (
+                      <Card key={idx} className="border-2">
+                        <CardHeader>
+                          <CardTitle className="text-lg">{skill.skill}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          {skill.levels.map((level) => (
+                            <div key={level.label} className="border rounded-lg p-4">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Badge variant={
+                                  level.label === '30s' ? 'secondary' :
+                                  level.label === '2min' ? 'default' : 'destructive'
+                                }>
+                                  {level.label === '30s' ? '30-Second' :
+                                   level.label === '2min' ? '2-Minute' : 'Deep Dive'}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                                {level.text}
+                              </p>
+                            </div>
+                          ))}
+                          
+                          {skill.pitfalls && skill.pitfalls.length > 0 && (
+                            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                              <p className="text-xs font-semibold text-red-900 dark:text-red-100 mb-2">
+                                Common Pitfalls
+                              </p>
+                              <ul className="list-disc list-inside space-y-1">
+                                {skill.pitfalls.map((pitfall, i) => (
+                                  <li key={i} className="text-sm text-red-800 dark:text-red-200">
+                                    {pitfall}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          
+                          {skill.examplesFromResume && skill.examplesFromResume.length > 0 && (
+                            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                              <p className="text-xs font-semibold text-green-900 dark:text-green-100 mb-2">
+                                From Your Resume
+                              </p>
+                              <ul className="list-disc list-inside space-y-1">
+                                {skill.examplesFromResume.map((example, i) => (
+                                  <li key={i} className="text-sm text-green-800 dark:text-green-200">
+                                    {example}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* STAR Story Builder Tab */}
+          <TabsContent value="stories">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>STAR Story Builder</CardTitle>
+                    <CardDescription>
+                      Structured narratives from your resume achievements
+                    </CardDescription>
+                  </div>
+                  <Button onClick={fetchStories} disabled={loadingStories}>
+                    {loadingStories ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>Generate Stories</>
+                    )}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loadingStories ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : stories.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Star className="h-12 w-12 mx-auto text-neutral-400 mb-4" />
+                    <p className="text-neutral-600 dark:text-neutral-400">
+                      Click "Generate Stories" to create STAR stories from your resume
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {stories.map((story) => (
+                      <Card key={story.id} className="border-2">
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <CardTitle className="text-lg">{story.title}</CardTitle>
+                              <Badge variant="outline" className="mt-2">{story.skill}</Badge>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => copyToClipboard(story.extendedVersion, 'Story')}
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="border rounded-lg p-3 bg-purple-50 dark:bg-purple-900/20">
+                              <p className="text-xs font-semibold text-purple-900 dark:text-purple-100 mb-1">
+                                Situation
+                              </p>
+                              <p className="text-sm text-purple-800 dark:text-purple-200">
+                                {story.situation}
+                              </p>
+                            </div>
+                            <div className="border rounded-lg p-3 bg-blue-50 dark:bg-blue-900/20">
+                              <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                                Task
+                              </p>
+                              <p className="text-sm text-blue-800 dark:text-blue-200">
+                                {story.task}
+                              </p>
+                            </div>
+                            <div className="border rounded-lg p-3 bg-green-50 dark:bg-green-900/20">
+                              <p className="text-xs font-semibold text-green-900 dark:text-green-100 mb-1">
+                                Action
+                              </p>
+                              <p className="text-sm text-green-800 dark:text-green-200">
+                                {story.action}
+                              </p>
+                            </div>
+                            <div className="border rounded-lg p-3 bg-amber-50 dark:bg-amber-900/20">
+                              <p className="text-xs font-semibold text-amber-900 dark:text-amber-100 mb-1">
+                                Result
+                              </p>
+                              <p className="text-sm text-amber-800 dark:text-amber-200">
+                                {story.result}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <div className="bg-neutral-50 dark:bg-neutral-800 border rounded-lg p-3">
+                              <p className="text-xs font-semibold mb-1">Concise Version (30-60s)</p>
+                              <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                                {story.conciseVersion}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* Weekly Prep Plan */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Weekly Interview Prep Plan
+            </CardTitle>
+            <CardDescription>
+              Based on your practice status and focus areas
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">Questions to Practice</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                    {Array.from(practiceStatus.values()).filter(s => s === 'needs-practice').length}
+                  </p>
+                  <p className="text-xs text-neutral-500 mt-1">Marked for review</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">Skills to Review</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    {skills.length}
+                  </p>
+                  <p className="text-xs text-neutral-500 mt-1">Key skills loaded</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">STAR Stories</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    {stories.length}
+                  </p>
+                  <p className="text-xs text-neutral-500 mt-1">Ready to practice</p>
+                </CardContent>
+              </Card>
+            </div>
+          </CardContent>
+        </Card>
+      </main>
+    </div>
+  );
+}
