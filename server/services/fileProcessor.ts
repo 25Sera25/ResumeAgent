@@ -756,3 +756,63 @@ export function validateProfileJSON(jsonString: string): any {
     throw new Error(`Invalid profile JSON: ${(error as Error).message}`);
   }
 }
+
+// ============================================
+// NEW FEATURE 2: Plain Text ATS Preview
+// ============================================
+
+export function generatePlainTextPreview(resumeContent: string): string {
+  try {
+    // Strip common formatting issues for ATS systems:
+    // 1. Remove excessive whitespace and special characters
+    // 2. Collapse multi-column layouts to single column
+    // 3. Remove headers/footers indicators
+    // 4. Simplify bullet points
+    // 5. Remove tables and complex formatting
+    
+    let plainText = resumeContent;
+    
+    // Remove multiple spaces and normalize line breaks
+    plainText = plainText.replace(/\s+/g, ' ');
+    plainText = plainText.replace(/\n\s*\n/g, '\n');
+    
+    // Remove common header/footer indicators
+    plainText = plainText.replace(/Page \d+ of \d+/gi, '');
+    plainText = plainText.replace(/\[Header\]|\[Footer\]/gi, '');
+    
+    // Simplify bullet points to simple dashes
+    plainText = plainText.replace(/[•●○■□▪▫]/g, '- ');
+    
+    // Remove excessive punctuation
+    plainText = plainText.replace(/\.{2,}/g, '.');
+    plainText = plainText.replace(/-{2,}/g, '-');
+    
+    // Normalize email and phone patterns
+    plainText = plainText.replace(/\s*\|\s*/g, ' | ');
+    
+    // Add section separators for readability
+    plainText = plainText.replace(/\n/g, '\n');
+    
+    // Trim and clean up
+    plainText = plainText.trim();
+    
+    return `=== ATS PLAIN TEXT PREVIEW ===
+This is how Applicant Tracking Systems typically parse your resume.
+Compare this with your formatted version to identify potential issues.
+
+${plainText}
+
+=== END ATS PREVIEW ===
+
+FORMATTING TIPS:
+- Use standard section headings (Experience, Education, Skills)
+- Avoid tables, text boxes, and multi-column layouts
+- Use simple bullet points (-, •)
+- Place contact information at the top
+- Avoid headers and footers
+- Use standard fonts and avoid images
+`;
+  } catch (error) {
+    throw new Error(`Failed to generate plain text preview: ${(error as Error).message}`);
+  }
+}

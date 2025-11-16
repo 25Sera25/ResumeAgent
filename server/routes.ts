@@ -962,6 +962,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===========================================
+  // NEW FEATURE 1: INTERVIEW QUESTION GENERATOR
+  // ===========================================
+  
+  app.post('/api/sessions/:id/interview-questions', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const session = await storage.getResumeSession(req.params.id, userId);
+      
+      if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
+      
+      if (!session.jobDescription && !session.jobAnalysis) {
+        return res.status(400).json({ error: 'Job description not available for this session' });
+      }
+      
+      const { generateInterviewQuestions } = await import('./services/openai');
+      
+      const jobDescription = session.jobDescription || 
+        (session.jobAnalysis as any)?.description || 
+        JSON.stringify(session.jobAnalysis);
+      
+      const tailoredContent = session.tailoredContent as any;
+      
+      const interviewQuestions = await generateInterviewQuestions(
+        jobDescription,
+        tailoredContent
+      );
+      
+      // Save interview questions to session
+      await storage.updateResumeSession(req.params.id, {
+        interviewPrep: interviewQuestions
+      });
+      
+      res.json(interviewQuestions);
+    } catch (error) {
+      console.error('Error generating interview questions:', error);
+      res.status(500).json({ error: 'Failed to generate interview questions' });
+    }
+  });
+
+  // ===========================================
+  // NEW FEATURE 2: ATS BREAKDOWN
+  // ===========================================
+  
+  app.get('/api/sessions/:id/ats-breakdown', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const session = await storage.getResumeSession(req.params.id, userId);
+      
+      if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
+      
+      const tailoredContent = session.tailoredContent as any;
+      
+      if (!tailoredContent) {
+        return res.status(400).json({ error: 'Tailored content not available' });
+      }
+      
+      // Return ATS breakdown from tailored content
+      const breakdown = {
+        overallScore: tailoredContent.atsScore || tailoredContent.coreScore || 0,
+        sectionScores: tailoredContent.scoreBreakdown || {},
+        formattingIssues: tailoredContent.formattingIssues || [],
+        coverageReport: tailoredContent.coverageReport || {}
+      };
+      
+      res.json(breakdown);
+    } catch (error) {
+      console.error('Error fetching ATS breakdown:', error);
+      res.status(500).json({ error: 'Failed to fetch ATS breakdown' });
+    }
+  });
+  
+  app.get('/api/sessions/:id/plain-text-preview', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const session = await storage.getResumeSession(req.params.id, userId);
+      
+      if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
+      
+      const { generatePlainTextPreview } = await import('./services/fileProcessor');
+      const resumeContent = session.baseResumeContent as string || '';
+      
+      const plainText = generatePlainTextPreview(resumeContent);
+      
+      res.json({ plainTextPreview: plainText });
+    } catch (error) {
+      console.error('Error generating plain text preview:', error);
+      res.status(500).json({ error: 'Failed to generate plain text preview' });
+    }
+  });
+
+  // ===========================================
+  // NEW FEATURE 3: SKILLS GAP DASHBOARD
+  // ===========================================
+  
+  app.get('/api/insights/skills', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { getSkillsInsights } = await import('./services/insights');
+      
+      const insights = await getSkillsInsights(userId);
+      
+      res.json(insights);
+    } catch (error) {
+      console.error('Error fetching skills insights:', error);
+      res.status(500).json({ error: 'Failed to fetch skills insights' });
+    }
+  });
+
+  // ===========================================
+  // NEW FEATURE 5: RESUME ANALYTICS
+  // ===========================================
+  
+  app.get('/api/tailored-resumes/analytics', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { getTailoredResumeAnalytics } = await import('./services/insights');
+      
+      const analytics = await getTailoredResumeAnalytics(userId);
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching resume analytics:', error);
+      res.status(500).json({ error: 'Failed to fetch resume analytics' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

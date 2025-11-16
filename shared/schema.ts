@@ -21,6 +21,7 @@ export const resumeSessions = pgTable("resume_sessions", {
   jobDescription: text("job_description"),
   jobAnalysis: json("job_analysis"),
   tailoredContent: json("tailored_content"),
+  interviewPrep: json("interview_prep"), // Interview questions and STAR examples
   status: text("status").default("draft"), // draft, analyzing, tailored, completed
   matchScore: integer("match_score"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
@@ -71,6 +72,11 @@ export const tailoredResumes = pgTable("tailored_resumes", {
   // NEW: Save AI improvements permanently for future reference
   microEdits: json("micro_edits"), // Array of micro-edits applied automatically
   aiImprovements: json("ai_improvements"), // Array of AI improvements made
+  // NEW: Performance tracking for A/B analytics
+  responseReceived: boolean("response_received"),
+  responseDate: timestamp("response_date"),
+  source: text("source"), // LinkedIn, Indeed, company website, etc.
+  referral: text("referral"), // Referral source if applicable
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`),
 });
