@@ -108,25 +108,31 @@ export default function InterviewPrep() {
   const fetchQuestions = async () => {
     setLoadingQuestions(true);
     try {
+      const payload: any = { mode: focusMode };
+      
+      // Only include jobId or skill if they exist and match the mode
+      if (focusMode === 'job' && jobId) {
+        payload.jobId = jobId;
+      } else if (focusMode === 'skill' && skill) {
+        payload.skill = skill;
+      }
+      
       const response = await apiRequest('/api/interview-prep/questions', {
         method: 'POST',
-        body: JSON.stringify({
-          jobId: jobId || undefined,
-          skill: skill || undefined,
-          mode: focusMode
-        })
+        body: JSON.stringify(payload)
       });
       
       if (response.ok) {
         const data = await response.json();
         setQuestions(data.questions || []);
       } else {
-        throw new Error('Failed to generate questions');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to generate questions');
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to generate interview questions",
+        description: error instanceof Error ? error.message : "Failed to generate interview questions",
         variant: "destructive"
       });
     } finally {
@@ -137,24 +143,31 @@ export default function InterviewPrep() {
   const fetchSkills = async () => {
     setLoadingSkills(true);
     try {
+      const payload: any = { mode: focusMode };
+      
+      // Only include jobId or skills if they exist and match the mode
+      if (focusMode === 'job' && jobId) {
+        payload.jobId = jobId;
+      } else if (focusMode === 'skill' && skill) {
+        payload.skills = [skill];
+      }
+      
       const response = await apiRequest('/api/interview-prep/skills-explanations', {
         method: 'POST',
-        body: JSON.stringify({
-          jobId: jobId || undefined,
-          skills: skill ? [skill] : undefined
-        })
+        body: JSON.stringify(payload)
       });
       
       if (response.ok) {
         const data = await response.json();
         setSkills(data.skills || []);
       } else {
-        throw new Error('Failed to generate skill explanations');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to generate skill explanations');
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to generate skill explanations",
+        description: error instanceof Error ? error.message : "Failed to generate skill explanations",
         variant: "destructive"
       });
     } finally {
@@ -165,24 +178,37 @@ export default function InterviewPrep() {
   const fetchStories = async () => {
     setLoadingStories(true);
     try {
+      const payload: any = { mode: focusMode };
+      
+      // Only include jobId or skill if they exist and match the mode
+      if (focusMode === 'job' && jobId) {
+        payload.jobId = jobId;
+      } else if (focusMode === 'skill' && skill) {
+        payload.skill = skill;
+      }
+      
       const response = await apiRequest('/api/interview-prep/star-stories', {
         method: 'POST',
-        body: JSON.stringify({
-          jobId: jobId || undefined,
-          skill: skill || undefined
-        })
+        body: JSON.stringify(payload)
       });
       
       if (response.ok) {
         const data = await response.json();
         setStories(data.stories || []);
       } else {
-        throw new Error('Failed to generate STAR stories');
+        const errorData = await response.json().catch(() => ({}));
+        
+        // Handle specific error for no resume content
+        if (errorData.error === 'no_resume_content') {
+          throw new Error(errorData.message || 'No resume content found. Please tailor and save at least one resume, then try again.');
+        }
+        
+        throw new Error(errorData.message || 'Failed to generate STAR stories');
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to generate STAR stories",
+        description: error instanceof Error ? error.message : "Failed to generate STAR stories",
         variant: "destructive"
       });
     } finally {

@@ -5,7 +5,221 @@ This document summarizes the fixes for production-blocking bugs in the ResumeAge
 
 ---
 
-## Latest Fixes - Resume Download Filenames & Analytics Schema (Current PR - FINAL FIX)
+## Latest Fixes - Interview Prep Hub API Issues & Job Tracker Integration (Current PR)
+
+### Problem
+The Interview Prep Hub UI was experiencing critical HTTP 400 errors preventing it from functioning:
+
+1. **API Endpoints Returning 400 Errors in General Mode**
+   - Browser console showed: "Failed to load resource: the server responded with a status of 400 ()" for:
+     - `api/interview-prep/questions`
+     - `api/interview-prep/skills-explanations`
+     - `api/interview-prep/star-stories`
+   - Red toast messages: "Failed to generate STAR stories", "Failed to generate skill explanations"
+   - The endpoints existed but rejected general mode requests without jobId/skills
+
+2. **No Resume Content Error Handling**
+   - When users had no tailored resumes saved, the API returned generic 400 errors
+   - Users didn't understand they needed to save at least one resume first
+   - Error messages were not actionable
+
+3. **Missing Default Skills for General Mode**
+   - Skills explanations endpoint required skills to be provided or failed with 400
+   - No fallback to default DBA skills for general interview prep
+   - Made the feature unusable from the sidebar navigation
+
+### Root Cause
+
+**API Endpoint Design Issues:**
+1. `/api/interview-prep/skills-explanations` returned 400 when no skills found (line 1299)
+2. `/api/interview-prep/star-stories` returned generic 400 error without structured error codes (line 1366)
+3. No default DBA skills list for general mode preparation
+4. Error messages were not user-friendly or actionable
+
+**Frontend Request Issues:**
+1. Frontend was passing `undefined` values for `jobId` and `skill` in general mode
+2. Error handling didn't differentiate between different error types
+3. No special handling for "no resume content" scenario
+
+### Solution
+
+#### 1. Backend: Skills Explanations Endpoint (`server/routes.ts` lines 1260-1310)
+
+**Enhanced to support general mode with default DBA skills:**
+
+```typescript
+// Now includes mode parameter and default skills
+const { skills, jobId, mode = 'general' } = req.body;
+
+// If still no skills after checking all sources, use defaults
+if (skillsList.length === 0) {
+  skillsList = [
+    'SQL Server Administration',
+    'High Availability & Disaster Recovery',
+    'Performance Tuning',
+    'T-SQL',
+    'Backup & Restore',
+    'Security & Compliance',
+    'Azure SQL Database',
+    'PowerShell Automation'
+  ];
+}
+```
+
+**Impact:**
+- General mode always provides useful content
+- No more 400 errors when accessing from sidebar
+- Default skills cover core DBA competencies
+- Graceful fallback if Skills Insights API fails
+
+#### 2. Backend: STAR Stories Endpoint (`server/routes.ts` lines 1312-1377)
+
+**Added structured error response:**
+
+```typescript
+if (!resumeContent) {
+  return res.status(400).json({ 
+    error: 'no_resume_content',
+    message: 'No resume content available. Save a tailored resume or select a specific job first.' 
+  });
+}
+```
+
+**Impact:**
+- Frontend can detect specific error type
+- User gets actionable error message
+- Clear guidance on how to fix the issue
+
+#### 3. Frontend: Interview Prep Requests (`client/src/pages/InterviewPrep.tsx`)
+
+**Fixed to send clean request payloads:**
+
+```typescript
+// Only include relevant parameters based on mode
+const payload: any = { mode: focusMode };
+
+if (focusMode === 'job' && jobId) {
+  payload.jobId = jobId;
+} else if (focusMode === 'skill' && skill) {
+  payload.skill = skill;
+}
+// General mode sends only { mode: 'general' }
+```
+
+**Enhanced error handling:**
+
+```typescript
+// Handle specific error codes
+if (errorData.error === 'no_resume_content') {
+  throw new Error(errorData.message || 'No resume content found...');
+}
+```
+
+**Impact:**
+- No undefined parameters sent to backend
+- Clear error messages shown to users
+- Special handling for missing resume content
+
+### Integration Status
+
+#### Job Tracker - "Prep for Interview" Button ✅ Already Exists
+
+Verification showed the feature was already implemented:
+- **Location:** `client/src/pages/JobTracker.tsx` lines 450-459
+- **Implementation:** Brain icon button on each job application card
+- **Route:** Links to `/interview-prep?jobId={application.tailoredResumeId}`
+- **Status:** ✅ Working as designed, no changes needed
+
+#### Skills Dashboard - "Prepare" Action ✅ Already Exists
+
+Verification showed the feature was already implemented:
+- **Location:** `client/src/pages/Insights.tsx` lines 226-231
+- **Implementation:** "Prepare" button with Brain icon on each skill row
+- **Route:** Links to `/interview-prep?skill={encodeURIComponent(skill.skill)}`
+- **Status:** ✅ Working as designed, no changes needed
+
+### Files Changed
+
+**Modified:**
+1. `server/routes.ts` - Fixed skills-explanations and star-stories endpoints
+2. `client/src/pages/InterviewPrep.tsx` - Fixed request payloads and error handling
+3. `BUG_FIXES_SUMMARY.md` - This documentation
+
+**No New Files Created**
+
+### Testing Plan
+
+**Manual Testing Checklist:**
+1. ✅ General Mode (from sidebar):
+   - Navigate to Interview Prep Hub from main navigation
+   - Click "Generate Questions" → Should return general DBA questions
+   - Click "Generate Explanations" → Should return 8 default DBA skills
+   - Click "Generate Stories" → Should show actionable error if no resumes saved
+
+2. ✅ Job-Specific Mode (from Job Tracker):
+   - Click "Prep for Interview" button on job card
+   - Verify jobId in URL
+   - All three features should use job context
+
+3. ✅ Skill-Specific Mode (from Skills Dashboard):
+   - Click "Prepare" button on skill row
+   - Verify skill in URL
+   - Questions and explanations should focus on that skill
+
+4. ✅ Error Handling:
+   - Test with no saved resumes → Clear error message
+   - Check browser console → No 400 errors in general mode
+   - Verify error toasts are user-friendly
+
+### Default DBA Skills List
+
+For general mode preparation, the system provides these foundational skills:
+1. SQL Server Administration
+2. High Availability & Disaster Recovery
+3. Performance Tuning
+4. T-SQL
+5. Backup & Restore
+6. Security & Compliance
+7. Azure SQL Database
+8. PowerShell Automation
+
+These skills were selected to cover:
+- **Core technical skills** every SQL Server DBA needs
+- **Modern cloud** technologies (Azure SQL)
+- **Operational** responsibilities (backups, HA/DR)
+- **Scripting** capabilities (PowerShell)
+
+### API Behavior Matrix
+
+| Mode | Endpoint | Required Params | Fallback Behavior |
+|------|----------|-----------------|-------------------|
+| general | questions | mode | Uses general DBA context |
+| general | skills-explanations | mode | Uses default 8 DBA skills |
+| general | star-stories | mode | Uses most recent tailored resume or error |
+| job | questions | mode, jobId | Loads job context |
+| job | skills-explanations | mode, jobId | Loads job skills or defaults |
+| job | star-stories | mode, jobId | Loads job resume or error |
+| skill | questions | mode, skill | Uses skill focus |
+| skill | skills-explanations | mode, skill | Explains provided skill |
+| skill | star-stories | mode, skill | Uses most recent resume + skill filter |
+
+### User Experience Improvements
+
+**Before:**
+- ❌ "Failed to generate STAR stories" (no context)
+- ❌ "Failed to generate skill explanations" (unclear)
+- ❌ 400 errors in console
+- ❌ Feature unusable from sidebar
+
+**After:**
+- ✅ "No resume content available. Save a tailored resume or select a specific job first."
+- ✅ Default skills always provided for explanations
+- ✅ No 400 errors in general mode
+- ✅ Feature works from all three entry points
+
+---
+
+## Previous Fixes - Resume Download Filenames & Analytics Schema
 
 ### Critical Changes Made
 1. **Fixed filename pattern inconsistency** - Save endpoint was using `FirstName_DBA_Company` instead of `FirstName_DBA_Resume_Company`
