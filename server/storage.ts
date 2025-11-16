@@ -807,11 +807,27 @@ export class DatabaseStorage implements IStorage {
     applicationsSent: number;
     followUpsScheduled: number;
   }> {
-    if (userId) {
+    try {
+      if (userId) {
+        const [sessions, resumes, applications, followUpsList] = await Promise.all([
+          db.select().from(resumeSessions).where(and(sql`job_analysis IS NOT NULL`, eq(resumeSessions.userId, userId))),
+          db.select().from(tailoredResumes).where(eq(tailoredResumes.userId, userId)),
+          db.select().from(jobApplications).where(eq(jobApplications.userId, userId)),
+          db.select().from(followUps)
+        ]);
+
+        return {
+          jobsAnalyzed: sessions.length,
+          resumesGenerated: resumes.length,
+          applicationsSent: applications.length,
+          followUpsScheduled: followUpsList.length,
+        };
+      }
+
       const [sessions, resumes, applications, followUpsList] = await Promise.all([
-        db.select().from(resumeSessions).where(and(sql`job_analysis IS NOT NULL`, eq(resumeSessions.userId, userId))),
-        db.select().from(tailoredResumes).where(eq(tailoredResumes.userId, userId)),
-        db.select().from(jobApplications).where(eq(jobApplications.userId, userId)),
+        db.select().from(resumeSessions).where(sql`job_analysis IS NOT NULL`),
+        db.select().from(tailoredResumes),
+        db.select().from(jobApplications),
         db.select().from(followUps)
       ]);
 
@@ -821,21 +837,17 @@ export class DatabaseStorage implements IStorage {
         applicationsSent: applications.length,
         followUpsScheduled: followUpsList.length,
       };
+    } catch (error) {
+      console.error('[STATS] Error fetching overall stats:', error);
+      console.error('[STATS] This may indicate a database schema mismatch. Please run migrations: npm run db:migrate');
+      // Return safe defaults instead of throwing
+      return {
+        jobsAnalyzed: 0,
+        resumesGenerated: 0,
+        applicationsSent: 0,
+        followUpsScheduled: 0,
+      };
     }
-
-    const [sessions, resumes, applications, followUpsList] = await Promise.all([
-      db.select().from(resumeSessions).where(sql`job_analysis IS NOT NULL`),
-      db.select().from(tailoredResumes),
-      db.select().from(jobApplications),
-      db.select().from(followUps)
-    ]);
-
-    return {
-      jobsAnalyzed: sessions.length,
-      resumesGenerated: resumes.length,
-      applicationsSent: applications.length,
-      followUpsScheduled: followUpsList.length,
-    };
   }
 
   // Follow-up tracking for PERMANENT storage
