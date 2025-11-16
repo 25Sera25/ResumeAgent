@@ -346,37 +346,33 @@ export default function Home() {
 
   return (
     <div className="font-inter bg-neutral-50 dark:bg-neutral-900 min-h-screen">
-      {/* Header */}
+      {/* Header - Compressed */}
       <header className="bg-white dark:bg-neutral-800 shadow-sm border-b border-neutral-200 dark:border-neutral-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <div className="bg-primary text-white p-2 rounded-lg">
-                <Database className="text-xl" />
+          <div className="flex justify-between items-center h-14">
+            <div className="flex items-center space-x-2">
+              <div className="bg-primary text-white p-1.5 rounded-lg">
+                <Database className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-neutral-800 dark:text-neutral-100">Resume Tailor Agent</h1>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400">MS SQL Server DBA Specialist</p>
+                <h1 className="text-lg font-bold text-neutral-800 dark:text-neutral-100">Resume Tailor Agent</h1>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
               <Link href="/resume-library">
                 <Button variant="ghost" size="sm" data-testid="button-resume-library">
-                  <BookOpen className="w-4 h-4 mr-2" />
-                  Resume Library
+                  <BookOpen className="w-4 h-4" />
                 </Button>
               </Link>
               <Link href="/job-tracker">
                 <Button variant="ghost" size="sm" data-testid="button-job-tracker">
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  Job Tracker
+                  <BarChart3 className="w-4 h-4" />
                 </Button>
               </Link>
               {user?.isAdmin && (
                 <Link href="/admin/users">
                   <Button variant="ghost" size="sm" data-testid="button-admin">
-                    <Shield className="w-4 h-4 mr-2" />
-                    Admin
+                    <Shield className="w-4 h-4" />
                   </Button>
                 </Link>
               )}
@@ -389,23 +385,22 @@ export default function Home() {
                 ]}
               />
               <Button variant="ghost" size="sm" data-testid="button-settings">
-                <Settings className="text-lg" />
+                <Settings className="w-4 h-4" />
               </Button>
               <ThemeToggle />
-              <div className="flex items-center gap-2 ml-2 pl-4 border-l border-neutral-200 dark:border-neutral-700">
-                <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300">
-                  <User className="w-4 h-4" />
-                  <span>{user?.username}</span>
+              <div className="flex items-center gap-2 ml-2 pl-2 border-l border-neutral-200 dark:border-neutral-700">
+                <div className="flex items-center gap-1.5 text-sm text-neutral-600 dark:text-neutral-300">
+                  <User className="w-3.5 h-3.5" />
+                  <span className="text-xs">{user?.username}</span>
                 </div>
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   onClick={handleLogout}
                   data-testid="button-logout"
-                  className="text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100"
+                  className="text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 h-8"
                 >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
+                  <LogOut className="w-3.5 h-3.5" />
                 </Button>
               </div>
             </div>
@@ -413,40 +408,40 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex gap-8">
-          {/* Sidebar */}
-          <aside className="w-80 bg-white rounded-xl shadow-sm border border-neutral-200 p-6 h-fit">
-            <div className="space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-[280px_1fr] gap-6">
+          {/* Sidebar - Fixed width */}
+          <aside className="bg-white dark:bg-neutral-800 rounded-lg shadow-card border border-neutral-200 dark:border-neutral-700 p-5 h-fit">
+            <div className="space-y-5">
               <ProgressTracker steps={getProgressSteps()} />
               
-              <hr className="border-neutral-200" />
+              <hr className="border-neutral-200 dark:border-neutral-700" />
 
               {/* Quick Stats */}
               <div>
-                <h4 className="text-sm font-medium text-neutral-800 mb-3">Session Stats</h4>
+                <h4 className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 mb-3">Session Stats</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-neutral-600">Jobs Analyzed</span>
-                    <span className="font-medium text-neutral-800" data-testid="stat-jobs-analyzed">
+                    <span className="text-neutral-600 dark:text-neutral-400">Jobs Analyzed</span>
+                    <span className="font-medium text-neutral-800 dark:text-neutral-100" data-testid="stat-jobs-analyzed">
                       {sessionStats.jobsAnalyzed}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-neutral-600">Resumes Generated</span>
-                    <span className="font-medium text-neutral-800" data-testid="stat-resumes-generated">
+                    <span className="text-neutral-600 dark:text-neutral-400">Resumes Generated</span>
+                    <span className="font-medium text-neutral-800 dark:text-neutral-100" data-testid="stat-resumes-generated">
                       {sessionStats.resumesGenerated}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-neutral-600">Applications Sent</span>
-                    <span className="font-medium text-neutral-800" data-testid="stat-applications-sent">
+                    <span className="text-neutral-600 dark:text-neutral-400">Applications Sent</span>
+                    <span className="font-medium text-neutral-800 dark:text-neutral-100" data-testid="stat-applications-sent">
                       {sessionStats.applicationsSent}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-neutral-600">Follow-ups Scheduled</span>
-                    <span className="font-medium text-neutral-800" data-testid="stat-followups-scheduled">
+                    <span className="text-neutral-600 dark:text-neutral-400">Follow-ups Scheduled</span>
+                    <span className="font-medium text-neutral-800 dark:text-neutral-100" data-testid="stat-followups-scheduled">
                       {sessionStats.followUpsScheduled}
                     </span>
                   </div>
@@ -456,34 +451,34 @@ export default function Home() {
           </aside>
 
           {/* Main Content */}
-          <main className="flex-1">
-            <div className="space-y-8">
-              {/* Welcome Section */}
-              <div className="bg-gradient-to-r from-primary to-blue-600 text-white rounded-xl p-8">
-                <div className="flex items-center space-x-4 mb-4">
-                  <Bot className="text-3xl" />
+          <main className="flex-1 min-w-0">
+            <div className="space-y-6">
+              {/* Welcome Section - More compact */}
+              <div className="bg-gradient-to-r from-primary to-blue-600 text-white rounded-lg p-6">
+                <div className="flex items-center space-x-3 mb-3">
+                  <Bot className="w-7 h-7" />
                   <div>
-                    <h2 className="text-2xl font-bold">AI-Powered Resume Tailoring</h2>
-                    <p className="text-blue-100">Specialized for Microsoft SQL Server DBA roles</p>
+                    <h2 className="text-xl font-bold">AI-Powered Resume Tailoring</h2>
+                    <p className="text-sm text-blue-100">Specialized for Microsoft SQL Server DBA roles</p>
                   </div>
                 </div>
-                <p className="text-blue-100 mb-6 leading-relaxed">
+                <p className="text-sm text-blue-100 mb-4 leading-relaxed">
                   Upload your base resume and a job posting URL. Our AI agent will analyze the requirements, 
                   extract key skills and keywords, then generate an ATS-optimized resume tailored specifically 
                   for that MS SQL DBA position.
                 </p>
                 <div className="flex space-x-4">
                   <div className="flex items-center space-x-2">
-                    <Check className="text-secondary" />
-                    <span className="text-sm">ATS-Optimized</span>
+                    <Check className="w-4 h-4 text-secondary" />
+                    <span className="text-xs">ATS-Optimized</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Check className="text-secondary" />
-                    <span className="text-sm">Keyword Matching</span>
+                    <Check className="w-4 h-4 text-secondary" />
+                    <span className="text-xs">Keyword Matching</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Check className="text-secondary" />
-                    <span className="text-sm">SQL DBA Focused</span>
+                    <Check className="w-4 h-4 text-secondary" />
+                    <span className="text-xs">SQL DBA Focused</span>
                   </div>
                 </div>
               </div>
@@ -669,30 +664,31 @@ export default function Home() {
           </main>
         </div>
 
-        {/* Follow-Up Queue Section */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Follow-Up Queue Section - below main grid */}
+        <div className="mt-6">
           <FollowUpQueue compact />
         </div>
       </div>
 
-      {/* Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 shadow-lg">
+      {/* Action Bar - Compressed */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" data-testid="button-save-progress">
+          <div className="flex items-center justify-between h-14">
+            <div className="flex items-center space-x-3">
+              <Button variant="ghost" size="sm" data-testid="button-save-progress">
                 Save Progress
               </Button>
-              <Button variant="ghost" data-testid="button-load-previous">
+              <Button variant="ghost" size="sm" data-testid="button-load-previous">
                 Load Previous
               </Button>
             </div>
             
-            <div className="flex items-center space-x-3">
-              <Button variant="ghost" data-testid="button-reset">
+            <div className="flex items-center space-x-2">
+              <Button variant="ghost" size="sm" data-testid="button-reset">
                 Reset All
               </Button>
               <Button 
+                size="sm"
                 disabled={!session?.jobAnalysis || session?.status === 'tailoring' || tailorResumeMutation.isPending}
                 onClick={() => {
                   if (session?.tailoredContent) {

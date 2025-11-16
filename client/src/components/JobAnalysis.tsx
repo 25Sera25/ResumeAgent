@@ -117,20 +117,20 @@ export default function JobAnalysis({
   };
 
   return (
-    <Card className={cn("border border-neutral-200 overflow-hidden", className)}>
-      <CardHeader className="px-6 py-4 border-b border-neutral-200 bg-neutral-50">
+    <Card className={cn("border border-neutral-200 dark:border-neutral-700 overflow-hidden", className)}>
+      <CardHeader className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-medium">
               2
             </div>
-            <h3 className="text-lg font-semibold text-neutral-800">Job Posting Analysis</h3>
+            <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-100">Job Posting Analysis</h3>
           </div>
           {getStatusBadge()}
         </div>
       </CardHeader>
       
-      <CardContent className="p-6 space-y-6">
+      <CardContent className="p-5 space-y-5">
         {/* Input Mode Selection */}
         <Tabs value={inputMode} onValueChange={(value) => setInputMode(value as "url" | "text")} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
@@ -146,22 +146,24 @@ export default function JobAnalysis({
           
           <TabsContent value="url" className="space-y-4 mt-6">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
+              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                 Job Posting URL
               </label>
-              <div className="flex space-x-3">
+              <div className="flex space-x-2">
                 <Input
                   type="url"
                   placeholder="https://company.com/careers/sql-dba-position"
                   value={jobUrl}
                   onChange={handleUrlChange}
-                  className="flex-1"
+                  className="flex-1 h-10"
                   disabled={isAnalyzing}
                   data-testid="input-job-url"
                 />
                 <Button
                   onClick={handleAnalyze}
                   disabled={!isReadyToAnalyze() || isAnalyzing}
+                  size="sm"
+                  className="h-10"
                   data-testid="button-analyze-job"
                 >
                   {isAnalyzing ? (
@@ -177,7 +179,7 @@ export default function JobAnalysis({
                   )}
                 </Button>
               </div>
-              <p className="text-xs text-neutral-500 mt-2">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1.5">
                 Paste the URL of the job posting you want to tailor your resume for
               </p>
             </div>
@@ -185,26 +187,28 @@ export default function JobAnalysis({
           
           <TabsContent value="text" className="space-y-4 mt-6">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
+              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                 Job Description
               </label>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Textarea
                   placeholder="Paste the full job description here including requirements, skills, and responsibilities..."
                   value={jobDescription}
                   onChange={handleDescriptionChange}
-                  rows={8}
+                  rows={6}
                   className="resize-none"
                   disabled={isAnalyzing}
                   data-testid="textarea-job-description"
                 />
                 <div className="flex justify-between items-center">
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
                     {jobDescription.length} characters
                   </p>
                   <Button
                     onClick={handleAnalyze}
                     disabled={!isReadyToAnalyze() || isAnalyzing}
+                    size="sm"
+                    className="h-10"
                     data-testid="button-analyze-job-text"
                   >
                     {isAnalyzing ? (
