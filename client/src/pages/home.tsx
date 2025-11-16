@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ import ResumePreview from "@/components/ResumePreview";
 import StoredResumeSelector from "@/components/StoredResumeSelector";
 import FollowUpQueue from "@/components/FollowUpQueue";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { KeyboardShortcutsDialog } from "@/components/KeyboardShortcutsDialog";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import type { ResumeSession } from "@shared/schema";
 
 interface SessionStats {
@@ -30,6 +32,36 @@ export default function Home() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user, logout } = useAuth();
+  const [, setLocation] = useLocation();
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts([
+    {
+      key: "l",
+      ctrlKey: true,
+      description: "Go to Resume Library",
+      action: () => setLocation("/resume-library"),
+    },
+    {
+      key: "t",
+      ctrlKey: true,
+      description: "Go to Job Tracker",
+      action: () => setLocation("/job-tracker"),
+    },
+    {
+      key: "h",
+      ctrlKey: true,
+      description: "Go to Home",
+      action: () => setLocation("/"),
+    },
+    {
+      key: "Escape",
+      description: "Close dialogs",
+      action: () => {
+        // This will be handled by individual dialogs
+      },
+    },
+  ]);
 
   // Get current session data
   const { data: session, isLoading: sessionLoading } = useQuery<ResumeSession>({
@@ -348,9 +380,14 @@ export default function Home() {
                   </Button>
                 </Link>
               )}
-              <Button variant="ghost" size="sm" data-testid="button-help">
-                <HelpCircle className="text-lg" />
-              </Button>
+              <KeyboardShortcutsDialog
+                shortcuts={[
+                  { key: "l", ctrlKey: true, description: "Go to Resume Library", action: () => {} },
+                  { key: "t", ctrlKey: true, description: "Go to Job Tracker", action: () => {} },
+                  { key: "h", ctrlKey: true, description: "Go to Home", action: () => {} },
+                  { key: "Escape", description: "Close dialogs", action: () => {} },
+                ]}
+              />
               <Button variant="ghost" size="sm" data-testid="button-settings">
                 <Settings className="text-lg" />
               </Button>
