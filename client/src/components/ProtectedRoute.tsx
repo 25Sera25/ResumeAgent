@@ -1,10 +1,18 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 
 export default function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
+
+  // Redirect to login if not authenticated
+  // Use useEffect to avoid calling setLocation during render
+  useEffect(() => {
+    if (!loading && !user) {
+      setLocation("/login");
+    }
+  }, [user, loading, setLocation]);
 
   if (loading) {
     return (
@@ -15,7 +23,6 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   if (!user) {
-    setLocation("/login");
     return null;
   }
 
