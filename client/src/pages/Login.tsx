@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, Sparkles, Target, Calendar } from "lucide-react";
+import { CheckCircle, Sparkles, Target, Calendar, Zap, Award, TrendingUp } from "lucide-react";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -77,70 +77,100 @@ export default function Login() {
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-tr from-purple-600/20 via-transparent to-blue-600/20"></div>
         
+        {/* Animated Background Elements - Pulsing Gradient Orbs */}
+        <div className="absolute top-20 left-20 w-72 h-72 bg-purple-500/30 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        
         {/* Content */}
-        <div className="relative z-10 max-w-lg space-y-8">
+        <div className="relative z-10 max-w-lg space-y-10">
           {/* Brand */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Sparkles className="h-8 w-8 text-white" />
-              <h1 className="text-4xl lg:text-5xl font-bold text-white">
+          <div className="space-y-6">
+            <div className="flex items-center space-x-3">
+              <Sparkles className="h-10 w-10 text-white drop-shadow-lg" />
+              <h1 className="text-5xl lg:text-6xl font-bold text-white drop-shadow-lg">
                 ResumeAgent
               </h1>
             </div>
-            <h2 className="text-2xl lg:text-3xl font-semibold text-white/90">
+            <h2 className="text-3xl lg:text-4xl font-semibold text-white/90 drop-shadow-md">
               Your personal SQL Server DBA job-search cockpit
             </h2>
-            <p className="text-lg text-white/80">
+            <p className="text-xl text-white/80 drop-shadow-sm">
               Tailor resumes, track applications, and prepare for interviews in one focused workspace.
             </p>
           </div>
 
-          {/* Value Bullets */}
-          <div className="space-y-4">
-            <div className="flex items-start space-x-3">
-              <CheckCircle className="h-6 w-6 text-green-300 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="text-white font-semibold">AI‑tailored resumes per posting</h3>
-                <p className="text-white/70 text-sm">
-                  Generate customized resumes that match each job description perfectly
-                </p>
+          {/* Feature Cards - 2x2 Grid with Glassmorphism */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* AI-Tailored Resumes */}
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-5 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-green-500/20">
+              <div className="flex items-start space-x-3">
+                <div className="p-2 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold mb-1">AI-Tailored Resumes</h3>
+                  <p className="text-white/70 text-sm">
+                    Generate customized resumes that match each job perfectly
+                  </p>
+                </div>
               </div>
             </div>
-            <div className="flex items-start space-x-3">
-              <Target className="h-6 w-6 text-blue-300 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="text-white font-semibold">Application tracking with follow-ups</h3>
-                <p className="text-white/70 text-sm">
-                  Never miss a deadline with organized tracking and automated reminders
-                </p>
+
+            {/* Smart Tracking */}
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-5 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
+              <div className="flex items-start space-x-3">
+                <div className="p-2 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-lg">
+                  <Target className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold mb-1">Smart Tracking</h3>
+                  <p className="text-white/70 text-sm">
+                    Never miss a deadline with organized tracking and reminders
+                  </p>
+                </div>
               </div>
             </div>
-            <div className="flex items-start space-x-3">
-              <Calendar className="h-6 w-6 text-purple-300 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="text-white font-semibold">Interview Prep Hub</h3>
-                <p className="text-white/70 text-sm">
-                  Practice with job-specific questions and craft compelling STAR stories
-                </p>
+
+            {/* Interview Prep Hub */}
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-5 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/20">
+              <div className="flex items-start space-x-3">
+                <div className="p-2 bg-gradient-to-br from-purple-400 to-violet-500 rounded-lg">
+                  <Calendar className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold mb-1">Interview Prep Hub</h3>
+                  <p className="text-white/70 text-sm">
+                    Practice with job-specific questions and STAR stories
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Analytics & Insights */}
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-5 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-amber-500/20">
+              <div className="flex items-start space-x-3">
+                <div className="p-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold mb-1">Analytics & Insights</h3>
+                  <p className="text-white/70 text-sm">
+                    Track your progress and optimize your job search strategy
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Stats Card - Glassmorphism */}
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-xl">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-3xl font-bold text-white">250+</div>
-                <div className="text-sm text-white/70">Resumes Tailored</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-white">89</div>
-                <div className="text-sm text-white/70">Interviews</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-white">32</div>
-                <div className="text-sm text-white/70">Offers</div>
-              </div>
+          {/* Inspirational Tagline */}
+          <div className="bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-md rounded-xl p-4 border border-white/20">
+            <div className="flex items-center justify-center space-x-3 text-white/90">
+              <Award className="h-5 w-5" />
+              <span className="font-medium">Designed for SQL Server DBAs</span>
+              <span className="text-white/60">·</span>
+              <Zap className="h-5 w-5" />
+              <span className="font-medium">Built for Success</span>
             </div>
           </div>
         </div>
