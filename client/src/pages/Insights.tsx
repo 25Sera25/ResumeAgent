@@ -40,12 +40,21 @@ export default function Insights() {
         const data = await response.json();
         setInsights(data);
       } else {
-        throw new Error('Failed to fetch insights');
+        // Only show error for actual server errors, not empty data
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Failed to fetch insights:', errorData);
+        toast({
+          title: "Error",
+          description: errorData.error || "Failed to load skills insights",
+          variant: "destructive"
+        });
       }
     } catch (error) {
+      // Only show toast for network errors, not empty data
+      console.error('Network error fetching insights:', error);
       toast({
         title: "Error",
-        description: "Failed to load skills insights",
+        description: "Failed to load skills insights. Please check your connection.",
         variant: "destructive"
       });
     } finally {
@@ -221,11 +230,17 @@ export default function Insights() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">
-                    No data yet. Start analyzing job postings to see insights!
+                <div className="text-center py-12">
+                  <Brain className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Skills Data Yet</h3>
+                  <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                    Start analyzing job postings and tailoring your resume to unlock powerful insights about in-demand skills and your coverage areas.
                   </p>
+                  <Link href="/">
+                    <Button variant="default" className="mt-2">
+                      Create Your First Tailored Resume
+                    </Button>
+                  </Link>
                 </div>
               )}
             </CardContent>
@@ -261,8 +276,20 @@ export default function Insights() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">Great! No significant skills gaps detected.</p>
+                <div className="text-center py-10">
+                  {insights?.stats?.totalJobsAnalyzed === 0 ? (
+                    <>
+                      <Target className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
+                      <p className="text-muted-foreground">
+                        Skills gap analysis will appear here once you start tailoring resumes to job postings.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <Target className="h-12 w-12 text-green-500/50 mx-auto mb-3" />
+                      <p className="text-muted-foreground">Great! No significant skills gaps detected.</p>
+                    </>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -313,11 +340,22 @@ export default function Insights() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">
-                    No learning recommendations yet. Analyze more job postings!
-                  </p>
+                <div className="text-center py-10">
+                  <BookOpen className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
+                  {insights?.stats?.totalJobsAnalyzed === 0 ? (
+                    <>
+                      <p className="text-muted-foreground mb-2">
+                        Personalized learning resources will appear here based on your skills gaps.
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Tailor your first resume to get started!
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-muted-foreground">
+                      No learning recommendations yet. You're covering all the key skills!
+                    </p>
+                  )}
                 </div>
               )}
             </CardContent>
