@@ -69,8 +69,10 @@ Never commit your actual `.env` file to version control!
    ```
 
 4. **Build & Deploy**
-   - Build Command: `npm install && npm run build`
+   - Build Command: `npm install && npm run build && npm run db:migrate`
    - Start Command: `npm start`
+   
+   **Note**: The build command now includes `npm run db:migrate` to automatically apply database migrations during deployment.
 
 ### Troubleshooting Authentication Issues
 
@@ -149,10 +151,17 @@ This allows Express to trust the `X-Forwarded-Proto` header from the reverse pro
    - Copy `.env.example` to `.env`
    - Update `DATABASE_URL` with your local database URL
 
-3. **Run migrations** (if using Drizzle):
+3. **Run database migrations**:
+   ```bash
+   npm run db:migrate
+   ```
+   
+   Alternatively, for development you can use schema push:
    ```bash
    npm run db:push
    ```
+   
+   **Note**: `db:migrate` is recommended for production as it maintains migration history.
 
 4. **Start development server**:
    ```bash
