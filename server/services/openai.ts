@@ -40,6 +40,8 @@ export interface ResumeAnalysis {
   gaps: string[];
   matchScore: number;
   suggestions: string[];
+  matchedKeywords?: string[];
+  missingKeywords?: string[];
 }
 
 export interface ContactInformation {
@@ -112,7 +114,7 @@ Please respond with a JSON object containing:
 If any field is not found in the resume, return an empty string for that field.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -173,7 +175,7 @@ Return a comprehensive JSON analysis containing:
 Focus on SQL Server, database administration, EHR systems, and related technologies.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -237,11 +239,13 @@ Please respond with a JSON object containing:
 - gaps: Array of missing skills/experience from the resume
 - matchScore: Percentage match (0-100)
 - suggestions: Array of specific suggestions to improve the resume for this role
+- matchedKeywords: Array of keywords from the job requirements that are present in the resume
+- missingKeywords: Array of important keywords from the job requirements that are missing from the resume
 
 Focus on SQL Server DBA specific skills, experience, and qualifications.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -439,7 +443,7 @@ CRITICAL REQUIREMENTS:
 5. **Role evolution** - Traditional DBA → Cloud DBA → Data Platform Engineer → Multi-Cloud Data Engineer based on job requirements`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -590,7 +594,7 @@ Example STAR: "When you mentioned the need for high-availability database soluti
     }
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",

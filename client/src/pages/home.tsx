@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,9 @@ import JobAnalysis from "@/components/JobAnalysis";
 import ResumePreview from "@/components/ResumePreview";
 import StoredResumeSelector from "@/components/StoredResumeSelector";
 import FollowUpQueue from "@/components/FollowUpQueue";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { KeyboardShortcutsDialog } from "@/components/KeyboardShortcutsDialog";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import type { ResumeSession } from "@shared/schema";
 
 interface SessionStats {
@@ -29,6 +32,36 @@ export default function Home() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user, logout } = useAuth();
+  const [, setLocation] = useLocation();
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts([
+    {
+      key: "l",
+      ctrlKey: true,
+      description: "Go to Resume Library",
+      action: () => setLocation("/resume-library"),
+    },
+    {
+      key: "t",
+      ctrlKey: true,
+      description: "Go to Job Tracker",
+      action: () => setLocation("/job-tracker"),
+    },
+    {
+      key: "h",
+      ctrlKey: true,
+      description: "Go to Home",
+      action: () => setLocation("/"),
+    },
+    {
+      key: "Escape",
+      description: "Close dialogs",
+      action: () => {
+        // This will be handled by individual dialogs
+      },
+    },
+  ]);
 
   // Get current session data
   const { data: session, isLoading: sessionLoading } = useQuery<ResumeSession>({
@@ -312,9 +345,9 @@ export default function Home() {
   }
 
   return (
-    <div className="font-inter bg-neutral-50 min-h-screen">
+    <div className="font-inter bg-neutral-50 dark:bg-neutral-900 min-h-screen">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-neutral-200">
+      <header className="bg-white dark:bg-neutral-800 shadow-sm border-b border-neutral-200 dark:border-neutral-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
@@ -322,8 +355,8 @@ export default function Home() {
                 <Database className="text-xl" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-neutral-800">Resume Tailor Agent</h1>
-                <p className="text-sm text-neutral-500">MS SQL Server DBA Specialist</p>
+                <h1 className="text-xl font-bold text-neutral-800 dark:text-neutral-100">Resume Tailor Agent</h1>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">MS SQL Server DBA Specialist</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -347,14 +380,20 @@ export default function Home() {
                   </Button>
                 </Link>
               )}
-              <Button variant="ghost" size="sm" data-testid="button-help">
-                <HelpCircle className="text-lg" />
-              </Button>
+              <KeyboardShortcutsDialog
+                shortcuts={[
+                  { key: "l", ctrlKey: true, description: "Go to Resume Library", action: () => {} },
+                  { key: "t", ctrlKey: true, description: "Go to Job Tracker", action: () => {} },
+                  { key: "h", ctrlKey: true, description: "Go to Home", action: () => {} },
+                  { key: "Escape", description: "Close dialogs", action: () => {} },
+                ]}
+              />
               <Button variant="ghost" size="sm" data-testid="button-settings">
                 <Settings className="text-lg" />
               </Button>
-              <div className="flex items-center gap-2 ml-2 pl-4 border-l border-neutral-200">
-                <div className="flex items-center gap-2 text-sm text-neutral-600">
+              <ThemeToggle />
+              <div className="flex items-center gap-2 ml-2 pl-4 border-l border-neutral-200 dark:border-neutral-700">
+                <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300">
                   <User className="w-4 h-4" />
                   <span>{user?.username}</span>
                 </div>
@@ -363,7 +402,7 @@ export default function Home() {
                   size="sm" 
                   onClick={handleLogout}
                   data-testid="button-logout"
-                  className="text-neutral-600 hover:text-neutral-900"
+                  className="text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout

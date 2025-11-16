@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Loader2, CheckCircle, Clock, Link, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import KeywordMatchVisualization from "./KeywordMatchVisualization";
 
 interface JobAnalysisResult {
   title?: string;
@@ -32,6 +33,9 @@ interface JobAnalysisResult {
     roleSpecific?: boolean;
     notGeneric?: boolean;
   };
+  // Keyword match details
+  matchedKeywords?: string[];
+  missingKeywords?: string[];
 }
 
 interface JobAnalysisProps {
@@ -361,8 +365,17 @@ export default function JobAnalysis({
                     </div>
                   )}
 
-                  {/* Match Score */}
-                  {result.matchScore !== undefined && (
+                  {/* Keyword Match Visualization */}
+                  {(result.matchedKeywords || result.missingKeywords) && (
+                    <KeywordMatchVisualization
+                      matchedKeywords={result.matchedKeywords || []}
+                      missingKeywords={result.missingKeywords || []}
+                      matchScore={result.matchScore}
+                    />
+                  )}
+
+                  {/* Match Score - Only show if keyword visualization is not shown */}
+                  {result.matchScore !== undefined && !result.matchedKeywords && !result.missingKeywords && (
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
