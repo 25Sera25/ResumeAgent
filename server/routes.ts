@@ -301,6 +301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/sessions/:id/download/:format", requireAuth, async (req, res) => {
     try {
       const { format } = req.params;
+      const userId = req.user!.id;
       
       if (!['pdf', 'docx'].includes(format)) {
         return res.status(400).json({ error: "Format must be pdf or docx" });
@@ -309,40 +310,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const documents = await generateResumeDocuments(req.params.id);
       const buffer = format === 'pdf' ? documents.pdf : documents.docx;
       
-      const session = await storage.getResumeSession(req.params.id);
+      // Get session with userId to ensure user owns it
+      const session = await storage.getResumeSession(req.params.id, userId);
       
-      // Create filename in format: Name_DBA_Resume_CompanyName (e.g. Ayele_DBA_Resume_Microsoft)
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      
+      // Create filename in format: FirstName_DBA_Resume_Company (matching save-to-library pattern)
       let filename = 'tailored_resume';
       
-      const tailoredContent = session?.tailoredContent;
-      const jobAnalysis = session?.jobAnalysis;
+      // PRIORITY 1: Check if this session has already been saved to library and reuse that filename
+      try {
+        const savedResumes = await storage.getTailoredResumes(userId);
+        const savedResume = savedResumes.find(r => r.sessionId === req.params.id);
+        if (savedResume?.filename) {
+          // Strip any existing extension from stored filename
+          filename = savedResume.filename.replace(/\.(pdf|docx)$/i, '');
+          console.log(`[SESSION_DOWNLOAD] Reusing saved resume filename: ${savedResume.filename} -> ${filename}.${format}`);
+        }
+      } catch (err) {
+        console.log(`[SESSION_DOWNLOAD] Could not check for saved resume, continuing with generation:`, err);
+      }
       
-      if (tailoredContent && typeof tailoredContent === 'object' && jobAnalysis && typeof jobAnalysis === 'object') {
-        const contact = (tailoredContent as any).contact;
-        const targetCompany = (jobAnalysis as any).company;
+      // PRIORITY 2: Generate filename from session data (if not already set from saved resume)
+      if (filename === 'tailored_resume') {
+        const tailoredContent = session.tailoredContent;
+        const jobAnalysis = session.jobAnalysis;
         
-        if (contact?.name && targetCompany) {
-          // Extract first name from full name (e.g., "Ayele Tesfaye" -> "Ayele")
-          const firstName = contact.name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
-          // Clean company name and limit length to avoid truncation issues
-          const cleanCompany = targetCompany
-            .replace(/[^a-zA-Z0-9\s]/g, '')
-            .replace(/\s+/g, '')
-            .substring(0, 20); // Limit to 20 chars to avoid filename issues
-          filename = `${firstName}_DBA_Resume_${cleanCompany}`;
-        } else if (contact?.name) {
-          // Fallback to just name_DBA_Resume if no company
-          const firstName = contact.name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
-          filename = `${firstName}_DBA_Resume`;
+        console.log(`[SESSION_DOWNLOAD] Session ${req.params.id} data:`, {
+          hasTailoredContent: !!tailoredContent,
+          hasJobAnalysis: !!jobAnalysis,
+          contactName: tailoredContent && typeof tailoredContent === 'object' ? (tailoredContent as any).contact?.name : null,
+          company: jobAnalysis && typeof jobAnalysis === 'object' ? (jobAnalysis as any).company : null,
+        });
+        
+        if (tailoredContent && typeof tailoredContent === 'object' && jobAnalysis && typeof jobAnalysis === 'object') {
+          const contact = (tailoredContent as any).contact;
+          const targetCompany = (jobAnalysis as any).company;
+          
+          if (contact?.name && targetCompany) {
+            // Extract first name from full name (e.g., "Ayele Tesfaye" -> "Ayele")
+            const firstName = contact.name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
+            // Clean company name and limit length to avoid truncation issues
+            const cleanCompany = targetCompany
+              .replace(/[^a-zA-Z0-9\s]/g, '')
+              .replace(/\s+/g, '')
+              .substring(0, 20); // Limit to 20 chars to avoid filename issues
+            filename = `${firstName}_DBA_Resume_${cleanCompany}`;
+            console.log(`[SESSION_DOWNLOAD] Generated filename from contact+company: ${filename}`);
+          } else if (contact?.name) {
+            // Fallback to just name_DBA_Resume if no company
+            const firstName = contact.name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
+            filename = `${firstName}_DBA_Resume`;
+            console.log(`[SESSION_DOWNLOAD] Generated filename from contact only: ${filename}`);
+          } else {
+            console.log(`[SESSION_DOWNLOAD] Missing contact/company data, using fallback: ${filename}`);
+          }
+        } else {
+          console.log(`[SESSION_DOWNLOAD] No tailoredContent or jobAnalysis, using fallback: ${filename}`);
         }
       }
       
       filename += `.${format}`;
+      console.log(`[SESSION_DOWNLOAD] Final filename for session ${req.params.id}: ${filename}`);
 
       res.setHeader('Content-Type', format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
       res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
       res.send(buffer);
     } catch (error) {
+      console.error(`[SESSION_DOWNLOAD] Error downloading session ${req.params.id}:`, error);
       res.status(500).json({ error: (error as Error).message });
     }
   });

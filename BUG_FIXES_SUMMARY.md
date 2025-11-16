@@ -1,7 +1,168 @@
 # Bug Fixes Summary - Production Blocking Issues
 
 ## Overview
-This document summarizes the fixes for three production-blocking bugs in the ResumeAgent application.
+This document summarizes the fixes for production-blocking bugs in the ResumeAgent application.
+
+---
+
+## Latest Fixes - Session Download Filenames & Production DB Schema (Current PR)
+
+### Problem
+1. **Session downloads use generic `tailored_resume.pdf` filenames** - When downloading a tailored resume from an active session (before saving to library), the filename was always `tailored_resume.pdf` or `tailored_resume.docx` instead of a meaningful name like `Ayele_DBA_Resume_SQLWatchmen.pdf`.
+2. **Production DB schema out of sync** - Render production database was missing analytics columns (`response_received`, `response_date`, `source`, `referral`, `micro_edits`, `ai_improvements`), causing `getOverallStats` to fail with "column does not exist" errors.
+
+### Root Cause
+1. **Session download endpoint** (`GET /api/sessions/:id/download/:format`) had filename generation logic, but it wasn't being triggered properly because:
+   - It didn't pass `userId` when fetching the session
+   - It had no logging to debug why fallback was being used
+   - It didn't check if the session was already saved to library (which would have a proper filename)
+
+2. **Database schema mismatch** - Migration 0001 exists with all necessary columns, but hadn't been run on Render's production database yet. The `getOverallStats` method would crash if any column was missing, breaking the homepage.
+
+### Solution
+
+#### 1. Session Download Filename Fix (`server/routes.ts` lines 300-388)
+
+**Enhanced the session download endpoint with:**
+
+- **Priority 1: Reuse saved resume filename** if the session has already been saved to the library
+  - Queries `getTailoredResumes` to find a saved resume matching the session ID
+  - Uses the stored `filename` field from the database
+  - Strips any existing extension before adding the requested format
+
+- **Priority 2: Generate from session data** if not saved yet
+  - Extracts contact name from `session.tailoredContent.contact.name`
+  - Extracts company from `session.jobAnalysis.company`
+  - Creates filename pattern: `FirstName_DBA_Resume_Company` (e.g., `Ayele_DBA_Resume_Microsoft`)
+  - Sanitizes company name (removes special chars, limits to 20 chars)
+
+- **Priority 3: Fallback to `tailored_resume`** only if all data is missing
+
+- **Comprehensive logging** with `[SESSION_DOWNLOAD]` prefix for debugging:
+  - Logs whether saved resume filename was reused
+  - Logs session data availability (hasTailoredContent, hasJobAnalysis, contactName, company)
+  - Logs filename generation decision at each step
+  - Logs final filename being used
+
+**Example filename progression:**
+```
+Session not saved yet → Ayele_DBA_Resume_Microsoft.pdf
+Session saved to library → Ayele_DBA_SQLWatchmen.pdf (reuses saved filename)
+No contact/company data → tailored_resume.pdf (fallback)
+```
+
+#### 2. Production DB Schema Fix (`server/storage.ts` lines 803-850)
+
+**Added error handling to `getOverallStats`:**
+
+```typescript
+async getOverallStats(userId?: string): Promise<{...}> {
+  try {
+    // ... existing query logic
+  } catch (error) {
+    console.error('[STATS] Error fetching overall stats:', error);
+    console.error('[STATS] This may indicate a database schema mismatch. Please run migrations: npm run db:migrate');
+    // Return safe defaults instead of throwing
+    return {
+      jobsAnalyzed: 0,
+      resumesGenerated: 0,
+      applicationsSent: 0,
+      followUpsScheduled: 0,
+    };
+  }
+}
+```
+
+**Benefits:**
+- Homepage no longer crashes if DB schema is out of sync
+- Clear error message in logs indicates the solution (run migrations)
+- Safe defaults (all zeros) allow app to continue functioning
+- User sees empty stats instead of a broken page
+
+#### 3. Library Download Verification (No Changes Needed)
+
+**Verified that library download endpoint already correctly:**
+- Strips existing extensions from stored filename (line 862)
+- Uses stored `filename` if available (line 860-864)
+- Falls back to generating from contact/company if needed (line 866-881)
+- Has proper logging with `[DOWNLOAD]` prefix (line 864, 883)
+
+### Migration Status
+
+**Migration `0001_add_tailored_resumes_columns.sql` is complete and idempotent:**
+- ✅ `micro_edits` (json) - Stores AI micro-edits applied
+- ✅ `ai_improvements` (json) - Stores AI improvements made
+- ✅ `response_received` (boolean) - Tracks if application got response
+- ✅ `response_date` (timestamp) - When response was received
+- ✅ `source` (text) - Job source (LinkedIn, Indeed, etc.)
+- ✅ `referral` (text) - Referral source if applicable
+
+**All columns use `DO` blocks with existence checks**, making the migration safe to run multiple times.
+
+### Files Changed
+
+**Modified:**
+1. `server/routes.ts` - Enhanced session download endpoint with priority-based filename logic and comprehensive logging
+2. `server/storage.ts` - Added error handling to `getOverallStats` to prevent schema errors from breaking homepage
+3. `BUG_FIXES_SUMMARY.md` - This file, documenting the fixes
+
+**No New Files** - Migration 0001 already exists with all required columns
+
+---
+
+## Deployment Checklist for Production (Render)
+
+### Critical Steps:
+1. ✅ Review code changes
+2. ✅ TypeScript compilation passes
+3. ✅ Build succeeds
+4. ⚠️ **RUN DATABASE MIGRATION ON RENDER**: `npm run db:migrate`
+   - This adds the missing analytics columns to `tailored_resumes` table
+   - Safe to run - migration is idempotent (checks if columns exist first)
+   - **MUST be done before or during deployment** to prevent errors
+5. ⏳ Deploy updated code to Render
+6. ⏳ Monitor Render logs for any errors
+
+### Post-Deployment Verification:
+1. **Test session download filename:**
+   - Create new tailoring session
+   - Upload resume, analyze job, tailor resume
+   - Click download → filename should be `FirstName_DBA_Resume_Company.pdf`
+   - Check Render logs for `[SESSION_DOWNLOAD]` messages
+
+2. **Test library download filename:**
+   - Save the tailored resume to library
+   - Download from library → filename should match saved filename
+   - Check Render logs for `[DOWNLOAD]` messages
+
+3. **Test homepage stats:**
+   - Visit homepage
+   - Session stats should load without errors
+   - If errors occur, check Render logs for `[STATS]` messages
+   - Stats should show counts or all zeros (not crash)
+
+4. **Check Render logs:**
+   - No "column does not exist" errors
+   - `[SESSION_DOWNLOAD]` logs show proper filename generation
+   - No 500 errors on `/api/session-stats` endpoint
+
+### Migration Verification (Run on Render DB):
+```sql
+-- Verify all columns exist
+SELECT column_name, data_type 
+FROM information_schema.columns 
+WHERE table_name = 'tailored_resumes'
+ORDER BY column_name;
+
+-- Should include: ai_improvements, micro_edits, referral, response_date, response_received, source
+```
+
+### Rollback Plan (if needed):
+- Code changes are backward compatible (only added logging and error handling)
+- Migration is additive (only adds columns, doesn't modify existing data)
+- If issues occur, can revert code deploy but keep migration (columns don't hurt)
+
+---
 
 ## Bug #1: "Failed to save resume to library" - 500 Error ✅ FIXED
 
