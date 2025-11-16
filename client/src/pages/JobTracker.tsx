@@ -19,7 +19,8 @@ import {
   Filter,
   Search,
   ArrowLeft,
-  Bell
+  Bell,
+  Mail
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -272,6 +273,12 @@ export default function JobTracker() {
           <Link href="/resume-library">
             <Button variant="ghost" size="sm" data-testid="link-resume-library">
               Resume Library
+            </Button>
+          </Link>
+          <Link href="/follow-ups">
+            <Button variant="ghost" size="sm" className="gap-2" data-testid="link-follow-ups">
+              <Mail className="h-4 w-4" />
+              Follow-Ups
             </Button>
           </Link>
         </div>

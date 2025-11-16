@@ -500,14 +500,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { sessionId } = req.params;
       const userId = req.user!.id;
+      
+      console.log(`[SAVE] Attempting to save resume for session ${sessionId}, user ${userId}`);
+      
       const session = await storage.getResumeSession(sessionId, userId);
       
-      if (!session || !session.tailoredContent || !session.jobAnalysis) {
-        return res.status(400).json({ error: 'Session not found or tailored content not available' });
+      // Detailed validation with specific error messages
+      if (!session) {
+        console.error(`[SAVE] Session not found: ${sessionId}`);
+        return res.status(404).json({ 
+          error: 'Session not found',
+          details: 'The resume tailoring session could not be found. Please start a new session.'
+        });
+      }
+      
+      if (!session.tailoredContent) {
+        console.error(`[SAVE] No tailored content in session ${sessionId}`);
+        return res.status(400).json({ 
+          error: 'Resume not tailored yet',
+          details: 'Please tailor your resume before saving it to the library. Click "Tailor Resume" to generate an optimized version.'
+        });
+      }
+      
+      if (!session.jobAnalysis) {
+        console.error(`[SAVE] No job analysis in session ${sessionId}`);
+        return res.status(400).json({ 
+          error: 'Job analysis missing',
+          details: 'Job information is required to save the resume. Please analyze a job posting first.'
+        });
       }
 
       const jobAnalysis = session.jobAnalysis as any;
       const tailoredContent = session.tailoredContent as any;
+      
+      // Validate critical data with fallbacks
+      if (!jobAnalysis || typeof jobAnalysis !== 'object') {
+        console.error(`[SAVE] Invalid jobAnalysis format in session ${sessionId}:`, jobAnalysis);
+        return res.status(400).json({ 
+          error: 'Invalid job analysis data',
+          details: 'The job analysis data is corrupted. Please re-analyze the job posting.'
+        });
+      }
+      
+      if (!tailoredContent || typeof tailoredContent !== 'object') {
+        console.error(`[SAVE] Invalid tailoredContent format in session ${sessionId}:`, tailoredContent);
+        return res.status(400).json({ 
+          error: 'Invalid tailored content',
+          details: 'The tailored resume data is corrupted. Please re-tailor your resume.'
+        });
+      }
       
       // Generate filename like "Ayele_DBA_Resume_Microsoft"
       const contactName = tailoredContent.contact?.name || 'Resume';
@@ -520,14 +561,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .replace(/\s+/g, '')
         .substring(0, 20);
       
-      const filename = `${cleanName}_DBA_Resume_${cleanCompany}`;
+      const filename = `${cleanName}_DBA_${cleanCompany}`;
+      
+      console.log(`[SAVE] Saving resume with filename: ${filename}`);
 
       const savedResume = await storage.saveTailoredResume({
         userId,
         sessionId,
         jobTitle: jobAnalysis.title || 'Unknown Position',
         company: jobAnalysis.company || 'Unknown Company',
-        jobUrl: session.jobUrl,
+        jobUrl: session.jobUrl || null,
         // SAVE ORIGINAL JOB DESCRIPTION for interview preparation
         originalJobDescription: session.jobDescription || jobAnalysis.description || null,
         tailoredContent: session.tailoredContent,
@@ -542,10 +585,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         aiImprovements: tailoredContent.improvements || [],
       });
 
+      console.log(`[SAVE] Successfully saved resume ${savedResume.id} for session ${sessionId}`);
       res.json({ id: savedResume.id, filename: savedResume.filename, message: 'Resume saved permanently!' });
     } catch (error) {
-      console.error('Error saving tailored resume:', error);
-      res.status(500).json({ error: 'Failed to save tailored resume' });
+      console.error('[SAVE] Error saving tailored resume:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ 
+        error: 'Failed to save tailored resume',
+        details: `An unexpected error occurred: ${errorMessage}. Please try again or contact support.`
+      });
     }
   });
 
@@ -749,26 +797,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { generateResumeDocumentFromContent } = await import('./services/resumeTailor');
         const buffer = await generateResumeDocumentFromContent(tailoredContent, format as 'pdf' | 'docx');
         
-        // Always generate proper filename format: Name_DBA_Resume_CompanyName
-        const contact = tailoredContent?.contact;
-        const company = resume.company;
-        
+        // Use the stored filename from database if available, otherwise generate from contact/company
+        // Format: FirstName_DBA_Company.format (e.g., "Ayele_DBA_Microsoft.pdf")
         let filename = `tailored_resume.${format}`; // fallback
         
-        if (contact?.name && company) {
-          const firstName = contact.name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
-          const cleanCompany = company
-            .replace(/[^a-zA-Z0-9\s]/g, '')
-            .replace(/\s+/g, '')
-            .substring(0, 20);
-          filename = `${firstName}_DBA_Resume_${cleanCompany}.${format}`;
-        } else if (contact?.name) {
-          const firstName = contact.name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
-          filename = `${firstName}_DBA_Resume.${format}`;
+        if (resume.filename) {
+          // Use the stored filename and add the format extension
+          filename = `${resume.filename}.${format}`;
+        } else {
+          // Fallback: generate from contact and company info
+          const contact = tailoredContent?.contact;
+          const company = resume.company;
+          
+          if (contact?.name && company) {
+            const firstName = contact.name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
+            const cleanCompany = company
+              .replace(/[^a-zA-Z0-9\s]/g, '')
+              .replace(/\s+/g, '')
+              .substring(0, 20);
+            filename = `${firstName}_DBA_${cleanCompany}.${format}`;
+          } else if (contact?.name) {
+            const firstName = contact.name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
+            filename = `${firstName}_DBA.${format}`;
+          }
         }
         
+        console.log(`[DOWNLOAD] Serving resume ${id} with filename: ${filename}`);
+        
         res.setHeader('Content-Type', format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
         res.send(buffer);
       } else {
         res.status(400).json({ error: 'Invalid format. Use pdf or docx.' });
