@@ -5,9 +5,10 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Database, Bot, HelpCircle, Settings, Check, Loader2, WandSparkles, FileText, Library, BookOpen, BarChart3, LogOut, User, Shield } from "lucide-react";
+import { Database, Bot, HelpCircle, Settings, Check, Loader2, WandSparkles, FileText, Library, BookOpen, BarChart3, LogOut, User, Shield, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import ProgressTracker from "@/components/ProgressTracker";
+import { cn } from "@/lib/utils";
+import Sidebar from "@/components/Sidebar";
 import FileUpload from "@/components/FileUpload";
 import JobAnalysis from "@/components/JobAnalysis";
 import ResumePreview from "@/components/ResumePreview";
@@ -345,218 +346,191 @@ export default function Home() {
   }
 
   return (
-    <div className="font-inter bg-neutral-50 dark:bg-neutral-900 min-h-screen">
-      {/* Header - Compressed */}
-      <header className="bg-white dark:bg-neutral-800 shadow-sm border-b border-neutral-200 dark:border-neutral-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-14">
-            <div className="flex items-center space-x-2">
-              <div className="bg-primary text-white p-1.5 rounded-lg">
-                <Database className="w-5 h-5" />
+    <div className="font-inter bg-background dark:bg-background min-h-screen">
+      {/* Sidebar */}
+      <Sidebar steps={getProgressSteps()} stats={sessionStats} />
+
+      {/* Main Content Area with Sidebar Offset */}
+      <div className="lg:ml-[280px]">
+        {/* Header - Sticky with backdrop blur */}
+        <header className="sticky top-0 z-30 bg-white/80 dark:bg-neutral-800/80 backdrop-blur-lg shadow-sm border-b border-neutral-200 dark:border-neutral-700">
+          <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center space-x-3">
+                <div className="bg-gradient-primary text-white p-2 rounded-lg">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-neutral-800 dark:text-neutral-100">Resume Tailor Agent</h1>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">AI-Powered Resume Optimization</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-lg font-bold text-neutral-800 dark:text-neutral-100">Resume Tailor Agent</h1>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Link href="/resume-library">
-                <Button variant="ghost" size="sm" data-testid="button-resume-library">
-                  <BookOpen className="w-4 h-4" />
-                </Button>
-              </Link>
-              <Link href="/job-tracker">
-                <Button variant="ghost" size="sm" data-testid="button-job-tracker">
-                  <BarChart3 className="w-4 h-4" />
-                </Button>
-              </Link>
-              {user?.isAdmin && (
-                <Link href="/admin/users">
-                  <Button variant="ghost" size="sm" data-testid="button-admin">
-                    <Shield className="w-4 h-4" />
+              <div className="flex items-center space-x-3">
+                <Link href="/resume-library">
+                  <Button variant="ghost" size="sm" className="button-hover" data-testid="button-resume-library">
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    <span className="hidden sm:inline">Library</span>
                   </Button>
                 </Link>
-              )}
-              <KeyboardShortcutsDialog
-                shortcuts={[
-                  { key: "l", ctrlKey: true, description: "Go to Resume Library", action: () => {} },
-                  { key: "t", ctrlKey: true, description: "Go to Job Tracker", action: () => {} },
-                  { key: "h", ctrlKey: true, description: "Go to Home", action: () => {} },
-                  { key: "Escape", description: "Close dialogs", action: () => {} },
-                ]}
-              />
-              <Button variant="ghost" size="sm" data-testid="button-settings">
-                <Settings className="w-4 h-4" />
-              </Button>
-              <ThemeToggle />
-              <div className="flex items-center gap-2 ml-2 pl-2 border-l border-neutral-200 dark:border-neutral-700">
-                <div className="flex items-center gap-1.5 text-sm text-neutral-600 dark:text-neutral-300">
-                  <User className="w-3.5 h-3.5" />
-                  <span className="text-xs">{user?.username}</span>
+                <Link href="/job-tracker">
+                  <Button variant="ghost" size="sm" className="button-hover" data-testid="button-job-tracker">
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    <span className="hidden sm:inline">Tracker</span>
+                  </Button>
+                </Link>
+                {user?.isAdmin && (
+                  <Link href="/admin/users">
+                    <Button variant="ghost" size="sm" className="button-hover" data-testid="button-admin">
+                      <Shield className="w-4 h-4 mr-2" />
+                      <span className="hidden sm:inline">Admin</span>
+                    </Button>
+                  </Link>
+                )}
+                <KeyboardShortcutsDialog
+                  shortcuts={[
+                    { key: "l", ctrlKey: true, description: "Go to Resume Library", action: () => {} },
+                    { key: "t", ctrlKey: true, description: "Go to Job Tracker", action: () => {} },
+                    { key: "h", ctrlKey: true, description: "Go to Home", action: () => {} },
+                    { key: "Escape", description: "Close dialogs", action: () => {} },
+                  ]}
+                />
+                <ThemeToggle />
+                <div className="flex items-center gap-2 pl-2 border-l border-neutral-200 dark:border-neutral-700">
+                  <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300">
+                    <User className="w-4 h-4" />
+                    <span className="hidden sm:inline text-sm">{user?.username}</span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleLogout}
+                    data-testid="button-logout"
+                    className="text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </Button>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={handleLogout}
-                  data-testid="button-logout"
-                  className="text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 h-8"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                </Button>
               </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-[280px_1fr] gap-6">
-          {/* Sidebar - Fixed width */}
-          <aside className="bg-white dark:bg-neutral-800 rounded-lg shadow-card border border-neutral-200 dark:border-neutral-700 p-5 h-fit">
-            <div className="space-y-5">
-              <ProgressTracker steps={getProgressSteps()} />
+        {/* Main Content */}
+        <main className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 py-8">
+          <div className="space-y-8">
+            {/* Hero Section - Eye-catching banner with gradient */}
+            <div className="relative overflow-hidden bg-gradient-animated rounded-xl p-8 text-white shadow-lg animate-scale-in">
+              {/* Animated background effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-transparent to-blue-600/20 animate-pulse-glow" />
               
-              <hr className="border-neutral-200 dark:border-neutral-700" />
-
-              {/* Quick Stats */}
-              <div>
-                <h4 className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 mb-3">Session Stats</h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-neutral-600 dark:text-neutral-400">Jobs Analyzed</span>
-                    <span className="font-medium text-neutral-800 dark:text-neutral-100" data-testid="stat-jobs-analyzed">
-                      {sessionStats.jobsAnalyzed}
-                    </span>
+              <div className="relative z-10">
+                <div className="flex items-start space-x-4 mb-4">
+                  <div className="bg-white/20 backdrop-blur-sm p-3 rounded-lg animate-float">
+                    <Sparkles className="w-8 h-8" />
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-neutral-600 dark:text-neutral-400">Resumes Generated</span>
-                    <span className="font-medium text-neutral-800 dark:text-neutral-100" data-testid="stat-resumes-generated">
-                      {sessionStats.resumesGenerated}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-neutral-600 dark:text-neutral-400">Applications Sent</span>
-                    <span className="font-medium text-neutral-800 dark:text-neutral-100" data-testid="stat-applications-sent">
-                      {sessionStats.applicationsSent}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-neutral-600 dark:text-neutral-400">Follow-ups Scheduled</span>
-                    <span className="font-medium text-neutral-800 dark:text-neutral-100" data-testid="stat-followups-scheduled">
-                      {sessionStats.followUpsScheduled}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </aside>
-
-          {/* Main Content */}
-          <main className="flex-1 min-w-0">
-            <div className="space-y-6">
-              {/* Welcome Section - More compact */}
-              <div className="bg-gradient-to-r from-primary to-blue-600 text-white rounded-lg p-6">
-                <div className="flex items-center space-x-3 mb-3">
-                  <Bot className="w-7 h-7" />
                   <div>
-                    <h2 className="text-xl font-bold">AI-Powered Resume Tailoring</h2>
-                    <p className="text-sm text-blue-100">Specialized for Microsoft SQL Server DBA roles</p>
+                    <h2 className="text-3xl font-bold mb-2">AI-Powered Resume Tailoring</h2>
+                    <p className="text-lg text-white/90">Specialized for Microsoft SQL Server DBA roles</p>
                   </div>
                 </div>
-                <p className="text-sm text-blue-100 mb-4 leading-relaxed">
+                
+                <p className="text-white/90 mb-6 leading-relaxed max-w-3xl">
                   Upload your base resume and a job posting URL. Our AI agent will analyze the requirements, 
                   extract key skills and keywords, then generate an ATS-optimized resume tailored specifically 
                   for that MS SQL DBA position.
                 </p>
-                <div className="flex space-x-4">
-                  <div className="flex items-center space-x-2">
-                    <Check className="w-4 h-4 text-secondary" />
-                    <span className="text-xs">ATS-Optimized</span>
+                
+                <div className="flex flex-wrap gap-4">
+                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
+                    <Check className="w-5 h-5 text-green-300" />
+                    <span className="font-medium">ATS-Optimized</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Check className="w-4 h-4 text-secondary" />
-                    <span className="text-xs">Keyword Matching</span>
+                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
+                    <Check className="w-5 h-5 text-green-300" />
+                    <span className="font-medium">Keyword Matching</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Check className="w-4 h-4 text-secondary" />
-                    <span className="text-xs">SQL DBA Focused</span>
+                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
+                    <Check className="w-5 h-5 text-green-300" />
+                    <span className="font-medium">SQL DBA Focused</span>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Step 1: Resume Upload */}
-              <Card className="border border-neutral-200 overflow-hidden">
-                <CardHeader className="px-6 py-4 border-b border-neutral-200 bg-neutral-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-medium">
-                        1
-                      </div>
-                      <h3 className="text-lg font-semibold text-neutral-800">Upload Base Resume</h3>
+            {/* Step 1: Resume Upload */}
+            <Card className="border border-neutral-200 dark:border-neutral-700 overflow-hidden card-hover shadow-md rounded-xl animate-slide-in">
+              <CardHeader className="px-8 py-5 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 bg-gradient-primary text-white rounded-full flex items-center justify-center text-lg font-bold shadow-lg">
+                      1
                     </div>
-                    {!!session?.baseResumeContent && (
-                      <div className="px-3 py-1 bg-secondary text-secondary-foreground text-xs font-medium rounded-full">
-                        <Check className="w-3 h-3 mr-1 inline" />
-                        Complete
-                      </div>
-                    )}
+                    <h3 className="text-xl font-bold text-neutral-800 dark:text-neutral-100">Upload Base Resume</h3>
                   </div>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-2">
-                        Resume Document
-                      </label>
-                      <FileUpload
-                        onFileSelect={handleFileUpload}
-                        currentFile={uploadedFile ? {
-                          name: uploadedFile.name,
-                          size: uploadedFile.size,
-                          type: uploadedFile.type
-                        } : null}
-                        disabled={uploadResumeMutation.isPending}
-                      />
-                      <div className="mt-3 pt-3 border-t border-neutral-200">
-                        <p className="text-sm text-neutral-600 mb-2">Or use a stored resume:</p>
-                        {currentSessionId && (
-                          <StoredResumeSelector 
-                            sessionId={currentSessionId} 
-                            onResumeSelected={() => {
-                              queryClient.invalidateQueries({ queryKey: ['/api/sessions', currentSessionId] });
-                            }}
-                          />
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-2">
-                        Profile JSON (Optional)
-                      </label>
-                      <FileUpload
-                        onFileSelect={(file) => {
-                          // Handle profile JSON upload
-                          console.log('Profile JSON uploaded:', file);
-                        }}
-                        acceptedTypes={['.json']}
-                        disabled={false}
-                      />
-                    </div>
-                  </div>
-
                   {!!session?.baseResumeContent && (
-                    <div className="mt-6">
-                      <ResumePreview
-                        content={{
-                          summary: "Base resume content uploaded successfully",
-                          experience: [],
-                          skills: []
-                        }}
-                        isOriginal={true}
-                      />
+                    <div className="px-4 py-1.5 bg-status-success text-white text-sm font-semibold rounded-full flex items-center space-x-1 shadow-sm">
+                      <Check className="w-4 h-4" />
+                      <span>Complete</span>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </CardHeader>
+              <CardContent className="p-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div>
+                    <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">
+                      Resume Document
+                    </label>
+                    <FileUpload
+                      onFileSelect={handleFileUpload}
+                      currentFile={uploadedFile ? {
+                        name: uploadedFile.name,
+                        size: uploadedFile.size,
+                        type: uploadedFile.type
+                      } : null}
+                      disabled={uploadResumeMutation.isPending}
+                    />
+                    <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-700">
+                      <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-3">Or use a stored resume:</p>
+                      {currentSessionId && (
+                        <StoredResumeSelector 
+                          sessionId={currentSessionId} 
+                          onResumeSelected={() => {
+                            queryClient.invalidateQueries({ queryKey: ['/api/sessions', currentSessionId] });
+                          }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">
+                      Profile JSON (Optional)
+                    </label>
+                    <FileUpload
+                      onFileSelect={(file) => {
+                        // Handle profile JSON upload
+                        console.log('Profile JSON uploaded:', file);
+                      }}
+                      acceptedTypes={['.json']}
+                      disabled={false}
+                    />
+                  </div>
+                </div>
+
+                {!!session?.baseResumeContent && (
+                  <div className="mt-8 pt-8 border-t border-neutral-200 dark:border-neutral-700">
+                    <ResumePreview
+                      content={{
+                        summary: "Base resume content uploaded successfully",
+                        experience: [],
+                        skills: []
+                      }}
+                      isOriginal={true}
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
               {/* Step 2: Job Analysis */}
               <JobAnalysis
@@ -570,137 +544,145 @@ export default function Home() {
                 isAnalyzing={analyzeJobMutation.isPending || session?.status === 'analyzing'}
               />
 
-              {/* Step 3: AI Tailoring */}
-              <Card className={`border border-neutral-200 overflow-hidden ${!session?.jobAnalysis ? 'opacity-60' : ''}`}>
-                <CardHeader className="px-6 py-4 border-b border-neutral-200 bg-neutral-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                        session?.tailoredContent ? 'bg-primary text-white' : 'bg-neutral-300 text-neutral-500'
-                      }`}>
-                        3
-                      </div>
-                      <h3 className={`text-lg font-semibold ${
-                        session?.tailoredContent ? 'text-neutral-800' : 'text-neutral-600'
-                      }`}>
-                        AI Resume Tailoring
-                      </h3>
+            {/* Step 3: AI Tailoring */}
+            <Card className={cn(
+              "border border-neutral-200 dark:border-neutral-700 overflow-hidden card-hover shadow-md rounded-xl animate-slide-in",
+              !session?.jobAnalysis && "opacity-60"
+            )}>
+              <CardHeader className="px-8 py-5 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold shadow-lg",
+                      session?.tailoredContent ? "bg-gradient-primary text-white" : "bg-neutral-300 dark:bg-neutral-600 text-neutral-500"
+                    )}>
+                      3
                     </div>
-                    {session?.tailoredContent ? (
-                      <div className="px-3 py-1 bg-secondary text-secondary-foreground text-xs font-medium rounded-full">
-                        <Check className="w-3 h-3 mr-1 inline" />
-                        Complete
-                      </div>
-                    ) : session?.status === 'tailoring' ? (
-                      <div className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded-full">
-                        <Loader2 className="w-3 h-3 mr-1 inline animate-spin" />
-                        Processing
-                      </div>
-                    ) : (
-                      <div className="px-3 py-1 bg-neutral-200 text-neutral-600 text-xs font-medium rounded-full">
-                        Waiting
-                      </div>
-                    )}
+                    <h3 className={cn(
+                      "text-xl font-bold",
+                      session?.tailoredContent ? "text-neutral-800 dark:text-neutral-100" : "text-neutral-600 dark:text-neutral-400"
+                    )}>
+                      AI Resume Tailoring
+                    </h3>
                   </div>
-                </CardHeader>
-                <CardContent className="p-6">
-                  {session?.jobAnalysis && !session?.tailoredContent && session?.status !== 'tailoring' ? (
-                    <div className="text-center py-8">
-                      <WandSparkles className="w-12 h-12 text-primary mx-auto mb-4" />
-                      <h4 className="text-lg font-medium text-neutral-800 mb-2">Ready to Tailor</h4>
-                      <p className="text-sm text-neutral-600 mb-6 max-w-md mx-auto">
-                        Your resume and job analysis are complete. Start AI tailoring to optimize your resume for this position.
-                      </p>
-                      <Button
-                        onClick={() => tailorResumeMutation.mutate()}
-                        disabled={tailorResumeMutation.isPending}
-                        data-testid="button-start-tailoring"
-                      >
-                        {tailorResumeMutation.isPending ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Tailoring Resume...
-                          </>
-                        ) : (
-                          <>
-                            <WandSparkles className="w-4 h-4 mr-2" />
-                            Start AI Tailoring
-                          </>
-                        )}
-                      </Button>
+                  {session?.tailoredContent ? (
+                    <div className="px-4 py-1.5 bg-status-success text-white text-sm font-semibold rounded-full flex items-center space-x-1 shadow-sm">
+                      <Check className="w-4 h-4" />
+                      <span>Complete</span>
                     </div>
-                  ) : session?.tailoredContent ? (
-                    <ResumePreview
-                      content={session.tailoredContent}
-                      isOriginal={false}
-                      onDownload={handleDownload}
-                      sessionId={currentSessionId || undefined}
-                      onSaveToLibrary={() => {
-                        toast({
-                          title: "Resume Saved!",
-                          description: "You can view and manage it in the Resume Library",
-                          variant: "default",
-                        });
-                      }}
-                    />
                   ) : session?.status === 'tailoring' ? (
-                    <div className="text-center py-8">
-                      <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
-                      <h4 className="text-lg font-medium text-neutral-800 mb-2">AI is Tailoring Your Resume</h4>
-                      <p className="text-sm text-neutral-600">This may take a few moments...</p>
+                    <div className="px-4 py-1.5 bg-status-warning text-white text-sm font-semibold rounded-full flex items-center space-x-1 shadow-sm animate-pulse">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Processing</span>
                     </div>
                   ) : (
-                    <div className="text-center py-8">
-                      <WandSparkles className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
-                      <h4 className="text-lg font-medium text-neutral-600 mb-2">AI Tailoring Ready</h4>
-                      <p className="text-sm text-neutral-500 max-w-md mx-auto">
-                        Complete the job analysis above to proceed with AI-powered resume optimization
-                      </p>
+                    <div className="px-4 py-1.5 bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 text-sm font-semibold rounded-full">
+                      Waiting
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </div>
-          </main>
-        </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-8">
+                {session?.jobAnalysis && !session?.tailoredContent && session?.status !== 'tailoring' ? (
+                  <div className="text-center py-12">
+                    <div className="bg-gradient-primary p-4 rounded-full w-20 h-20 mx-auto mb-6 animate-float">
+                      <WandSparkles className="w-12 h-12 text-white" />
+                    </div>
+                    <h4 className="text-2xl font-bold text-neutral-800 dark:text-neutral-100 mb-3">Ready to Tailor</h4>
+                    <p className="text-neutral-600 dark:text-neutral-400 mb-8 max-w-md mx-auto">
+                      Your resume and job analysis are complete. Start AI tailoring to optimize your resume for this position.
+                    </p>
+                    <Button
+                      onClick={() => tailorResumeMutation.mutate()}
+                      disabled={tailorResumeMutation.isPending}
+                      data-testid="button-start-tailoring"
+                      className="bg-gradient-primary hover:opacity-90 button-hover text-white px-8 py-3 text-lg h-auto shadow-lg"
+                    >
+                      {tailorResumeMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Tailoring Resume...
+                        </>
+                      ) : (
+                        <>
+                          <WandSparkles className="w-5 h-5 mr-2" />
+                          Start AI Tailoring
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ) : session?.tailoredContent ? (
+                  <ResumePreview
+                    content={session.tailoredContent}
+                    isOriginal={false}
+                    onDownload={handleDownload}
+                    sessionId={currentSessionId || undefined}
+                    onSaveToLibrary={() => {
+                      toast({
+                        title: "Resume Saved!",
+                        description: "You can view and manage it in the Resume Library",
+                        variant: "default",
+                      });
+                    }}
+                  />
+                ) : session?.status === 'tailoring' ? (
+                  <div className="text-center py-12">
+                    <Loader2 className="w-16 h-16 animate-spin mx-auto mb-6 text-primary" />
+                    <h4 className="text-2xl font-bold text-neutral-800 dark:text-neutral-100 mb-3">AI is Tailoring Your Resume</h4>
+                    <p className="text-neutral-600 dark:text-neutral-400">This may take a few moments...</p>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <WandSparkles className="w-16 h-16 text-neutral-300 dark:text-neutral-600 mx-auto mb-6" />
+                    <h4 className="text-xl font-semibold text-neutral-600 dark:text-neutral-400 mb-3">AI Tailoring Ready</h4>
+                    <p className="text-neutral-500 dark:text-neutral-500 max-w-md mx-auto">
+                      Complete the job analysis above to proceed with AI-powered resume optimization
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </main>
 
-        {/* Follow-Up Queue Section - below main grid */}
-        <div className="mt-6">
+        {/* Follow-Up Queue Section */}
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 mt-8">
           <FollowUpQueue compact />
         </div>
-      </div>
 
-      {/* Action Bar - Compressed */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14">
-            <div className="flex items-center space-x-3">
-              <Button variant="ghost" size="sm" data-testid="button-save-progress">
-                Save Progress
-              </Button>
-              <Button variant="ghost" size="sm" data-testid="button-load-previous">
-                Load Previous
-              </Button>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="sm" data-testid="button-reset">
-                Reset All
-              </Button>
-              <Button 
-                size="sm"
-                disabled={!session?.jobAnalysis || session?.status === 'tailoring' || tailorResumeMutation.isPending}
-                onClick={() => {
-                  if (session?.tailoredContent) {
-                    handleDownload('pdf');
-                  } else {
-                    tailorResumeMutation.mutate();
-                  }
-                }}
-                data-testid="button-continue"
-              >
-                {session?.tailoredContent ? "Download Resume" : "Continue to Tailoring"}
-              </Button>
+        {/* Action Bar - Fixed at bottom */}
+        <div className="fixed bottom-0 left-0 lg:left-[280px] right-0 bg-white/90 dark:bg-neutral-800/90 backdrop-blur-lg border-t border-neutral-200 dark:border-neutral-700 shadow-lg z-20">
+          <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center space-x-3">
+                <Button variant="outline" size="sm" className="button-hover" data-testid="button-save-progress">
+                  Save Progress
+                </Button>
+                <Button variant="outline" size="sm" className="button-hover" data-testid="button-load-previous">
+                  Load Previous
+                </Button>
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                <Button variant="outline" size="sm" className="button-hover" data-testid="button-reset">
+                  Reset All
+                </Button>
+                <Button 
+                  size="sm"
+                  disabled={!session?.jobAnalysis || session?.status === 'tailoring' || tailorResumeMutation.isPending}
+                  onClick={() => {
+                    if (session?.tailoredContent) {
+                      handleDownload('pdf');
+                    } else {
+                      tailorResumeMutation.mutate();
+                    }
+                  }}
+                  data-testid="button-continue"
+                  className="bg-gradient-primary hover:opacity-90 button-hover text-white px-6 shadow-md"
+                >
+                  {session?.tailoredContent ? "Download Resume" : "Continue to Tailoring"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

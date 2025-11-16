@@ -98,13 +98,15 @@ export default function FileUpload({
 
   if (currentFile) {
     return (
-      <Card className={cn("border border-neutral-200 dark:border-neutral-700", className)}>
-        <CardContent className="p-4">
+      <Card className={cn("border border-neutral-200 dark:border-neutral-700 shadow-md hover:shadow-lg transition-shadow", className)}>
+        <CardContent className="p-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              {getFileIcon(currentFile.name)}
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-neutral-100 dark:bg-neutral-700 rounded-lg">
+                {getFileIcon(currentFile.name)}
+              </div>
               <div>
-                <p className="text-sm font-medium text-neutral-800 dark:text-neutral-100" data-testid="current-filename">
+                <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100" data-testid="current-filename">
                   {currentFile.name}
                 </p>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">
@@ -117,7 +119,7 @@ export default function FileUpload({
                 variant="ghost"
                 size="sm"
                 onClick={onFileRemove}
-                className="h-8"
+                className="h-9 w-9 p-0 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
                 data-testid="button-remove-file"
               >
                 <X className="w-4 h-4" />
@@ -127,7 +129,7 @@ export default function FileUpload({
           <Button
             variant="outline"
             size="sm"
-            className="mt-3 h-8"
+            className="mt-4 w-full button-hover"
             onClick={triggerFileInput}
             disabled={disabled}
             data-testid="button-replace-file"
@@ -150,8 +152,10 @@ export default function FileUpload({
   return (
     <Card 
       className={cn(
-        "border-2 border-dashed transition-colors cursor-pointer",
-        isDragOver && !disabled ? "border-primary bg-primary/5" : "border-neutral-300 dark:border-neutral-600",
+        "border-2 border-dashed transition-all duration-300 cursor-pointer group",
+        isDragOver && !disabled 
+          ? "border-primary bg-primary/5 scale-105 shadow-lg" 
+          : "border-neutral-300 dark:border-neutral-600 hover:border-primary/50 hover:bg-neutral-50 dark:hover:bg-neutral-800",
         disabled && "opacity-50 cursor-not-allowed",
         className
       )}
@@ -161,12 +165,22 @@ export default function FileUpload({
       onClick={triggerFileInput}
       data-testid="file-upload-area"
     >
-      <CardContent className="p-4 text-center">
-        <div className="flex flex-col items-center space-y-2">
-          <Upload className="w-6 h-6 text-neutral-400" />
+      <CardContent className="p-8 text-center">
+        <div className="flex flex-col items-center space-y-3">
+          <div className={cn(
+            "transition-all duration-300",
+            isDragOver ? "animate-float" : "group-hover:animate-float"
+          )}>
+            <Upload className={cn(
+              "w-12 h-12 transition-colors",
+              isDragOver ? "text-primary" : "text-neutral-400 group-hover:text-primary"
+            )} />
+          </div>
           <div className="text-sm">
-            <p className="text-neutral-600 dark:text-neutral-300 text-sm">Drop file here or click to browse</p>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+            <p className="text-neutral-700 dark:text-neutral-300 font-medium mb-1">
+              Drop file here or click to browse
+            </p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
               {acceptedTypes.join(', ')} • Max {Math.round(maxSize / (1024 * 1024))}MB
             </p>
           </div>
