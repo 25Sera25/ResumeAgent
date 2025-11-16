@@ -5,6 +5,9 @@ import { Progress } from "@/components/ui/progress";
 import { Expand, Download, FileText, Target, Save, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import InterviewPrep from "./InterviewPrep";
+import ATSBreakdown from "./ATSBreakdown";
+import { useState } from "react";
 
 interface ResumeContent {
   summary?: string;
@@ -58,6 +61,8 @@ export default function ResumePreview({
 }: ResumePreviewProps) {
   const { toast } = useToast();
   const hasContent = content && (content.summary || content.experience || content.skills);
+  const [interviewPrepOpen, setInterviewPrepOpen] = useState(false);
+  const [atsBreakdownOpen, setAtsBreakdownOpen] = useState(false);
 
   const handleSaveToLibrary = async () => {
     if (!sessionId || !content) return;
@@ -108,6 +113,22 @@ export default function ResumePreview({
           )}
           {!isOriginal && hasContent && (
             <>
+              {/* Interview Prep and ATS Analysis Buttons */}
+              {sessionId && (
+                <>
+                  <InterviewPrep 
+                    sessionId={sessionId} 
+                    open={interviewPrepOpen}
+                    onOpenChange={setInterviewPrepOpen}
+                  />
+                  <ATSBreakdown 
+                    sessionId={sessionId}
+                    open={atsBreakdownOpen}
+                    onOpenChange={setAtsBreakdownOpen}
+                  />
+                </>
+              )}
+              
               {/* Save to Library Button */}
               {sessionId && (
                 <Button 

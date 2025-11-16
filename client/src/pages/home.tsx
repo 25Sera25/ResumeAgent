@@ -5,7 +5,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Database, Bot, HelpCircle, Settings, Check, Loader2, WandSparkles, FileText, Library, BookOpen, BarChart3, LogOut, User, Shield, Sparkles } from "lucide-react";
+import { Database, Bot, HelpCircle, Settings, Check, Loader2, WandSparkles, FileText, Library, BookOpen, BarChart3, LogOut, User, Shield, Sparkles, Brain } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Sidebar from "@/components/Sidebar";
@@ -376,6 +376,12 @@ export default function Home() {
                   <Button variant="ghost" size="sm" className="button-hover" data-testid="button-job-tracker">
                     <BarChart3 className="w-4 h-4 mr-2" />
                     <span className="hidden sm:inline">Tracker</span>
+                  </Button>
+                </Link>
+                <Link href="/insights">
+                  <Button variant="ghost" size="sm" className="button-hover" data-testid="button-insights">
+                    <Brain className="w-4 h-4 mr-2" />
+                    <span className="hidden sm:inline">Insights</span>
                   </Button>
                 </Link>
                 {user?.isAdmin && (

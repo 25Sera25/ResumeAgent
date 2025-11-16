@@ -145,6 +145,7 @@ export class MemStorage implements IStorage {
       jobDescription: insertSession.jobDescription || null,
       jobAnalysis: insertSession.jobAnalysis || null,
       tailoredContent: insertSession.tailoredContent || null,
+      interviewPrep: insertSession.interviewPrep || null,
       status: insertSession.status || "draft",
       matchScore: insertSession.matchScore || null,
       id, 
@@ -334,6 +335,10 @@ export class MemStorage implements IStorage {
       atsScore: insertResume.atsScore || null,
       microEdits: insertResume.microEdits || null,
       aiImprovements: insertResume.aiImprovements || null,
+      responseReceived: insertResume.responseReceived || null,
+      responseDate: insertResume.responseDate || null,
+      source: insertResume.source || null,
+      referral: insertResume.referral || null,
       createdAt: now,
       updatedAt: now,
     };

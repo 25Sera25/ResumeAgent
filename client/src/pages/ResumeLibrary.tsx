@@ -197,6 +197,12 @@ export default function ResumeLibrary() {
               Job Tracker
             </Button>
           </Link>
+          <Link href="/resume-analytics">
+            <Button variant="ghost" size="sm" className="gap-2" data-testid="link-resume-analytics">
+              <Sparkles className="h-4 w-4" />
+              Analytics
+            </Button>
+          </Link>
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">

@@ -42,6 +42,16 @@ export interface ResumeAnalysis {
   suggestions: string[];
   matchedKeywords?: string[];
   missingKeywords?: string[];
+  // NEW: ATS Score Breakdown
+  sectionScores?: {
+    header: number;
+    summary: number;
+    experience: number;
+    skills: number;
+    certifications: number;
+  };
+  formattingIssues?: string[];
+  plainTextPreview?: string;
 }
 
 export interface ContactInformation {
@@ -224,12 +234,16 @@ Focus on SQL Server, database administration, EHR systems, and related technolog
   }
 }
 
-export async function analyzeResumeMatch(resumeContent: string, jobAnalysis: JobAnalysisResult): Promise<ResumeAnalysis> {
+export async function analyzeResumeMatch(resumeContent: string, jobAnalysis: JobAnalysisResult, plainTextResume?: string): Promise<ResumeAnalysis> {
   try {
     const prompt = `Analyze this resume against the job requirements for a SQL Server DBA position.
 
 Resume Content:
 ${resumeContent}
+
+${plainTextResume ? `Plain Text ATS Preview:
+${plainTextResume}
+` : ''}
 
 Job Requirements:
 ${JSON.stringify(jobAnalysis, null, 2)}
@@ -241,6 +255,16 @@ Please respond with a JSON object containing:
 - suggestions: Array of specific suggestions to improve the resume for this role
 - matchedKeywords: Array of keywords from the job requirements that are present in the resume
 - missingKeywords: Array of important keywords from the job requirements that are missing from the resume
+- sectionScores: Object with scores for each resume section (0-100 each):
+  {
+    header: score for contact information completeness,
+    summary: score for professional summary alignment with job,
+    experience: score for experience section relevance,
+    skills: score for skills match,
+    certifications: score for certifications relevance
+  }
+- formattingIssues: Array of ATS formatting problems (e.g., "Two-column layout may cause parsing issues", "Header/footer content will be ignored", "Complex tables not ATS-friendly")
+- plainTextPreview: Simplified text version showing how ATS systems will parse the resume
 
 Focus on SQL Server DBA specific skills, experience, and qualifications.`;
 
@@ -249,7 +273,7 @@ Focus on SQL Server DBA specific skills, experience, and qualifications.`;
       messages: [
         {
           role: "system",
-          content: "You are an expert SQL Server DBA recruiter analyzing resume compatibility with job requirements."
+          content: "You are an expert SQL Server DBA recruiter and ATS systems analyst. Analyze resume compatibility with job requirements and identify ATS parsing issues."
         },
         {
           role: "user",
@@ -616,5 +640,155 @@ Example STAR: "When you mentioned the need for high-availability database soluti
     };
   } catch (error) {
     throw new Error("Failed to generate follow-up email: " + (error as Error).message);
+  }
+}
+
+// ============================================
+// NEW FEATURE 1: Interview Question Generator
+// ============================================
+
+export interface InterviewQuestion {
+  q: string;
+  difficulty: string;
+  rationale: string;
+  modelAnswer: string;
+  starExample?: string;
+}
+
+export interface InterviewQuestions {
+  questions: InterviewQuestion[];
+}
+
+export async function generateInterviewQuestions(
+  jobDescription: string,
+  tailoredContent?: TailoredResumeContent
+): Promise<InterviewQuestions> {
+  try {
+    const prompt = `Generate comprehensive interview questions for a SQL Server DBA position based on this job description and candidate's tailored resume.
+
+Job Description:
+${jobDescription}
+
+${tailoredContent ? `Candidate's Tailored Resume Content:
+Summary: ${tailoredContent.summary || ''}
+Experience: ${JSON.stringify(tailoredContent.experience || [], null, 2)}
+Skills: ${(tailoredContent.skills || []).join(', ')}
+` : ''}
+
+Generate 15-20 interview questions covering:
+1. Technical Questions (SQL Server specific, database administration, performance tuning, HA/DR)
+2. Behavioral Questions (using STAR method examples from the candidate's experience)
+3. System Design Questions (architecture, scalability, disaster recovery)
+
+For each question, provide:
+- q: The interview question
+- difficulty: "Easy", "Medium", or "Hard"
+- rationale: Why this question is relevant to this specific job posting
+- modelAnswer: A strong answer tailored to the candidate's experience (if available) or a general expert-level answer
+- starExample: For behavioral questions, provide a STAR (Situation, Task, Action, Result) formatted example using the candidate's actual experience bullets if available
+
+Return a JSON object with this structure:
+{
+  "questions": [
+    {
+      "q": "Tell me about a time when you had to optimize a poorly performing query in a production environment.",
+      "difficulty": "Medium",
+      "rationale": "This job emphasizes performance tuning and the candidate has experience with query optimization using Extended Events and Query Store.",
+      "modelAnswer": "In my role at UnitedHealth, I identified a critical query that was causing timeouts...",
+      "starExample": "Situation: At UnitedHealth, our healthcare application was experiencing slow response times. Task: I needed to identify and fix the performance bottleneck. Action: I used Extended Events and Query Store to analyze query patterns, identified missing indexes, and implemented optimizations. Result: Improved query execution time by 70% and resolved user complaints."
+    }
+  ]
+}
+
+Focus on SQL Server DBA-specific questions that align with the job requirements and demonstrate the candidate's expertise.`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert SQL Server DBA interviewer and career coach. Generate realistic, role-specific interview questions with STAR method examples."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || "{}");
+    
+    return {
+      questions: Array.isArray(result.questions) ? result.questions : []
+    };
+  } catch (error) {
+    throw new Error("Failed to generate interview questions: " + (error as Error).message);
+  }
+}
+
+// ============================================
+// NEW FEATURE 4: Achievement Quantifier
+// ============================================
+
+export interface QuantifiedAchievements {
+  appliedEdits: string[];
+  suggestions: string[];
+}
+
+export async function quantifyAchievements(
+  resumeContent: string,
+  experienceBullets: string[]
+): Promise<QuantifiedAchievements> {
+  try {
+    const prompt = `Analyze these experience bullets and suggest quantified alternatives where possible.
+
+Resume Content Context:
+${resumeContent}
+
+Experience Bullets to Quantify:
+${experienceBullets.map((bullet, i) => `${i + 1}. ${bullet}`).join('\n')}
+
+For each bullet:
+1. If it can be quantified (add metrics, percentages, time savings, cost reductions), provide an enhanced version
+2. If it's already well-quantified or cannot be quantified without making false claims, mark it as "unchanged"
+
+Return a JSON object with:
+{
+  "appliedEdits": [
+    "Enhanced bullet 1 with metrics",
+    "Enhanced bullet 2 with percentages"
+  ],
+  "suggestions": [
+    "Could add: Reduced database query time by 40% through index optimization",
+    "Could add: Managed 500+ SQL Server instances across production environments"
+  ]
+}
+
+IMPORTANT: Only suggest quantifications that are reasonable based on the resume content. Do not invent specific numbers that can't be verified.`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert resume writer who specializes in quantifying achievements. Enhance bullets with metrics while maintaining truthfulness."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || "{}");
+    
+    return {
+      appliedEdits: Array.isArray(result.appliedEdits) ? result.appliedEdits : [],
+      suggestions: Array.isArray(result.suggestions) ? result.suggestions : []
+    };
+  } catch (error) {
+    throw new Error("Failed to quantify achievements: " + (error as Error).message);
   }
 }

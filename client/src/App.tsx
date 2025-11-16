@@ -12,6 +12,8 @@ import ResumeLibrary from "@/pages/ResumeLibrary";
 import JobTracker from "@/pages/JobTracker";
 import Login from "@/pages/Login";
 import AdminUsers from "@/pages/AdminUsers";
+import Insights from "@/pages/Insights";
+import ResumeAnalytics from "@/pages/ResumeAnalytics";
 
 function Router() {
   return (
@@ -33,6 +35,16 @@ function Router() {
       <Route path="/job-tracker">
         <ProtectedRoute>
           <JobTracker />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/insights">
+        <ProtectedRoute>
+          <Insights />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/resume-analytics">
+        <ProtectedRoute>
+          <ResumeAnalytics />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/users">
