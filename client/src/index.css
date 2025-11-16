@@ -35,6 +35,14 @@
   --neutral-900: hsl(214, 34%, 10%);
   --font-inter: 'Inter', sans-serif;
   --radius: 0.75rem;
+  --surface: hsl(0, 0%, 100%);
+  --surface-elevated: hsl(210, 33%, 99%);
+  --status-success: hsl(142, 76%, 36%);
+  --status-warning: hsl(38, 92%, 50%);
+  --status-error: hsl(356, 91%, 54%);
+  --status-info: hsl(217, 78%, 57%);
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-elevated: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 .dark {
@@ -57,6 +65,8 @@
   --border: hsl(215, 19%, 26%);
   --input: hsl(215, 14%, 34%);
   --ring: hsl(217, 78%, 57%);
+  --surface: hsl(214, 28%, 16%);
+  --surface-elevated: hsl(215, 19%, 26%);
 }
 
 @layer base {

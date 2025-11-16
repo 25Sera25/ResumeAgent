@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { Link } from "wouter";
+import { cn } from "@/lib/utils";
 
 interface FollowUp {
   id: string;
@@ -199,16 +200,16 @@ export default function FollowUpQueue({ compact = false }: FollowUpQueueProps) {
         <CardTitle className="flex items-center gap-2">
           <Mail className="h-5 w-5" />
           Follow-Up Queue
-          <Badge variant="secondary">{allFollowUps.length} pending</Badge>
+          <Badge variant="secondary" className="ml-2">{allFollowUps.length} pending</Badge>
         </CardTitle>
         <CardDescription>
           {compact 
-            ? "Top 3 most urgent follow-ups - generate and send emails to stay top-of-mind" 
+            ? "Top 3 most urgent follow-ups" 
             : "Generate and send follow-up emails to stay top-of-mind with employers"}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-3">
           {followUps.map(followUp => {
             const application = getApplicationForFollowUp(followUp);
             const overdue = isOverdue(followUp.dueAt);
@@ -217,29 +218,36 @@ export default function FollowUpQueue({ compact = false }: FollowUpQueueProps) {
             return (
               <div
                 key={followUp.id}
-                className={`border rounded-lg p-4 space-y-3 ${
-                  overdue ? 'border-orange-500 bg-orange-50 dark:bg-orange-950' : ''
-                }`}
+                className={cn(
+                  "border rounded-lg p-4 space-y-3 bg-white dark:bg-neutral-800 transition-shadow hover:shadow-md",
+                  overdue && "border-status-warning bg-orange-50 dark:bg-orange-950/20"
+                )}
                 data-testid={`followup-${followUp.id}`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-base" data-testid={`followup-job-title-${followUp.id}`}>
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <h4 className="font-semibold text-sm" data-testid={`followup-job-title-${followUp.id}`}>
                         {application?.jobTitle || 'Unknown Position'}
                       </h4>
-                      <Badge variant="outline">{getFollowUpTypeLabel(followUp.type)}</Badge>
+                      <Badge variant="outline" className="text-xs">{getFollowUpTypeLabel(followUp.type)}</Badge>
                       {overdue && (
-                        <Badge variant="destructive" className="gap-1">
+                        <Badge variant="destructive" className="gap-1 text-xs">
                           <Clock className="h-3 w-3" />
                           Overdue
                         </Badge>
                       )}
+                      {hasEmail && (
+                        <Badge className="gap-1 text-xs bg-status-success text-white">
+                          <Check className="h-3 w-3" />
+                          Ready
+                        </Badge>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground" data-testid={`followup-company-${followUp.id}`}>
+                    <p className="text-xs text-muted-foreground" data-testid={`followup-company-${followUp.id}`}>
                       {application?.company || 'Unknown Company'}
                     </p>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       <Calendar className="h-3 w-3 inline mr-1" />
                       Due: {format(new Date(followUp.dueAt), 'MMM d, yyyy')}
                     </p>
@@ -252,17 +260,17 @@ export default function FollowUpQueue({ compact = false }: FollowUpQueueProps) {
                       onClick={() => generateEmailMutation.mutate(followUp.id)}
                       disabled={generateEmailMutation.isPending}
                       size="sm"
-                      className="gap-2"
+                      className="gap-1.5 h-8 text-xs"
                       data-testid={`button-generate-email-${followUp.id}`}
                     >
-                      <Sparkles className="h-4 w-4" />
+                      <Sparkles className="h-3.5 w-3.5" />
                       {generateEmailMutation.isPending ? 'Generating...' : 'Generate Email'}
                     </Button>
                   ) : (
                     <Dialog open={expandedId === followUp.id} onOpenChange={(open) => setExpandedId(open ? followUp.id : null)}>
                       <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="gap-2" data-testid={`button-view-email-${followUp.id}`}>
-                          <Mail className="h-4 w-4" />
+                        <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" data-testid={`button-view-email-${followUp.id}`}>
+                          <Mail className="h-3.5 w-3.5" />
                           View Email
                         </Button>
                       </DialogTrigger>
@@ -356,9 +364,10 @@ export default function FollowUpQueue({ compact = false }: FollowUpQueueProps) {
                       size="sm"
                       onClick={() => skipFollowUpMutation.mutate(followUp.id)}
                       disabled={skipFollowUpMutation.isPending}
+                      className="h-8 text-xs"
                       data-testid={`button-skip-inline-${followUp.id}`}
                     >
-                      <X className="h-4 w-4 mr-1" />
+                      <X className="h-3.5 w-3.5 mr-1" />
                       Skip
                     </Button>
                   )}

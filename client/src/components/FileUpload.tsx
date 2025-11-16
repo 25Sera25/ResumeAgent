@@ -98,16 +98,16 @@ export default function FileUpload({
 
   if (currentFile) {
     return (
-      <Card className={cn("border border-neutral-200", className)}>
-        <CardContent className="p-6">
+      <Card className={cn("border border-neutral-200 dark:border-neutral-700", className)}>
+        <CardContent className="p-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
               {getFileIcon(currentFile.name)}
               <div>
-                <p className="font-medium text-neutral-800" data-testid="current-filename">
+                <p className="text-sm font-medium text-neutral-800 dark:text-neutral-100" data-testid="current-filename">
                   {currentFile.name}
                 </p>
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
                   {formatFileSize(currentFile.size)} • {currentFile.type.includes('pdf') ? 'PDF' : 'DOCX'} • Uploaded
                 </p>
               </div>
@@ -117,6 +117,7 @@ export default function FileUpload({
                 variant="ghost"
                 size="sm"
                 onClick={onFileRemove}
+                className="h-8"
                 data-testid="button-remove-file"
               >
                 <X className="w-4 h-4" />
@@ -126,7 +127,7 @@ export default function FileUpload({
           <Button
             variant="outline"
             size="sm"
-            className="mt-3"
+            className="mt-3 h-8"
             onClick={triggerFileInput}
             disabled={disabled}
             data-testid="button-replace-file"
@@ -150,7 +151,7 @@ export default function FileUpload({
     <Card 
       className={cn(
         "border-2 border-dashed transition-colors cursor-pointer",
-        isDragOver && !disabled ? "border-primary bg-primary/5" : "border-neutral-300",
+        isDragOver && !disabled ? "border-primary bg-primary/5" : "border-neutral-300 dark:border-neutral-600",
         disabled && "opacity-50 cursor-not-allowed",
         className
       )}
@@ -160,13 +161,13 @@ export default function FileUpload({
       onClick={triggerFileInput}
       data-testid="file-upload-area"
     >
-      <CardContent className="p-6 text-center">
+      <CardContent className="p-4 text-center">
         <div className="flex flex-col items-center space-y-2">
-          <Upload className="w-8 h-8 text-neutral-400" />
+          <Upload className="w-6 h-6 text-neutral-400" />
           <div className="text-sm">
-            <p className="text-neutral-600">Drop file here or click to browse</p>
-            <p className="text-xs text-neutral-500 mt-1">
-              Supported formats: {acceptedTypes.join(', ')} • Max size: {Math.round(maxSize / (1024 * 1024))}MB
+            <p className="text-neutral-600 dark:text-neutral-300 text-sm">Drop file here or click to browse</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+              {acceptedTypes.join(', ')} • Max {Math.round(maxSize / (1024 * 1024))}MB
             </p>
           </div>
         </div>
