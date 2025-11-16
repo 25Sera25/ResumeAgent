@@ -166,9 +166,39 @@ filename = `${firstName}_DBA_Resume`;
 
 **Modified:**
 1. `server/routes.ts` - Fixed filename pattern in save endpoint (line 601) and library download fallback (lines 876, 879)
-2. `BUG_FIXES_SUMMARY.md` - This file, documenting the actual root cause and fixes
+2. `client/src/pages/home.tsx` - Fixed client-side download to respect server's Content-Disposition header instead of hardcoding filename
+3. `client/src/pages/ResumeLibrary.tsx` - Fixed client-side download to respect server's Content-Disposition header for consistency
+4. `BUG_FIXES_SUMMARY.md` - This file, documenting the actual root cause and fixes
 
 **No New Files** - Migration 0001 already exists with all required columns
+
+### Critical Client-Side Fix
+
+**Problem:** Even though the server was setting the correct `Content-Disposition` header with the right filename, the client-side code was overriding it by explicitly setting `a.download = 'tailored_resume.${format}'`.
+
+**Solution:** Updated both download handlers to:
+1. Extract filename from `Content-Disposition` header
+2. Use the extracted filename for the download
+3. Fall back to a default only if header is missing
+
+**Code Example:**
+```typescript
+// Extract filename from Content-Disposition header
+const contentDisposition = response.headers.get('Content-Disposition');
+let filename = `tailored_resume.${format}`; // fallback
+
+if (contentDisposition) {
+  // Parse Content-Disposition header: attachment; filename*=UTF-8''encoded_filename
+  const filenameMatch = contentDisposition.match(/filename\*=UTF-8''(.+)|filename="?(.+?)"?$/);
+  if (filenameMatch) {
+    filename = decodeURIComponent(filenameMatch[1] || filenameMatch[2]);
+  }
+}
+
+a.download = filename; // Use server-provided filename
+```
+
+This ensures the browser respects the server's carefully-generated filename instead of replacing it with a hardcoded value.
 
 ### What Was Already Correct
 
