@@ -1279,6 +1279,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { jobId, skill, mode = 'general' } = req.body;
       const userId = req.user!.id;
       
+      console.log('[INTERVIEW_PREP] Generating questions - Mode:', mode, 'JobId:', jobId, 'Skill:', skill);
+      
       let context: any = { mode };
       
       // Resolve context based on mode
@@ -1293,6 +1295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             technologies: (tailoredResume.tailoredContent as any)?.skills || []
           };
           context.tailoredContent = tailoredResume.tailoredContent;
+          console.log('[INTERVIEW_PREP] Using tailored resume:', tailoredResume.id);
         } else {
           // Fall back to session
           const session = await storage.getResumeSession(jobId, userId);
@@ -1300,19 +1303,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
             context.jobDescription = session.jobDescription || '';
             context.jobAnalysis = session.jobAnalysis;
             context.tailoredContent = session.tailoredContent;
+            console.log('[INTERVIEW_PREP] Using session:', session.id);
           }
         }
       } else if (mode === 'skill' && skill) {
         context.skills = Array.isArray(skill) ? skill : [skill];
+        console.log('[INTERVIEW_PREP] Skills focus:', context.skills);
+      } else {
+        console.log('[INTERVIEW_PREP] General mode - no specific context');
       }
       
       const { generateInterviewPrepQuestions } = await import('./services/openai');
       const result = await generateInterviewPrepQuestions(context);
       
+      console.log('[INTERVIEW_PREP] Successfully generated', result.questions?.length || 0, 'questions');
       res.json(result);
-    } catch (error) {
-      console.error('Error generating interview questions:', error);
-      res.status(500).json({ error: 'Failed to generate interview questions' });
+    } catch (error: any) {
+      console.error('[INTERVIEW_PREP] Error generating interview questions:', {
+        message: error.message,
+        stack: error.stack
+      });
+      
+      // Return structured error response
+      res.status(500).json({ 
+        error: 'openai_request_error',
+        message: error.message || 'Failed to generate interview questions. Please try again.'
+      });
     }
   });
 
@@ -1322,12 +1338,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { skills, jobId, mode = 'general' } = req.body;
       const userId = req.user!.id;
       
+      console.log('[INTERVIEW_PREP] Generating skills - Mode:', mode, 'JobId:', jobId, 'Skills:', skills);
+      
       let skillsList: string[] = [];
       let context: any = {};
       
       // If skills provided directly, use them
       if (skills && Array.isArray(skills) && skills.length > 0) {
         skillsList = skills;
+        console.log('[INTERVIEW_PREP] Using provided skills:', skillsList);
       } else if (mode === 'job' && jobId) {
         // Get skills from job
         const tailoredResume = await storage.getTailoredResume(jobId, userId);
@@ -1336,6 +1355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           skillsList = content?.skills || [];
           context.jobDescription = tailoredResume.originalJobDescription;
           context.tailoredContent = tailoredResume.tailoredContent;
+          console.log('[INTERVIEW_PREP] Extracted skills from tailored resume:', skillsList.length);
         } else {
           const session = await storage.getResumeSession(jobId, userId);
           if (session) {
@@ -1343,6 +1363,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             skillsList = content?.skills || [];
             context.jobDescription = session.jobDescription;
             context.tailoredContent = session.tailoredContent;
+            console.log('[INTERVIEW_PREP] Extracted skills from session:', skillsList.length);
           }
         }
       } else {
@@ -1352,9 +1373,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const insights = await getSkillsInsights(userId);
           if (insights?.topRequestedSkills && insights.topRequestedSkills.length > 0) {
             skillsList = insights.topRequestedSkills.slice(0, 8).map((s: any) => s.skill);
+            console.log('[INTERVIEW_PREP] Using skills from insights:', skillsList.length);
           }
         } catch (insightsError) {
-          console.log('Could not fetch insights, using default DBA skills:', insightsError);
+          console.log('[INTERVIEW_PREP] Could not fetch insights, using default DBA skills:', insightsError);
         }
       }
       
@@ -1370,16 +1392,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'Azure SQL Database',
           'PowerShell Automation'
         ];
-        console.log('Using default DBA skills for general mode');
+        console.log('[INTERVIEW_PREP] Using default DBA skills');
       }
       
       const { generateSkillExplanations } = await import('./services/openai');
       const result = await generateSkillExplanations(skillsList, context);
       
+      console.log('[INTERVIEW_PREP] Successfully generated', result.skills?.length || 0, 'skill explanations');
       res.json(result);
-    } catch (error) {
-      console.error('Error generating skill explanations:', error);
-      res.status(500).json({ error: 'Failed to generate skill explanations' });
+    } catch (error: any) {
+      console.error('[INTERVIEW_PREP] Error generating skill explanations:', {
+        message: error.message,
+        stack: error.stack
+      });
+      
+      // Return structured error response
+      res.status(500).json({ 
+        error: 'openai_request_error',
+        message: error.message || 'Failed to generate skill explanations. Please try again.'
+      });
     }
   });
 
@@ -1388,6 +1419,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { resumeId, sessionId, jobId, skill, mode = 'general' } = req.body;
       const userId = req.user!.id;
+      
+      console.log('[INTERVIEW_PREP] Generating STAR stories - Mode:', mode, 'JobId:', jobId, 'ResumeId:', resumeId, 'SessionId:', sessionId, 'Skill:', skill);
       
       let resumeContent: any = null;
       let context: any = {};
@@ -1402,11 +1435,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (tailoredResume) {
           resumeContent = tailoredResume.tailoredContent;
           context.jobDescription = tailoredResume.originalJobDescription;
+          console.log('[INTERVIEW_PREP] Using tailored resume content for STAR stories');
         } else {
           const session = await storage.getResumeSession(jobId, userId);
           if (session) {
             resumeContent = session.tailoredContent;
             context.jobDescription = session.jobDescription;
+            console.log('[INTERVIEW_PREP] Using session content for STAR stories');
           }
         }
       } else if (sessionId) {
@@ -1414,6 +1449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (session) {
           resumeContent = session.tailoredContent;
           context.jobDescription = session.jobDescription;
+          console.log('[INTERVIEW_PREP] Using specific session:', sessionId);
         }
       } else if (resumeId) {
         const storedResume = await storage.getStoredResume(resumeId, userId);
@@ -1425,6 +1461,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               achievements: [storedResume.content]
             }]
           };
+          console.log('[INTERVIEW_PREP] Using stored resume:', resumeId);
         }
       } else {
         // Get most recent tailored resume for general mode
@@ -1433,10 +1470,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const latest = tailoredResumes[0];
           resumeContent = latest.tailoredContent;
           context.jobDescription = latest.originalJobDescription;
+          console.log('[INTERVIEW_PREP] Using most recent tailored resume');
         }
       }
       
       if (!resumeContent) {
+        console.log('[INTERVIEW_PREP] No resume content available');
         return res.status(400).json({ 
           error: 'no_resume_content',
           message: 'No resume content available. Save a tailored resume or select a specific job first.' 
@@ -1446,10 +1485,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { generateStarStories } = await import('./services/openai');
       const result = await generateStarStories(resumeContent, context);
       
+      console.log('[INTERVIEW_PREP] Successfully generated', result.stories?.length || 0, 'STAR stories');
       res.json(result);
-    } catch (error) {
-      console.error('Error generating STAR stories:', error);
-      res.status(500).json({ error: 'Failed to generate STAR stories' });
+    } catch (error: any) {
+      console.error('[INTERVIEW_PREP] Error generating STAR stories:', {
+        message: error.message,
+        stack: error.stack
+      });
+      
+      // Return structured error response
+      res.status(500).json({ 
+        error: 'openai_request_error',
+        message: error.message || 'Failed to generate STAR stories. Please try again.'
+      });
     }
   });
 

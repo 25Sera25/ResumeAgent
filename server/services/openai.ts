@@ -985,6 +985,8 @@ Return JSON in this exact format:
   ]
 }`;
 
+    console.log('[OPENAI] Generating interview prep questions with mode:', context.mode);
+    
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -1005,8 +1007,21 @@ Return JSON in this exact format:
     return {
       questions: Array.isArray(result.questions) ? result.questions : []
     };
-  } catch (error) {
-    throw new Error("Failed to generate interview prep questions: " + (error as Error).message);
+  } catch (error: any) {
+    console.error('[OPENAI] Error generating interview prep questions:', {
+      message: error.message,
+      status: error.status,
+      type: error.type,
+      code: error.code,
+      response: error.response?.data || error.response
+    });
+    
+    // Check if it's an OpenAI API error
+    if (error.status === 400) {
+      throw new Error(`OpenAI API error: Invalid request format. ${error.message}`);
+    }
+    
+    throw new Error("Failed to generate interview prep questions: " + error.message);
   }
 }
 
@@ -1079,6 +1094,8 @@ Return JSON in this exact format:
   ]
 }`;
 
+    console.log('[OPENAI] Generating skill explanations for:', skillsList.join(', '));
+
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -1099,8 +1116,21 @@ Return JSON in this exact format:
     return {
       skills: Array.isArray(result.skills) ? result.skills : []
     };
-  } catch (error) {
-    throw new Error("Failed to generate skill explanations: " + (error as Error).message);
+  } catch (error: any) {
+    console.error('[OPENAI] Error generating skill explanations:', {
+      message: error.message,
+      status: error.status,
+      type: error.type,
+      code: error.code,
+      response: error.response?.data || error.response
+    });
+    
+    // Check if it's an OpenAI API error
+    if (error.status === 400) {
+      throw new Error(`OpenAI API error: Invalid request format. ${error.message}`);
+    }
+    
+    throw new Error("Failed to generate skill explanations: " + error.message);
   }
 }
 
@@ -1174,6 +1204,8 @@ Return JSON in this exact format:
   ]
 }`;
 
+    console.log('[OPENAI] Generating STAR stories from', experienceBullets.length, 'achievements');
+
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -1194,7 +1226,20 @@ Return JSON in this exact format:
     return {
       stories: Array.isArray(result.stories) ? result.stories : []
     };
-  } catch (error) {
-    throw new Error("Failed to generate STAR stories: " + (error as Error).message);
+  } catch (error: any) {
+    console.error('[OPENAI] Error generating STAR stories:', {
+      message: error.message,
+      status: error.status,
+      type: error.type,
+      code: error.code,
+      response: error.response?.data || error.response
+    });
+    
+    // Check if it's an OpenAI API error
+    if (error.status === 400) {
+      throw new Error(`OpenAI API error: Invalid request format. ${error.message}`);
+    }
+    
+    throw new Error("Failed to generate STAR stories: " + error.message);
   }
 }
