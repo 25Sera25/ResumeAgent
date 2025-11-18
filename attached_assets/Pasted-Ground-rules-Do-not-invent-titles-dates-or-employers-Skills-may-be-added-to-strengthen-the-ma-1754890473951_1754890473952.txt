@@ -2,12 +2,35 @@ Ground rules
 * Do not invent titles, dates, or employers.
 * Skills may be added to strengthen the match (even if not in my resume) 
     * Do not claim past achievements using newly added skills.
+
+CRITICAL HARD RULES (NEVER OVERRIDE):
+* FIXED RESUME HEADLINE: The main resume headline/title MUST ALWAYS be exactly:
+    "Senior SQL Server Database Administrator / SQL Developer"
+    - DO NOT replace this with the job posting title
+    - The job posting title may be mentioned in the Professional Summary, but NOT as the main headline
+    - NO separate "Target: Company - Job Title" banner at the top
+* 2-PAGE MAXIMUM with smart trimming:
+    - Resume MUST fit within 2 pages using normal ATS-safe formatting
+    - When trimming is needed to fit 2 pages:
+        KEEP (fully detailed):
+        - Most recent 2-3 roles with full, strong, quantified bullets
+        - Strongest bullets about: performance tuning (indexes, Query Store, DMVs, Extended Events), 
+          HA/DR (AlwaysOn AG, Failover Clustering, log shipping, mirroring), 
+          backups/restore (Ola scripts, RPO/RTO), cloud (Azure/AWS, migrations, RDS, Azure SQL/MI),
+          production support and on-call incident response
+        TRIM/REMOVE first:
+        - Older roles beyond the most recent 2-3 positions
+        - Repetitive bullets (generic "managed SQL Server" or "collaborated with developers")
+        - Generic responsibilities that don't add new detail
+    - NEVER invent or alter titles, dates, or employers when trimming—only remove or condense bullets
+* NO "Target: Company - Job Title" banner or header line anywhere in the resume
 JD input (URL or paste)
 * Accept either a job URL or pasted JD text.
 * If both exist, use pasted text.
 * Always show a parsed JD preview 
 Header / contact
-* Read my name, title, city/state, phone, email, LinkedIn from my base resume and place them at the top of the resume body (not only in the Word header). If any are missing, ask me.
+* Read my name, city/state, phone, email, LinkedIn from my base resume and place them at the top of the resume body (not only in the Word header). If any are missing, ask me.
+* Title MUST be the fixed headline: "Senior SQL Server Database Administrator / SQL Developer" (never use job posting title here)
 ATS Score + Match % (in summary, not on resume)
 * Produce an ATS Scorecard in tailoring_summary.md:
     * Overall Match % (0–100) with weights: must-haves 60%, preferred 20%, keyword coverage 15%, format compliance 5%.

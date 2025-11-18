@@ -1291,8 +1291,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const { getSkillsInsights } = await import('./services/insights');
           const insights = await getSkillsInsights(userId);
-          if (insights?.topSkills && insights.topSkills.length > 0) {
-            skillsList = insights.topSkills.slice(0, 8).map((s: any) => s.skill);
+          if (insights?.topRequestedSkills && insights.topRequestedSkills.length > 0) {
+            skillsList = insights.topRequestedSkills.slice(0, 8).map((s: any) => s.skill);
           }
         } catch (insightsError) {
           console.log('Could not fetch insights, using default DBA skills:', insightsError);

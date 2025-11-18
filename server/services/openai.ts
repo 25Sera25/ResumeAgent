@@ -292,7 +292,38 @@ Focus on SQL Server DBA specific skills, experience, and qualifications.`;
 
 export async function tailorResumeContent(resumeContent: string, jobAnalysis: JobAnalysisResult, resumeAnalysis: ResumeAnalysis, contactInfo: ContactInformation): Promise<TailoredResumeContent> {
   try {
-    const prompt = `CRITICAL: PRESERVE AND ENHANCE EXISTING EXPERIENCE BULLETS
+    const prompt = `🚨 CRITICAL HARD RULES - ABSOLUTE REQUIREMENTS (NEVER OVERRIDE):
+
+1. FIXED RESUME HEADLINE: The contact.title field MUST ALWAYS be exactly:
+   "Senior SQL Server Database Administrator / SQL Developer"
+   - DO NOT use the job posting title as the main headline
+   - DO NOT replace this with any other title
+   - The job posting title may be mentioned in the Professional Summary text, but NOT as contact.title
+   - NO separate "Target: Company - Job Title" banner anywhere
+
+2. 2-PAGE MAXIMUM with smart trimming:
+   - The tailored resume MUST fit within 2 pages using normal ATS-safe formatting
+   - When content would exceed 2 pages, apply smart trimming:
+     KEEP (fully detailed):
+     - Most recent 2-3 roles with full, strong, quantified bullets
+     - Strongest bullets about:
+       * Performance tuning (indexes, Query Store, DMVs, Extended Events)
+       * HA/DR (AlwaysOn Availability Groups, Failover Clustering, log shipping, mirroring)
+       * Backups/restore (Ola Hallengren scripts, RPO/RTO)
+       * Cloud (Azure/AWS, migrations, RDS, Azure SQL/MI)
+       * Production support and on-call incident response
+     TRIM/REMOVE first:
+     - Older roles beyond the most recent 2-3 positions
+     - Repetitive bullets (generic "managed SQL Server databases" or "collaborated with developers")
+     - Generic responsibilities that don't add new information
+   - NEVER invent or alter titles, dates, or employers when trimming—only remove or condense bullets
+
+3. NO "Target: Company - Job Title" BANNER:
+   - Do NOT include any header line like "Target: Company X - Job Title Y"
+   - Do NOT include variants like "Target role: ..." or "Target company: ..."
+   - The resume should be a standard professional resume suitable for any ATS
+
+CRITICAL: PRESERVE AND ENHANCE EXISTING EXPERIENCE BULLETS
 
 Original Resume Content (WITH DETAILED EXPERIENCE BULLETS):
 ${resumeContent}
@@ -367,8 +398,8 @@ SPECIFIC JOB REQUIREMENTS TO ADDRESS:
 Extract the actual requirements from the job analysis provided and tailor accordingly.
 
 Please respond with a JSON object containing:
-- contact: Use the REAL contact information from the provided contactInfo object - never use placeholders like "Professional Name". Use the actual name, email, phone, etc. from the contactInfo. For the title field, use the EXACT job title from the job posting (e.g., "Senior Database Administrator - Azure SQL & Multi-Cloud Data Platforms") to show perfect role alignment.
-- summary: Professional summary that MATCHES THE EXACT JOB LEVEL and requirements from the job posting. For modern data platform roles, lead with cloud technologies (Azure SQL, Snowflake, multi-cloud). For traditional DBA roles, lead with SQL Server. Emphasize the specific technologies and responsibilities mentioned in the job posting. DO NOT include location preferences or willingness to work in specific locations like "Open to a fully on-site role in Camden, NJ"
+- contact: Use the REAL contact information from the provided contactInfo object - never use placeholders like "Professional Name". Use the actual name, email, phone, etc. from the contactInfo. For the title field, use EXACTLY: "Senior SQL Server Database Administrator / SQL Developer" (the FIXED HEADLINE - do NOT use the job posting title here).
+- summary: Professional summary that MATCHES THE EXACT JOB LEVEL and requirements from the job posting. Mention the target job title from the posting within the summary text if appropriate. For modern data platform roles, lead with cloud technologies (Azure SQL, Snowflake, multi-cloud). For traditional DBA roles, lead with SQL Server. Emphasize the specific technologies and responsibilities mentioned in the job posting. DO NOT include location preferences or willingness to work in specific locations like "Open to a fully on-site role in Camden, NJ"
 - experience: Array of experience objects with this MANDATORY format:
   [
     {
@@ -401,7 +432,7 @@ Please respond with a JSON object containing:
 CRITICAL ALIGNMENT REQUIREMENTS FOR 90%+ ATS SCORES:
 
 **ROLE TARGETING:**
-1. **MATCH EXACT JOB TITLE & LEVEL** - Use the exact title from job posting (Senior Database Administrator - Azure SQL & Multi-Cloud, etc.)
+1. **FIXED HEADLINE REQUIREMENT** - The contact.title field MUST be "Senior SQL Server Database Administrator / SQL Developer" (per hard rules above). Mention the job posting title in the Professional Summary if needed for alignment.
 2. **MATCH PRIMARY TECHNOLOGIES** - Prioritize the databases/technologies mentioned first in job requirements
 3. **MATCH COMPANY CONTEXT** - Align with company industry and scale (multinational, financial services, etc.)
 4. **MATCH ROLE FOCUS** - Traditional DBA vs Cloud Data Engineer vs Data Platform Engineer vs Multi-Cloud DBA
@@ -461,7 +492,7 @@ These keywords are critical for achieving 90%+ ATS scores and must be present in
 
 CRITICAL REQUIREMENTS:
 1. **Avoid overusing "familiar"** - use variety with terms like "Experience with", "Working knowledge of", "Background in", "Exposure to", "Proficient in", "Hands-on experience with"
-2. **Match job title exactly** - Use the exact job title from posting in the contact.title field
+2. **FIXED HEADLINE** - Use exactly "Senior SQL Server Database Administrator / SQL Developer" in the contact.title field (per hard rules). Mention the job posting title in the Professional Summary for alignment.
 3. **Technology prioritization** - For cloud/data platform roles, emphasize modern stack (Snowflake, dbt, Airflow, Azure SQL specifics) over traditional SQL Server
 4. **Industry alignment** - Adjust language for company context (financial services, healthcare, enterprise, etc.)
 5. **Role evolution** - Traditional DBA → Cloud DBA → Data Platform Engineer → Multi-Cloud Data Engineer based on job requirements`;
@@ -490,6 +521,29 @@ CRITICAL REQUIREMENTS:
     const improvements = Array.isArray(result.improvements) ? result.improvements : [];
     const experience = Array.isArray(result.experience) ? result.experience : [];
     const professionalDevelopment = Array.isArray(result.professionalDevelopment) ? result.professionalDevelopment : [];
+    
+    // SAFETY NET: Enforce hard rules
+    const FIXED_HEADLINE = "Senior SQL Server Database Administrator / SQL Developer";
+    
+    // Ensure contact title is the fixed headline
+    if (result.contact && result.contact.title !== FIXED_HEADLINE) {
+      console.warn(`Correcting contact.title from "${result.contact.title}" to fixed headline`);
+      result.contact.title = FIXED_HEADLINE;
+    }
+    
+    // Remove any "Target:" lines from summary if present
+    if (result.summary && typeof result.summary === 'string') {
+      const summaryLines = result.summary.split('\n');
+      const filteredLines = summaryLines.filter((line: string) => 
+        !line.trim().toLowerCase().startsWith('target:') &&
+        !line.trim().toLowerCase().startsWith('target role:') &&
+        !line.trim().toLowerCase().startsWith('target company:')
+      );
+      if (filteredLines.length !== summaryLines.length) {
+        console.warn('Removed "Target:" lines from summary');
+        result.summary = filteredLines.join('\n').trim();
+      }
+    }
     
     return {
       ...result,
