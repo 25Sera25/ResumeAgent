@@ -403,6 +403,12 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex items-center space-x-3">
+                <Link href="/base-resumes">
+                  <Button variant="ghost" size="sm" className="button-hover" data-testid="button-base-resumes">
+                    <FileText className="w-4 h-4 mr-2" />
+                    <span className="hidden sm:inline">Base Resumes</span>
+                  </Button>
+                </Link>
                 <Link href="/resume-library">
                   <Button variant="ghost" size="sm" className="button-hover" data-testid="button-resume-library">
                     <BookOpen className="w-4 h-4 mr-2" />
