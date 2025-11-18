@@ -208,7 +208,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/sessions", requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
+      const { baseResumeId } = req.body;
+      
+      // Create the session
       const session = await createTailoringSession(userId);
+      
+      // If a base resume ID was provided, load it into the session
+      if (baseResumeId) {
+        const storedResume = await storage.getStoredResume(baseResumeId, userId);
+        if (!storedResume) {
+          return res.status(404).json({ error: "Base resume not found" });
+        }
+        
+        // Update session with base resume content
+        const updatedSession = await storage.updateResumeSession(session.id, {
+          baseResumeFile: storedResume.originalFilename,
+          baseResumeContent: storedResume.content,
+          profileJson: storedResume.contactInfo
+        });
+        
+        return res.json(updatedSession);
+      }
+      
       res.json(session);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -247,7 +268,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
+      const userId = req.user!.id;
+      const { saveAsBaseResume = 'true' } = req.body; // Default to auto-save
+      
+      // Upload to session
       const session = await uploadResumeToSession(req.params.id, req.file);
+      
+      // Auto-save to base resume library if requested
+      if (saveAsBaseResume === 'true' || saveAsBaseResume === true) {
+        try {
+          // Process the file to extract content
+          const { processResumeFile, extractContactInformation } = await import("./services/fileProcessor");
+          const processed = await processResumeFile(req.file);
+          const contactInfo = await extractContactInformation(processed.text);
+          
+          // Generate a name for the base resume
+          const baseName = req.file.originalname.replace(/\.(pdf|docx)$/i, '');
+          const name = `Base Resume - ${baseName}`;
+          
+          // Check if a resume with similar name already exists
+          const existingResumes = await storage.getStoredResumes(userId);
+          const isDuplicate = existingResumes.some(r => r.originalFilename === req.file!.originalname);
+          
+          // Only save if not a duplicate
+          if (!isDuplicate) {
+            await storage.createStoredResume({
+              userId,
+              name,
+              originalFilename: req.file.originalname,
+              content: processed.text,
+              contactInfo,
+              isDefault: existingResumes.length === 0 // Set as default if it's the first one
+            });
+          }
+        } catch (saveError) {
+          // Log error but don't fail the request
+          console.error('[RESUME_UPLOAD] Failed to auto-save to base resume library:', saveError);
+        }
+      }
+      
       res.json(session);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
