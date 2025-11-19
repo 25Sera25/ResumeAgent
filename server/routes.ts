@@ -16,6 +16,23 @@ import {
 } from "./services/resumeTailor";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Log configuration on startup
+  const manualUploadOnly = process.env.MANUAL_UPLOAD_ONLY === 'true';
+  if (manualUploadOnly) {
+    console.log('[CONFIG] MANUAL_UPLOAD_ONLY=true – disabling base resume auto-load and autosave');
+  }
+
+  // ===================
+  // PUBLIC ROUTES
+  // ===================
+
+  // Get application configuration
+  app.get("/api/config", (req, res) => {
+    res.json({
+      manualUploadOnly: process.env.MANUAL_UPLOAD_ONLY === 'true'
+    });
+  });
+
   // ===================
   // AUTHENTICATION ROUTES
   // ===================
@@ -209,9 +226,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       const { baseResumeId } = req.body;
+      const manualUploadOnly = process.env.MANUAL_UPLOAD_ONLY === 'true';
       
       // Create the session
       const session = await createTailoringSession(userId);
+      
+      // If MANUAL_UPLOAD_ONLY is enabled, ignore baseResumeId and return empty session
+      if (manualUploadOnly) {
+        if (baseResumeId) {
+          console.log('[SESSION] MANUAL_UPLOAD_ONLY enabled - ignoring baseResumeId, creating empty session');
+        }
+        return res.json(session);
+      }
       
       // If a base resume ID was provided, load it into the session
       if (baseResumeId) {
@@ -269,13 +295,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.user!.id;
-      const { saveAsBaseResume = 'true' } = req.body; // Default to auto-save
+      const manualUploadOnly = process.env.MANUAL_UPLOAD_ONLY === 'true';
+      
+      // Default changed to false (no auto-save)
+      let saveAsBaseResume = req.body.saveAsBaseResume === 'true' || req.body.saveAsBaseResume === true;
+      
+      // Force saveAsBaseResume to false when MANUAL_UPLOAD_ONLY is enabled
+      if (manualUploadOnly && saveAsBaseResume) {
+        console.log('[UPLOAD] saveAsBaseResume forced to false due to MANUAL_UPLOAD_ONLY');
+        saveAsBaseResume = false;
+      }
       
       // Upload to session
       const session = await uploadResumeToSession(req.params.id, req.file);
       
       // Auto-save to base resume library if requested
-      if (saveAsBaseResume === 'true' || saveAsBaseResume === true) {
+      if (saveAsBaseResume) {
         try {
           // Process the file to extract content
           const { processResumeFile, extractContactInformation } = await import("./services/fileProcessor");
