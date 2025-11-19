@@ -1449,6 +1449,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===========================================
+  // INTERVIEW SESSION MANAGEMENT
+  // ===========================================
+
+  // Create a new interview session
+  app.post('/api/interview-sessions', requireAuth, async (req, res) => {
+    try {
+      const { name, mode, jobId, skill } = req.body;
+      const userId = req.user!.id;
+
+      if (!name || !mode) {
+        return res.status(400).json({ error: 'Name and mode are required' });
+      }
+
+      if (!['job', 'skill', 'general'].includes(mode)) {
+        return res.status(400).json({ error: 'Invalid mode. Must be job, skill, or general' });
+      }
+
+      const session = await storage.createInterviewSession({
+        userId,
+        name,
+        mode,
+        jobId: jobId || null,
+        skill: skill || null,
+        questions: null,
+        skillExplanations: null,
+        starStories: null,
+        userAnswers: null,
+        practiceStatus: null,
+      });
+
+      console.log(`[INTERVIEW_SESSION] Created new session: ${session.id} for user ${userId}`);
+      res.json(session);
+    } catch (error) {
+      console.error('[INTERVIEW_SESSION] Error creating session:', error);
+      res.status(500).json({ error: 'Failed to create interview session' });
+    }
+  });
+
+  // Get all interview sessions for the current user
+  app.get('/api/interview-sessions', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const sessions = await storage.getInterviewSessions(userId);
+      res.json(sessions);
+    } catch (error) {
+      console.error('[INTERVIEW_SESSION] Error fetching sessions:', error);
+      res.status(500).json({ error: 'Failed to fetch interview sessions' });
+    }
+  });
+
+  // Get a specific interview session
+  app.get('/api/interview-sessions/:id', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const session = await storage.getInterviewSession(req.params.id, userId);
+
+      if (!session) {
+        return res.status(404).json({ error: 'Interview session not found' });
+      }
+
+      res.json(session);
+    } catch (error) {
+      console.error('[INTERVIEW_SESSION] Error fetching session:', error);
+      res.status(500).json({ error: 'Failed to fetch interview session' });
+    }
+  });
+
+  // Update an interview session
+  app.put('/api/interview-sessions/:id', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const updates = req.body;
+
+      // Verify ownership before updating
+      const existing = await storage.getInterviewSession(req.params.id, userId);
+      if (!existing) {
+        return res.status(404).json({ error: 'Interview session not found' });
+      }
+
+      const updated = await storage.updateInterviewSession(req.params.id, updates);
+      
+      if (!updated) {
+        return res.status(404).json({ error: 'Failed to update session' });
+      }
+
+      console.log(`[INTERVIEW_SESSION] Updated session: ${req.params.id}`);
+      res.json(updated);
+    } catch (error) {
+      console.error('[INTERVIEW_SESSION] Error updating session:', error);
+      res.status(500).json({ error: 'Failed to update interview session' });
+    }
+  });
+
+  // Delete an interview session
+  app.delete('/api/interview-sessions/:id', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const success = await storage.deleteInterviewSession(req.params.id, userId);
+
+      if (!success) {
+        return res.status(404).json({ error: 'Interview session not found' });
+      }
+
+      console.log(`[INTERVIEW_SESSION] Deleted session: ${req.params.id}`);
+      res.json({ message: 'Interview session deleted successfully' });
+    } catch (error) {
+      console.error('[INTERVIEW_SESSION] Error deleting session:', error);
+      res.status(500).json({ error: 'Failed to delete interview session' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

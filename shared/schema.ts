@@ -116,6 +116,23 @@ export const followUps = pgTable("follow_ups", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
+// Interview preparation sessions - persistent storage for generated questions, skills analysis, and STAR stories
+export const interviewSessions = pgTable("interview_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(), // User-provided name for the session (e.g., "Microsoft DBA Prep", "General SQL Prep")
+  mode: text("mode").notNull(), // 'job', 'skill', 'general' - context mode for the session
+  jobId: varchar("job_id"), // Optional reference to tailored resume or session if mode is 'job'
+  skill: text("skill"), // Optional specific skill focus if mode is 'skill'
+  questions: json("questions"), // Array of generated interview questions with answers
+  skillExplanations: json("skill_explanations"), // Array of skill explanations at different depth levels
+  starStories: json("star_stories"), // Array of STAR format stories
+  userAnswers: json("user_answers"), // Map of question IDs to user's practice answers
+  practiceStatus: json("practice_status"), // Map of question IDs to practice status ('needs-practice' | 'confident')
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -156,6 +173,12 @@ export const insertFollowUpSchema = createInsertSchema(followUps).omit({
   updatedAt: true,
 });
 
+export const insertInterviewSessionSchema = createInsertSchema(interviewSessions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type ResumeSession = typeof resumeSessions.$inferSelect;
@@ -164,9 +187,11 @@ export type StoredResume = typeof storedResumes.$inferSelect;
 export type TailoredResume = typeof tailoredResumes.$inferSelect;
 export type JobApplication = typeof jobApplications.$inferSelect;
 export type FollowUp = typeof followUps.$inferSelect;
+export type InterviewSession = typeof interviewSessions.$inferSelect;
 export type InsertResumeSession = z.infer<typeof insertResumeSessionSchema>;
 export type InsertJobPosting = z.infer<typeof insertJobPostingSchema>;
 export type InsertStoredResume = z.infer<typeof insertStoredResumeSchema>;
 export type InsertTailoredResume = z.infer<typeof insertTailoredResumeSchema>;
 export type InsertJobApplication = z.infer<typeof insertJobApplicationSchema>;
 export type InsertFollowUp = z.infer<typeof insertFollowUpSchema>;
+export type InsertInterviewSession = z.infer<typeof insertInterviewSessionSchema>;
