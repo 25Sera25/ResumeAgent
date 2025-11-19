@@ -14,7 +14,6 @@ import JobAnalysis from "@/components/JobAnalysis";
 import ResumePreview from "@/components/ResumePreview";
 import StoredResumeSelector from "@/components/StoredResumeSelector";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { KeyboardShortcutsDialog } from "@/components/KeyboardShortcutsDialog";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import type { ResumeSession } from "@shared/schema";
 
@@ -371,23 +370,8 @@ export default function Home() {
         {/* Header - Sticky with backdrop blur */}
         <header className="sticky top-0 z-30 bg-white/80 dark:bg-neutral-800/80 backdrop-blur-lg shadow-sm border-b border-neutral-200 dark:border-neutral-700">
           <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
-            <div className="flex justify-between items-center h-16">
+            <div className="flex justify-end items-center h-16">
               <div className="flex items-center space-x-3">
-                <div className="bg-gradient-primary text-white p-2 rounded-lg">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-neutral-800 dark:text-neutral-100">Resume Tailor Agent</h1>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">AI-Powered Resume Optimization</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <Link href="/base-resumes">
-                  <Button variant="ghost" size="sm" className="button-hover" data-testid="button-base-resumes">
-                    <FileText className="w-4 h-4 mr-2" />
-                    <span className="hidden sm:inline">Base Resumes</span>
-                  </Button>
-                </Link>
                 <Link href="/resume-library">
                   <Button variant="ghost" size="sm" className="button-hover" data-testid="button-resume-library">
                     <BookOpen className="w-4 h-4 mr-2" />
@@ -431,14 +415,6 @@ export default function Home() {
                     </Button>
                   </Link>
                 )}
-                <KeyboardShortcutsDialog
-                  shortcuts={[
-                    { key: "l", ctrlKey: true, description: "Go to Resume Library", action: () => {} },
-                    { key: "t", ctrlKey: true, description: "Go to Job Tracker", action: () => {} },
-                    { key: "h", ctrlKey: true, description: "Go to Home", action: () => {} },
-                    { key: "Escape", description: "Close dialogs", action: () => {} },
-                  ]}
-                />
                 <ThemeToggle />
                 <div className="flex items-center gap-2 pl-2 border-l border-neutral-200 dark:border-neutral-700">
                   <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300">
@@ -523,9 +499,14 @@ export default function Home() {
               <CardContent className="p-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div>
-                    <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">
-                      Resume Document
-                    </label>
+                    <div className="flex items-center gap-2 mb-3">
+                      <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                        Resume Document
+                      </label>
+                      <span className="px-2 py-0.5 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-md">
+                        Required
+                      </span>
+                    </div>
                     <FileUpload
                       onFileSelect={handleFileUpload}
                       currentFile={uploadedFile ? {
@@ -548,9 +529,17 @@ export default function Home() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">
-                      Profile JSON (Optional)
-                    </label>
+                    <div className="flex items-center gap-2 mb-3">
+                      <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                        Profile JSON
+                      </label>
+                      <span className="px-2 py-0.5 text-xs font-medium bg-neutral-100 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 rounded-md">
+                        Optional
+                      </span>
+                    </div>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-3">
+                      Upload a JSON file with additional profile information to enhance tailoring (optional).
+                    </p>
                     <FileUpload
                       onFileSelect={(file) => {
                         // Handle profile JSON upload
@@ -726,20 +715,20 @@ export default function Home() {
           <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center space-x-3">
-                <Button variant="outline" size="sm" className="button-hover" data-testid="button-save-progress">
+                <Button variant="ghost" size="sm" className="button-hover text-neutral-600 dark:text-neutral-400" data-testid="button-save-progress">
                   Save Progress
                 </Button>
-                <Button variant="outline" size="sm" className="button-hover" data-testid="button-load-previous">
+                <Button variant="ghost" size="sm" className="button-hover text-neutral-600 dark:text-neutral-400" data-testid="button-load-previous">
                   Load Previous
                 </Button>
               </div>
               
               <div className="flex items-center space-x-3">
-                <Button variant="outline" size="sm" className="button-hover" data-testid="button-reset">
+                <Button variant="ghost" size="sm" className="button-hover text-neutral-600 dark:text-neutral-400" data-testid="button-reset">
                   Reset All
                 </Button>
                 <Button 
-                  size="sm"
+                  size="lg"
                   disabled={!session?.jobAnalysis || session?.status === 'tailoring' || tailorResumeMutation.isPending}
                   onClick={() => {
                     if (session?.tailoredContent) {
@@ -749,7 +738,7 @@ export default function Home() {
                     }
                   }}
                   data-testid="button-continue"
-                  className="bg-gradient-primary hover:opacity-90 button-hover text-white px-6 shadow-md"
+                  className="bg-gradient-primary hover:opacity-90 button-hover text-white px-8 py-6 text-base font-semibold shadow-lg"
                 >
                   {session?.tailoredContent ? "Download Resume" : "Continue to Tailoring"}
                 </Button>
