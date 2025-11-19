@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -97,6 +99,9 @@ export default function InterviewPrep() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
   const [newSessionName, setNewSessionName] = useState('');
+  const [newSessionCompany, setNewSessionCompany] = useState('');
+  const [newSessionJobTitle, setNewSessionJobTitle] = useState('');
+  const [newSessionJobDescription, setNewSessionJobDescription] = useState('');
   
   // Fetch all sessions for current user
   const { data: sessions = [], refetch: refetchSessions } = useQuery<any[]>({
@@ -112,7 +117,15 @@ export default function InterviewPrep() {
   
   // Create session mutation
   const createSessionMutation = useMutation({
-    mutationFn: async (data: { name: string; mode: string; jobId?: string; skill?: string }) => {
+    mutationFn: async (data: { 
+      name: string; 
+      mode: string; 
+      jobId?: string; 
+      skill?: string;
+      companyName?: string;
+      jobTitle?: string;
+      jobDescription?: string;
+    }) => {
       const response = await apiRequest('/api/interview-sessions', {
         method: 'POST',
         body: data,
@@ -252,6 +265,11 @@ export default function InterviewPrep() {
     setLoadingQuestions(true);
     try {
       const payload: any = { mode: focusMode };
+      
+      // Include session ID if available for job description context
+      if (currentSessionId) {
+        payload.sessionId = currentSessionId;
+      }
       
       // Only include jobId or skill if they exist and match the mode
       if (focusMode === 'job' && jobId) {
@@ -429,10 +447,16 @@ export default function InterviewPrep() {
       mode: focusMode,
       jobId: jobId || undefined,
       skill: skill || undefined,
+      companyName: newSessionCompany.trim() || undefined,
+      jobTitle: newSessionJobTitle.trim() || undefined,
+      jobDescription: newSessionJobDescription.trim() || undefined,
     });
 
     setShowNewSessionDialog(false);
     setNewSessionName('');
+    setNewSessionCompany('');
+    setNewSessionJobTitle('');
+    setNewSessionJobDescription('');
   };
 
   const handleLoadSession = (sessionId: string) => {
@@ -453,20 +477,70 @@ export default function InterviewPrep() {
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
       {/* New Session Dialog */}
       <Dialog open={showNewSessionDialog} onOpenChange={setShowNewSessionDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Interview Session</DialogTitle>
             <DialogDescription>
-              Name your interview prep session to save your progress
+              Save your interview prep progress. Add job details for personalized questions.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Input
-              placeholder="e.g., Microsoft DBA Prep, General SQL Practice"
-              value={newSessionName}
-              onChange={(e) => setNewSessionName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreateSession()}
-            />
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="session-name">Session Name *</Label>
+              <Input
+                id="session-name"
+                placeholder="e.g., Microsoft DBA Prep, General SQL Practice"
+                value={newSessionName}
+                onChange={(e) => setNewSessionName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleCreateSession();
+                  }
+                }}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="company-name">Company Name</Label>
+              <Input
+                id="company-name"
+                placeholder="e.g., Microsoft, Amazon, Google"
+                value={newSessionCompany}
+                onChange={(e) => setNewSessionCompany(e.target.value)}
+              />
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                Optional: Add company name for company-specific questions
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="job-title">Job Title</Label>
+              <Input
+                id="job-title"
+                placeholder="e.g., Senior SQL Server DBA, Database Administrator"
+                value={newSessionJobTitle}
+                onChange={(e) => setNewSessionJobTitle(e.target.value)}
+              />
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                Optional: Specify the role you're preparing for
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="job-description">Job Description</Label>
+              <Textarea
+                id="job-description"
+                placeholder="Paste the full job description here for highly targeted questions..."
+                value={newSessionJobDescription}
+                onChange={(e) => setNewSessionJobDescription(e.target.value)}
+                rows={8}
+                className="resize-none"
+              />
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                Optional: Paste the job description to generate questions specific to the role's requirements
+              </p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNewSessionDialog(false)}>

@@ -1217,15 +1217,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate interview questions and answers
   app.post('/api/interview-prep/questions', requireAuth, async (req, res) => {
     try {
-      const { jobId, skill, mode = 'general', skillsContext } = req.body;
+      const { jobId, skill, mode = 'general', skillsContext, sessionId } = req.body;
       const userId = req.user!.id;
       
-      console.log('[INTERVIEW_PREP] Generating questions - Mode:', mode, 'JobId:', jobId, 'Skill:', skill);
+      console.log('[INTERVIEW_PREP] Generating questions - Mode:', mode, 'JobId:', jobId, 'SessionId:', sessionId, 'Skill:', skill);
       
       let context: any = { mode };
       
-      // Resolve context based on mode
-      if (mode === 'job' && jobId) {
+      // First, try to get context from interview session if provided
+      if (sessionId) {
+        const interviewSession = await storage.getInterviewSession(sessionId, userId);
+        if (interviewSession) {
+          // Use job description from interview session
+          if (interviewSession.jobDescription) {
+            context.jobDescription = interviewSession.jobDescription;
+            context.jobAnalysis = {
+              title: interviewSession.jobTitle || 'DBA',
+              company: interviewSession.companyName || 'Target Company',
+            };
+            console.log('[INTERVIEW_PREP] Using job description from interview session');
+            
+            // For gap analysis, get the user's most recent resume content
+            // This enables comparison between job requirements and candidate's background
+            const tailoredResumes = await storage.getTailoredResumes(userId);
+            if (tailoredResumes && tailoredResumes.length > 0) {
+              // Use the most recent tailored resume for gap analysis
+              const latestResume = tailoredResumes[0];
+              context.tailoredContent = latestResume.tailoredContent;
+              console.log('[INTERVIEW_PREP] Added resume content for gap analysis from latest tailored resume');
+            }
+          }
+        }
+      }
+      
+      // Resolve context based on mode if not already set from session
+      if (!context.jobDescription && mode === 'job' && jobId) {
         // Try to get tailored resume first, then session
         const tailoredResume = await storage.getTailoredResume(jobId, userId);
         if (tailoredResume) {
@@ -1250,7 +1276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (mode === 'skill' && skill) {
         context.skills = Array.isArray(skill) ? skill : [skill];
         console.log('[INTERVIEW_PREP] Skills focus:', context.skills);
-      } else {
+      } else if (mode === 'general') {
         // General mode - use skills from Skills Gap Dashboard if provided
         if (skillsContext && Array.isArray(skillsContext) && skillsContext.length > 0) {
           context.skillsContext = skillsContext;
@@ -1456,7 +1482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a new interview session
   app.post('/api/interview-sessions', requireAuth, async (req, res) => {
     try {
-      const { name, mode, jobId, skill } = req.body;
+      const { name, mode, jobId, skill, companyName, jobTitle, jobDescription } = req.body;
       const userId = req.user!.id;
 
       if (!name || !mode) {
@@ -1473,6 +1499,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mode,
         jobId: jobId || null,
         skill: skill || null,
+        companyName: companyName || null,
+        jobTitle: jobTitle || null,
+        jobDescription: jobDescription || null,
         questions: null,
         skillExplanations: null,
         starStories: null,

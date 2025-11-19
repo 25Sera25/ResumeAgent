@@ -124,6 +124,9 @@ export const interviewSessions = pgTable("interview_sessions", {
   mode: text("mode").notNull(), // 'job', 'skill', 'general' - context mode for the session
   jobId: varchar("job_id"), // Optional reference to tailored resume or session if mode is 'job'
   skill: text("skill"), // Optional specific skill focus if mode is 'skill'
+  companyName: text("company_name"), // Company name for job-specific prep
+  jobTitle: text("job_title"), // Job title for job-specific prep
+  jobDescription: text("job_description"), // Full job description for targeted question generation
   questions: json("questions"), // Array of generated interview questions with answers
   skillExplanations: json("skill_explanations"), // Array of skill explanations at different depth levels
   starStories: json("star_stories"), // Array of STAR format stories
