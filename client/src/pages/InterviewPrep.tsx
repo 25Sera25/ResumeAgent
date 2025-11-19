@@ -87,6 +87,27 @@ export default function InterviewPrep() {
   const [openQuestions, setOpenQuestions] = useState<Set<string>>(new Set());
   const [practiceStatus, setPracticeStatus] = useState<Map<string, 'needs-practice' | 'confident'>>(new Map());
   
+  // Load practice status from localStorage on mount
+  useEffect(() => {
+    const savedStatus = localStorage.getItem('interview-prep-practice-status');
+    if (savedStatus) {
+      try {
+        const parsed = JSON.parse(savedStatus);
+        setPracticeStatus(new Map(Object.entries(parsed)));
+      } catch (error) {
+        console.error('Failed to parse practice status from localStorage:', error);
+      }
+    }
+  }, []);
+  
+  // Save practice status to localStorage whenever it changes
+  useEffect(() => {
+    if (practiceStatus.size > 0) {
+      const statusObj = Object.fromEntries(practiceStatus.entries());
+      localStorage.setItem('interview-prep-practice-status', JSON.stringify(statusObj));
+    }
+  }, [practiceStatus]);
+  
   // Fetch job/resume context if jobId is provided
   const { data: jobContext } = useQuery<any>({
     queryKey: ['/api/tailored-resumes', jobId],
