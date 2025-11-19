@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { 
@@ -20,7 +22,10 @@ import {
   ChevronDown,
   ChevronUp,
   Copy,
-  Calendar
+  Calendar,
+  Save,
+  FolderOpen,
+  Plus
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -67,6 +72,7 @@ export default function InterviewPrep() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user, logout } = useAuth();
+  const queryClient = useQueryClient();
   
   // Parse query params
   const searchParams = new URLSearchParams(window.location.search);
@@ -87,10 +93,120 @@ export default function InterviewPrep() {
   const [openQuestions, setOpenQuestions] = useState<Set<string>>(new Set());
   const [practiceStatus, setPracticeStatus] = useState<Map<string, 'needs-practice' | 'confident'>>(new Map());
   
-  // Load practice status from localStorage on mount
+  // Session management state
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
+  const [newSessionName, setNewSessionName] = useState('');
+  
+  // Fetch all sessions for current user
+  const { data: sessions = [], refetch: refetchSessions } = useQuery<any[]>({
+    queryKey: ['/api/interview-sessions'],
+    enabled: !!user,
+  });
+  
+  // Fetch current session data
+  const { data: currentSession, refetch: refetchCurrentSession } = useQuery<any>({
+    queryKey: ['/api/interview-sessions', currentSessionId],
+    enabled: !!currentSessionId,
+  });
+  
+  // Create session mutation
+  const createSessionMutation = useMutation({
+    mutationFn: async (data: { name: string; mode: string; jobId?: string; skill?: string }) => {
+      const response = await apiRequest('/api/interview-sessions', {
+        method: 'POST',
+        body: data,
+      });
+      if (!response.ok) throw new Error('Failed to create session');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setCurrentSessionId(data.id);
+      refetchSessions();
+      toast({
+        title: "Session created",
+        description: `"${data.name}" is now active`,
+      });
+    },
+  });
+  
+  // Update session mutation
+  const updateSessionMutation = useMutation({
+    mutationFn: async (data: { id: string; updates: any }) => {
+      const response = await apiRequest(`/api/interview-sessions/${data.id}`, {
+        method: 'PUT',
+        body: data.updates,
+      });
+      if (!response.ok) throw new Error('Failed to update session');
+      return response.json();
+    },
+  });
+  
+  // Delete session mutation
+  const deleteSessionMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest(`/api/interview-sessions/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete session');
+      return response.json();
+    },
+    onSuccess: () => {
+      refetchSessions();
+      setCurrentSessionId(null);
+      toast({
+        title: "Session deleted",
+        description: "Interview session removed",
+      });
+    },
+  });
+  
+  // Load session data when currentSession changes
+  useEffect(() => {
+    if (currentSession) {
+      console.log('[INTERVIEW_PREP] Loading session data:', currentSession.id);
+      if (currentSession.questions) {
+        setQuestions(currentSession.questions);
+      }
+      if (currentSession.skillExplanations) {
+        setSkills(currentSession.skillExplanations);
+      }
+      if (currentSession.starStories) {
+        setStories(currentSession.starStories);
+      }
+      if (currentSession.practiceStatus) {
+        setPracticeStatus(new Map(Object.entries(currentSession.practiceStatus)));
+      }
+      if (currentSession.mode) {
+        setFocusMode(currentSession.mode);
+      }
+    }
+  }, [currentSession]);
+  
+  // Auto-save session data when it changes
+  useEffect(() => {
+    if (currentSessionId && (questions.length > 0 || skills.length > 0 || stories.length > 0)) {
+      const timeoutId = setTimeout(() => {
+        console.log('[INTERVIEW_PREP] Auto-saving session data');
+        updateSessionMutation.mutate({
+          id: currentSessionId,
+          updates: {
+            questions,
+            skillExplanations: skills,
+            starStories: stories,
+            practiceStatus: Object.fromEntries(practiceStatus.entries()),
+          },
+        });
+      }, 1000); // Debounce for 1 second
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [questions, skills, stories, practiceStatus, currentSessionId]);
+  
+  // Load practice status from localStorage on mount (fallback for legacy data)
   useEffect(() => {
     const savedStatus = localStorage.getItem('interview-prep-practice-status');
-    if (savedStatus) {
+    if (savedStatus && !currentSessionId) {
       try {
         const parsed = JSON.parse(savedStatus);
         setPracticeStatus(new Map(Object.entries(parsed)));
@@ -100,7 +216,7 @@ export default function InterviewPrep() {
     }
   }, []);
   
-  // Save practice status to localStorage whenever it changes
+  // Save practice status to localStorage whenever it changes (legacy backup)
   useEffect(() => {
     if (practiceStatus.size > 0) {
       const statusObj = Object.fromEntries(practiceStatus.entries());
@@ -298,8 +414,71 @@ export default function InterviewPrep() {
     }
   };
 
+  const handleCreateSession = async () => {
+    if (!newSessionName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a session name",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    createSessionMutation.mutate({
+      name: newSessionName,
+      mode: focusMode,
+      jobId: jobId || undefined,
+      skill: skill || undefined,
+    });
+
+    setShowNewSessionDialog(false);
+    setNewSessionName('');
+  };
+
+  const handleLoadSession = (sessionId: string) => {
+    setCurrentSessionId(sessionId);
+    toast({
+      title: "Session loaded",
+      description: "Your saved interview prep data has been restored",
+    });
+  };
+
+  const handleDeleteSession = (sessionId: string) => {
+    if (confirm('Are you sure you want to delete this session?')) {
+      deleteSessionMutation.mutate(sessionId);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
+      {/* New Session Dialog */}
+      <Dialog open={showNewSessionDialog} onOpenChange={setShowNewSessionDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Interview Session</DialogTitle>
+            <DialogDescription>
+              Name your interview prep session to save your progress
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              placeholder="e.g., Microsoft DBA Prep, General SQL Practice"
+              value={newSessionName}
+              onChange={(e) => setNewSessionName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleCreateSession()}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewSessionDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateSession} disabled={!newSessionName.trim()}>
+              Create Session
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -386,6 +565,68 @@ export default function InterviewPrep() {
                 </SelectContent>
               </Select>
             </div>
+          </CardHeader>
+        </Card>
+
+        {/* Session Management Panel */}
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Save className="h-5 w-5" />
+                  Interview Session
+                </CardTitle>
+                <CardDescription>
+                  {currentSessionId 
+                    ? `Active: ${sessions.find(s => s.id === currentSessionId)?.name || 'Unnamed Session'}`
+                    : 'Save your progress by creating or loading a session'}
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Select value={currentSessionId || ''} onValueChange={handleLoadSession}>
+                  <SelectTrigger className="w-[250px]">
+                    <SelectValue placeholder="Load a session..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sessions.length === 0 ? (
+                      <div className="p-2 text-sm text-neutral-500">No saved sessions</div>
+                    ) : (
+                      sessions.map((session: any) => (
+                        <SelectItem key={session.id} value={session.id}>
+                          <div className="flex items-center gap-2">
+                            <span>{session.name}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {session.mode}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                <Button onClick={() => setShowNewSessionDialog(true)} variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Session
+                </Button>
+                {currentSessionId && (
+                  <Button 
+                    onClick={() => handleDeleteSession(currentSessionId)} 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    Delete
+                  </Button>
+                )}
+              </div>
+            </div>
+            {currentSessionId && updateSessionMutation.isPending && (
+              <div className="mt-2 flex items-center gap-2 text-xs text-neutral-500">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Saving...
+              </div>
+            )}
           </CardHeader>
         </Card>
 

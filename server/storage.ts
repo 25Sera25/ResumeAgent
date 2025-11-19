@@ -550,6 +550,27 @@ export class MemStorage implements IStorage {
       followUpsScheduled: followUpsList.length,
     };
   }
+
+  // Interview session operations (MemStorage - not used in production)
+  async createInterviewSession(session: InsertInterviewSession): Promise<InterviewSession> {
+    throw new Error('MemStorage not implemented - use DatabaseStorage');
+  }
+
+  async getInterviewSessions(userId: string): Promise<InterviewSession[]> {
+    throw new Error('MemStorage not implemented - use DatabaseStorage');
+  }
+
+  async getInterviewSession(id: string, userId: string): Promise<InterviewSession | undefined> {
+    throw new Error('MemStorage not implemented - use DatabaseStorage');
+  }
+
+  async updateInterviewSession(id: string, updates: Partial<InterviewSession>): Promise<InterviewSession | undefined> {
+    throw new Error('MemStorage not implemented - use DatabaseStorage');
+  }
+
+  async deleteInterviewSession(id: string, userId: string): Promise<boolean> {
+    throw new Error('MemStorage not implemented - use DatabaseStorage');
+  }
 }
 
 export class DatabaseStorage implements IStorage {
