@@ -477,6 +477,15 @@ export default function InterviewPrep() {
     }
   };
 
+  const handleCloseDialog = () => {
+    setShowNewSessionDialog(false);
+    setSelectedResumeId('');
+    setNewSessionName('');
+    setNewSessionCompany('');
+    setNewSessionJobTitle('');
+    setNewSessionJobDescription('');
+  };
+
   const handleCreateSession = async () => {
     if (!newSessionName.trim()) {
       toast({
@@ -497,12 +506,7 @@ export default function InterviewPrep() {
       jobDescription: newSessionJobDescription.trim() || undefined,
     });
 
-    setShowNewSessionDialog(false);
-    setNewSessionName('');
-    setNewSessionCompany('');
-    setNewSessionJobTitle('');
-    setNewSessionJobDescription('');
-    setSelectedResumeId('');
+    handleCloseDialog();
   };
 
   const handleLoadSession = (sessionId: string) => {
@@ -522,7 +526,10 @@ export default function InterviewPrep() {
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
       {/* New Session Dialog */}
-      <Dialog open={showNewSessionDialog} onOpenChange={setShowNewSessionDialog}>
+      <Dialog open={showNewSessionDialog} onOpenChange={(open) => {
+        if (!open) handleCloseDialog();
+        else setShowNewSessionDialog(true);
+      }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Interview Session</DialogTitle>
@@ -609,7 +616,7 @@ export default function InterviewPrep() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewSessionDialog(false)}>
+            <Button variant="outline" onClick={handleCloseDialog}>
               Cancel
             </Button>
             <Button onClick={handleCreateSession} disabled={!newSessionName.trim()}>
