@@ -102,10 +102,17 @@ export default function InterviewPrep() {
   const [newSessionCompany, setNewSessionCompany] = useState('');
   const [newSessionJobTitle, setNewSessionJobTitle] = useState('');
   const [newSessionJobDescription, setNewSessionJobDescription] = useState('');
+  const [selectedResumeId, setSelectedResumeId] = useState<string>('');
   
   // Fetch all sessions for current user
   const { data: sessions = [], refetch: refetchSessions } = useQuery<any[]>({
     queryKey: ['/api/interview-sessions'],
+    enabled: !!user,
+  });
+  
+  // Fetch saved resumes from Resume Library
+  const { data: savedResumes = [] } = useQuery<any[]>({
+    queryKey: ['/api/tailored-resumes'],
     enabled: !!user,
   });
   
@@ -432,6 +439,44 @@ export default function InterviewPrep() {
     }
   };
 
+  const handleResumeSelection = async (resumeId: string) => {
+    setSelectedResumeId(resumeId);
+    
+    if (!resumeId) {
+      // Clear fields if "None" is selected
+      setNewSessionCompany('');
+      setNewSessionJobTitle('');
+      setNewSessionJobDescription('');
+      setNewSessionName('');
+      return;
+    }
+    
+    try {
+      // Fetch the full resume details
+      const response = await apiRequest(`/api/tailored-resumes/${resumeId}`, {
+        method: 'GET',
+      });
+      
+      if (response.ok) {
+        const resume = await response.json();
+        
+        // Auto-fill fields
+        setNewSessionCompany(resume.company || '');
+        setNewSessionJobTitle(resume.jobTitle || '');
+        setNewSessionJobDescription(resume.originalJobDescription || '');
+        
+        // Intelligently pre-fill session name
+        setNewSessionName(`Prep for ${resume.jobTitle} at ${resume.company}`);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load resume details",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleCreateSession = async () => {
     if (!newSessionName.trim()) {
       toast({
@@ -457,6 +502,7 @@ export default function InterviewPrep() {
     setNewSessionCompany('');
     setNewSessionJobTitle('');
     setNewSessionJobDescription('');
+    setSelectedResumeId('');
   };
 
   const handleLoadSession = (sessionId: string) => {
@@ -485,6 +531,26 @@ export default function InterviewPrep() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="resume-selector">Start with a Saved Resume</Label>
+              <Select value={selectedResumeId} onValueChange={handleResumeSelection}>
+                <SelectTrigger id="resume-selector">
+                  <SelectValue placeholder="Select a resume from your library..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None - Enter manually</SelectItem>
+                  {savedResumes.map((resume: any) => (
+                    <SelectItem key={resume.id} value={resume.id}>
+                      {resume.company} - {resume.jobTitle}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                Optional: Select a saved resume to auto-fill job details below
+              </p>
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="session-name">Session Name *</Label>
               <Input
