@@ -154,7 +154,7 @@ export default function InterviewPrep() {
       
       const response = await apiRequest('/api/interview-prep/questions', {
         method: 'POST',
-        body: JSON.stringify(payload)
+        body: payload
       });
       
       if (response.ok) {
@@ -192,7 +192,7 @@ export default function InterviewPrep() {
       
       const response = await apiRequest('/api/interview-prep/skills-explanations', {
         method: 'POST',
-        body: JSON.stringify(payload)
+        body: payload
       });
       
       if (response.ok) {
@@ -227,7 +227,7 @@ export default function InterviewPrep() {
       
       const response = await apiRequest('/api/interview-prep/star-stories', {
         method: 'POST',
-        body: JSON.stringify(payload)
+        body: payload
       });
       
       if (response.ok) {
