@@ -15,8 +15,6 @@ import JobAnalysis from "@/components/JobAnalysis";
 import ResumePreview from "@/components/ResumePreview";
 import StoredResumeSelector from "@/components/StoredResumeSelector";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { KeyboardShortcutsDialog } from "@/components/KeyboardShortcutsDialog";
-import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import type { ResumeSession } from "@shared/schema";
 
 interface SessionStats {
@@ -34,35 +32,6 @@ export default function Home() {
   const queryClient = useQueryClient();
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
-
-  // Keyboard shortcuts
-  useKeyboardShortcuts([
-    {
-      key: "l",
-      ctrlKey: true,
-      description: "Go to Resume Library",
-      action: () => setLocation("/resume-library"),
-    },
-    {
-      key: "t",
-      ctrlKey: true,
-      description: "Go to Job Tracker",
-      action: () => setLocation("/job-tracker"),
-    },
-    {
-      key: "h",
-      ctrlKey: true,
-      description: "Go to Home",
-      action: () => setLocation("/"),
-    },
-    {
-      key: "Escape",
-      description: "Close dialogs",
-      action: () => {
-        // This will be handled by individual dialogs
-      },
-    },
-  ]);
 
   // Get current session data
   const { data: session, isLoading: sessionLoading } = useQuery<ResumeSession>({
@@ -374,12 +343,7 @@ export default function Home() {
           <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center space-x-3">
-                <div className="bg-gradient-primary text-white p-2 rounded-lg">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-neutral-800 dark:text-neutral-100">Resume Agent</h1>
-                </div>
+                {/* Logo/brand is in left sidebar, so no duplication needed here */}
               </div>
               <div className="flex items-center space-x-3">
                 <Link href="/resume-library">
@@ -425,14 +389,6 @@ export default function Home() {
                     </Button>
                   </Link>
                 )}
-                <KeyboardShortcutsDialog
-                  shortcuts={[
-                    { key: "l", ctrlKey: true, description: "Go to Resume Library", action: () => {} },
-                    { key: "t", ctrlKey: true, description: "Go to Job Tracker", action: () => {} },
-                    { key: "h", ctrlKey: true, description: "Go to Home", action: () => {} },
-                    { key: "Escape", description: "Close dialogs", action: () => {} },
-                  ]}
-                />
                 <ThemeToggle />
                 <div className="flex items-center gap-2 pl-2 border-l border-neutral-200 dark:border-neutral-700">
                   <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300">
@@ -513,7 +469,7 @@ export default function Home() {
                 </div>
               </CardHeader>
               <CardContent className="p-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="max-w-2xl mx-auto">
                   <div>
                     <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">
                       Resume Document
@@ -537,27 +493,6 @@ export default function Home() {
                           }}
                         />
                       )}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-                        Profile JSON
-                      </label>
-                      <Badge variant="secondary" className="bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-400 text-xs">
-                        Optional
-                      </Badge>
-                    </div>
-                    <div className="opacity-75">
-                      <FileUpload
-                        onFileSelect={(file) => {
-                          // Handle profile JSON upload
-                          console.log('Profile JSON uploaded:', file);
-                        }}
-                        acceptedTypes={['.json']}
-                        disabled={false}
-                        className="border-neutral-200 dark:border-neutral-600 bg-neutral-50/50 dark:bg-neutral-800/50"
-                      />
                     </div>
                   </div>
                 </div>
