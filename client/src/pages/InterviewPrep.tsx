@@ -117,7 +117,15 @@ export default function InterviewPrep() {
   
   // Create session mutation
   const createSessionMutation = useMutation({
-    mutationFn: async (data: { name: string; mode: string; jobId?: string; skill?: string }) => {
+    mutationFn: async (data: { 
+      name: string; 
+      mode: string; 
+      jobId?: string; 
+      skill?: string;
+      companyName?: string;
+      jobTitle?: string;
+      jobDescription?: string;
+    }) => {
       const response = await apiRequest('/api/interview-sessions', {
         method: 'POST',
         body: data,
