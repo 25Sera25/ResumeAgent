@@ -9,7 +9,6 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import ResumeLibrary from "@/pages/ResumeLibrary";
-import BaseResumeLibrary from "@/pages/BaseResumeLibrary";
 import JobTracker from "@/pages/JobTracker";
 import FollowUps from "@/pages/FollowUps";
 import Login from "@/pages/Login";
@@ -33,11 +32,6 @@ function Router() {
       <Route path="/resume-library">
         <ProtectedRoute>
           <ResumeLibrary />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/base-resumes">
-        <ProtectedRoute>
-          <BaseResumeLibrary />
         </ProtectedRoute>
       </Route>
       <Route path="/job-tracker">

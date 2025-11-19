@@ -16,23 +16,6 @@ import {
 } from "./services/resumeTailor";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Log configuration on startup
-  const manualUploadOnly = process.env.MANUAL_UPLOAD_ONLY === 'true';
-  if (manualUploadOnly) {
-    console.log('[CONFIG] MANUAL_UPLOAD_ONLY=true – disabling base resume auto-load and autosave');
-  }
-
-  // ===================
-  // PUBLIC ROUTES
-  // ===================
-
-  // Get application configuration
-  app.get("/api/config", (req, res) => {
-    res.json({
-      manualUploadOnly: process.env.MANUAL_UPLOAD_ONLY === 'true'
-    });
-  });
-
   // ===================
   // AUTHENTICATION ROUTES
   // ===================
@@ -225,37 +208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/sessions", requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
-      const { baseResumeId } = req.body;
-      const manualUploadOnly = process.env.MANUAL_UPLOAD_ONLY === 'true';
-      
-      // Create the session
       const session = await createTailoringSession(userId);
-      
-      // If MANUAL_UPLOAD_ONLY is enabled, ignore baseResumeId and return empty session
-      if (manualUploadOnly) {
-        if (baseResumeId) {
-          console.log('[SESSION] MANUAL_UPLOAD_ONLY enabled - ignoring baseResumeId, creating empty session');
-        }
-        return res.json(session);
-      }
-      
-      // If a base resume ID was provided, load it into the session
-      if (baseResumeId) {
-        const storedResume = await storage.getStoredResume(baseResumeId, userId);
-        if (!storedResume) {
-          return res.status(404).json({ error: "Base resume not found" });
-        }
-        
-        // Update session with base resume content
-        const updatedSession = await storage.updateResumeSession(session.id, {
-          baseResumeFile: storedResume.originalFilename,
-          baseResumeContent: storedResume.content,
-          profileJson: storedResume.contactInfo
-        });
-        
-        return res.json(updatedSession);
-      }
-      
       res.json(session);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -294,54 +247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      const userId = req.user!.id;
-      const manualUploadOnly = process.env.MANUAL_UPLOAD_ONLY === 'true';
-      
-      // Default changed to false (no auto-save)
-      let saveAsBaseResume = req.body.saveAsBaseResume === 'true' || req.body.saveAsBaseResume === true;
-      
-      // Force saveAsBaseResume to false when MANUAL_UPLOAD_ONLY is enabled
-      if (manualUploadOnly && saveAsBaseResume) {
-        console.log('[UPLOAD] saveAsBaseResume forced to false due to MANUAL_UPLOAD_ONLY');
-        saveAsBaseResume = false;
-      }
-      
-      // Upload to session
       const session = await uploadResumeToSession(req.params.id, req.file);
-      
-      // Auto-save to base resume library if requested
-      if (saveAsBaseResume) {
-        try {
-          // Process the file to extract content
-          const { processResumeFile, extractContactInformation } = await import("./services/fileProcessor");
-          const processed = await processResumeFile(req.file);
-          const contactInfo = await extractContactInformation(processed.text);
-          
-          // Generate a name for the base resume
-          const baseName = req.file.originalname.replace(/\.(pdf|docx)$/i, '');
-          const name = `Base Resume - ${baseName}`;
-          
-          // Check if a resume with similar name already exists
-          const existingResumes = await storage.getStoredResumes(userId);
-          const isDuplicate = existingResumes.some(r => r.originalFilename === req.file!.originalname);
-          
-          // Only save if not a duplicate
-          if (!isDuplicate) {
-            await storage.createStoredResume({
-              userId,
-              name,
-              originalFilename: req.file.originalname,
-              content: processed.text,
-              contactInfo,
-              isDefault: existingResumes.length === 0 // Set as default if it's the first one
-            });
-          }
-        } catch (saveError) {
-          // Log error but don't fail the request
-          console.error('[RESUME_UPLOAD] Failed to auto-save to base resume library:', saveError);
-        }
-      }
-      
       res.json(session);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
