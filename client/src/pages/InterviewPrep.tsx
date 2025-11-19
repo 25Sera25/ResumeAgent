@@ -93,6 +93,12 @@ export default function InterviewPrep() {
     enabled: !!jobId && focusMode === 'job',
   });
 
+  // Fetch skills insights for general mode
+  const { data: skillsInsights } = useQuery<any>({
+    queryKey: ['/api/insights/skills'],
+    enabled: focusMode === 'general',
+  });
+
   useEffect(() => {
     // Auto-load on mount based on mode
     if (focusMode === 'job' && jobId) {
@@ -115,6 +121,14 @@ export default function InterviewPrep() {
         payload.jobId = jobId;
       } else if (focusMode === 'skill' && skill) {
         payload.skill = skill;
+      } else if (focusMode === 'general' && skillsInsights?.topRequestedSkills) {
+        // Pass top skills from Skills Gap Dashboard to use in question generation
+        payload.skillsContext = skillsInsights.topRequestedSkills.slice(0, 10).map((s: any) => ({
+          name: s.skill,
+          category: s.category,
+          coverage: s.coveragePercent,
+          jobCount: s.jobsMentioned
+        }));
       }
       
       const response = await apiRequest('/api/interview-prep/questions', {
@@ -150,6 +164,9 @@ export default function InterviewPrep() {
         payload.jobId = jobId;
       } else if (focusMode === 'skill' && skill) {
         payload.skills = [skill];
+      } else if (focusMode === 'general' && skillsInsights?.topRequestedSkills) {
+        // Pass top skills from Skills Gap Dashboard
+        payload.skills = skillsInsights.topRequestedSkills.slice(0, 8).map((s: any) => s.skill);
       }
       
       const response = await apiRequest('/api/interview-prep/skills-explanations', {
@@ -323,8 +340,19 @@ export default function InterviewPrep() {
                     ? `Preparing for ${jobContext.jobTitle} at ${jobContext.company}`
                     : focusMode === 'skill' && skill
                     ? `Focused on ${skill} skills`
+                    : skillsInsights?.topRequestedSkills && skillsInsights.topRequestedSkills.length > 0
+                    ? `Based on your top ${Math.min(skillsInsights.topRequestedSkills.length, 10)} in-demand skills from ${skillsInsights.stats?.totalJobsAnalyzed || 0} job${(skillsInsights.stats?.totalJobsAnalyzed || 0) !== 1 ? 's' : ''}`
                     : 'General SQL Server DBA interview preparation'}
                 </CardDescription>
+                {focusMode === 'general' && skillsInsights?.topRequestedSkills && skillsInsights.topRequestedSkills.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {skillsInsights.topRequestedSkills.slice(0, 8).map((s: any, idx: number) => (
+                      <Badge key={idx} variant="outline" className="text-xs">
+                        {s.skill}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
               <Select value={focusMode} onValueChange={(v: any) => setFocusMode(v)}>
                 <SelectTrigger className="w-[200px]">

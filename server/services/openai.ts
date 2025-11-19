@@ -919,6 +919,7 @@ export async function generateInterviewPrepQuestions(
     jobDescription?: string;
     jobAnalysis?: any;
     skills?: string[];
+    skillsContext?: Array<{ name: string; category: string; coverage: number; jobCount: number }>;
     tailoredContent?: any;
     mode: 'job' | 'skill' | 'general';
   }
@@ -935,6 +936,13 @@ export async function generateInterviewPrepQuestions(
       }
     } else if (context.mode === 'skill' && context.skills && context.skills.length > 0) {
       contextDescription = `Focus Skills: ${context.skills.join(', ')}\n\n`;
+    } else if (context.mode === 'general' && context.skillsContext && context.skillsContext.length > 0) {
+      contextDescription = 'Interview Preparation Based on Your Skills Gap Analysis\n\n';
+      contextDescription += `Top In-Demand Skills (from ${context.skillsContext[0]?.jobCount || 0} job analyses):\n`;
+      context.skillsContext.forEach((skill, idx) => {
+        contextDescription += `${idx + 1}. ${skill.name} (${skill.category}, ${skill.coverage}% coverage in your resumes)\n`;
+      });
+      contextDescription += '\n';
     } else {
       contextDescription = 'General SQL Server DBA Interview Preparation\n\n';
     }
@@ -955,6 +963,8 @@ Generate 12-15 high-quality interview questions covering:
 1. Technical Questions (40%): SQL Server administration, performance tuning, HA/DR, security
 2. Behavioral Questions (40%): Past experience using STAR method
 3. System Design (20%): Architecture and scalability
+
+${context.skillsContext && context.skillsContext.length > 0 ? `IMPORTANT: Focus questions on the skills listed above, especially those with lower coverage percentages as they represent gaps to address.\n\n` : ''}
 
 For each question provide:
 - id: unique identifier (e.g., "tech-1", "behav-1")
