@@ -1236,6 +1236,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
               company: interviewSession.companyName || 'Target Company',
             };
             console.log('[INTERVIEW_PREP] Using job description from interview session');
+            
+            // For gap analysis, get the user's most recent resume content
+            // This enables comparison between job requirements and candidate's background
+            const tailoredResumes = await storage.getTailoredResumes(userId);
+            if (tailoredResumes && tailoredResumes.length > 0) {
+              // Use the most recent tailored resume for gap analysis
+              const latestResume = tailoredResumes[0];
+              context.tailoredContent = latestResume.tailoredContent;
+              console.log('[INTERVIEW_PREP] Added resume content for gap analysis from latest tailored resume');
+            }
           }
         }
       }

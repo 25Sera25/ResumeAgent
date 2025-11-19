@@ -926,6 +926,7 @@ export async function generateInterviewPrepQuestions(
 ): Promise<InterviewPrepQuestionsResponse> {
   try {
     let contextDescription = '';
+    let gapAnalysisInstruction = '';
     
     if (context.mode === 'job' && context.jobDescription) {
       contextDescription = `Job Description:\n${context.jobDescription}\n\n`;
@@ -933,6 +934,28 @@ export async function generateInterviewPrepQuestions(
         contextDescription += `Job Title: ${context.jobAnalysis.title || 'DBA'}\n`;
         contextDescription += `Company: ${context.jobAnalysis.company || 'Target Company'}\n`;
         contextDescription += `Key Technologies: ${(context.jobAnalysis.technologies || []).join(', ')}\n\n`;
+      }
+      
+      // Add gap analysis if we have both job description and resume
+      if (context.tailoredContent) {
+        gapAnalysisInstruction = `
+CRITICAL - GAP ANALYSIS APPROACH:
+Compare the job description requirements with the candidate's resume to identify skill/experience gaps.
+Generate questions that probe areas where the candidate may lack explicit experience.
+
+Resume Analysis:
+- Candidate Skills: ${(context.tailoredContent.skills || []).join(', ')}
+- Recent Experience: ${context.tailoredContent.experience && context.tailoredContent.experience.length > 0 ? context.tailoredContent.experience.map((exp: any) => exp.title).join(', ') : 'N/A'}
+
+INSTRUCTIONS:
+1. Identify technologies/skills mentioned in the job description but NOT in the candidate's resume
+2. For each gap, create 2-3 probing questions to assess:
+   - Whether the candidate has unreported experience in this area
+   - Their willingness/ability to learn
+   - How they would approach learning this skill
+3. Include at least 4-5 "gap-focused" questions that target these missing skills
+4. Mark these questions with topic prefix "Gap:" (e.g., "Gap: Azure SQL")
+`;
       }
     } else if (context.mode === 'skill' && context.skills && context.skills.length > 0) {
       contextDescription = `Focus Skills: ${context.skills.join(', ')}\n\n`;
@@ -947,7 +970,7 @@ export async function generateInterviewPrepQuestions(
       contextDescription = 'General SQL Server DBA Interview Preparation\n\n';
     }
 
-    if (context.tailoredContent) {
+    if (context.tailoredContent && !gapAnalysisInstruction) {
       contextDescription += `Candidate Background:\n`;
       contextDescription += `Skills: ${(context.tailoredContent.skills || []).join(', ')}\n`;
       if (context.tailoredContent.experience && context.tailoredContent.experience.length > 0) {
@@ -959,18 +982,21 @@ export async function generateInterviewPrepQuestions(
 
 ${contextDescription}
 
+${gapAnalysisInstruction}
+
 Generate 12-15 high-quality interview questions covering:
 1. Technical Questions (40%): SQL Server administration, performance tuning, HA/DR, security
 2. Behavioral Questions (40%): Past experience using STAR method
 3. System Design (20%): Architecture and scalability
+${gapAnalysisInstruction ? '4. Gap-Focused Questions (targeting skills/technologies not in resume but required by job)' : ''}
 
 ${context.skillsContext && context.skillsContext.length > 0 ? `IMPORTANT: Focus questions on the skills listed above, especially those with lower coverage percentages as they represent gaps to address.\n\n` : ''}
 
 For each question provide:
-- id: unique identifier (e.g., "tech-1", "behav-1")
+- id: unique identifier (e.g., "tech-1", "behav-1", "gap-1")
 - question: The interview question text
 - type: "technical" or "behavioral"
-- topic: Category (e.g., "HA/DR", "Performance Tuning", "Leadership")
+- topic: Category (e.g., "HA/DR", "Performance Tuning", "Leadership", "Gap: Azure SQL")
 - difficulty: "junior", "mid", or "senior"
 - suggestedAnswer: A comprehensive answer with specific SQL Server details
 - star: For behavioral questions, include {situation, task, action, result} breakdown
@@ -1004,14 +1030,14 @@ Return JSON in this exact format:
   ]
 }`;
 
-    console.log('[OPENAI] Generating interview prep questions with mode:', context.mode);
+    console.log('[OPENAI] Generating interview prep questions with mode:', context.mode, 'Gap Analysis:', !!gapAnalysisInstruction);
     
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: "You are an expert SQL Server DBA interviewer and technical coach. Generate realistic, practical interview questions with detailed answers."
+          content: "You are an expert SQL Server DBA interviewer and technical coach. Generate realistic, practical interview questions with detailed answers. When analyzing resume-to-job-description gaps, focus on probing questions that reveal hidden experience or growth potential."
         },
         {
           role: "user",
