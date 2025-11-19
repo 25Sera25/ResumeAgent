@@ -75,10 +75,15 @@ export default function StoredResumeSelector({ sessionId, onResumeSelected }: St
   return (
     <Dialog open={showSelector} onOpenChange={setShowSelector}>
       <DialogTrigger asChild>
-        <Button variant="outline" data-testid="button-use-stored-resume">
-          <FileText className="w-4 h-4 mr-2" />
-          Use Stored Resume
-        </Button>
+        <div>
+          <Button variant="outline" data-testid="button-use-stored-resume">
+            <FileText className="w-4 h-4 mr-2" />
+            Use Stored Resume
+          </Button>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-2">
+            Reuse a resume you've previously uploaded.
+          </p>
+        </div>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>

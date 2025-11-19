@@ -152,7 +152,7 @@ export default function JobAnalysis({
               <div className="flex space-x-3">
                 <Input
                   type="url"
-                  placeholder="https://company.com/careers/sql-dba-position"
+                  placeholder="Paste job posting URL or job description text..."
                   value={jobUrl}
                   onChange={handleUrlChange}
                   className="flex-1 h-11 text-base"
@@ -180,7 +180,7 @@ export default function JobAnalysis({
                 </Button>
               </div>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-2">
-                Paste the URL of the job posting you want to tailor your resume for
+                We'll extract role requirements after you paste a URL or description.
               </p>
             </div>
           </TabsContent>

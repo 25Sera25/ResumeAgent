@@ -130,6 +130,35 @@
   body {
     @apply font-inter antialiased bg-background text-foreground;
   }
+  
+  /* Improved placeholder contrast for accessibility */
+  input::placeholder,
+  textarea::placeholder {
+    color: hsl(215, 13%, 50%);
+    opacity: 1;
+  }
+  
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    color: hsl(217, 10%, 65%);
+    opacity: 1;
+  }
+  
+  /* Enhanced focus states for accessibility */
+  input:focus,
+  textarea:focus,
+  button:focus,
+  select:focus,
+  [role="button"]:focus {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  
+  /* Specific focus for file upload dropzones */
+  [data-testid="file-upload-area"]:focus-within {
+    outline: 3px solid var(--ring);
+    outline-offset: 2px;
+  }
 }
 
 @layer utilities {
