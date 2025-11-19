@@ -4,6 +4,7 @@ import { Link, useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Database, Bot, HelpCircle, Settings, Check, Loader2, WandSparkles, FileText, Library, BookOpen, BarChart3, LogOut, User, Shield, Sparkles, Brain, Mail, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -377,17 +378,10 @@ export default function Home() {
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-neutral-800 dark:text-neutral-100">Resume Tailor Agent</h1>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">AI-Powered Resume Optimization</p>
+                  <h1 className="text-xl font-bold text-neutral-800 dark:text-neutral-100">Resume Agent</h1>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
-                <Link href="/base-resumes">
-                  <Button variant="ghost" size="sm" className="button-hover" data-testid="button-base-resumes">
-                    <FileText className="w-4 h-4 mr-2" />
-                    <span className="hidden sm:inline">Base Resumes</span>
-                  </Button>
-                </Link>
                 <Link href="/resume-library">
                   <Button variant="ghost" size="sm" className="button-hover" data-testid="button-resume-library">
                     <BookOpen className="w-4 h-4 mr-2" />
@@ -479,10 +473,8 @@ export default function Home() {
                   </div>
                 </div>
                 
-                <p className="text-white/90 mb-6 leading-relaxed max-w-3xl">
-                  Upload your base resume and a job posting URL. Our AI agent will analyze the requirements, 
-                  extract key skills and keywords, then generate an ATS-optimized resume tailored specifically 
-                  for that MS SQL DBA position.
+                <p className="text-white/90 leading-relaxed max-w-3xl">
+                  Upload your resume and paste a job URL to get an ATS-optimized, role-specific resume in minutes.
                 </p>
                 
                 <div className="flex flex-wrap gap-4">
@@ -548,17 +540,25 @@ export default function Home() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">
-                      Profile JSON (Optional)
-                    </label>
-                    <FileUpload
-                      onFileSelect={(file) => {
-                        // Handle profile JSON upload
-                        console.log('Profile JSON uploaded:', file);
-                      }}
-                      acceptedTypes={['.json']}
-                      disabled={false}
-                    />
+                    <div className="flex items-center gap-2 mb-3">
+                      <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                        Profile JSON
+                      </label>
+                      <Badge variant="secondary" className="bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-400 text-xs">
+                        Optional
+                      </Badge>
+                    </div>
+                    <div className="opacity-75">
+                      <FileUpload
+                        onFileSelect={(file) => {
+                          // Handle profile JSON upload
+                          console.log('Profile JSON uploaded:', file);
+                        }}
+                        acceptedTypes={['.json']}
+                        disabled={false}
+                        className="border-neutral-200 dark:border-neutral-600 bg-neutral-50/50 dark:bg-neutral-800/50"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -726,20 +726,17 @@ export default function Home() {
           <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center space-x-3">
-                <Button variant="outline" size="sm" className="button-hover" data-testid="button-save-progress">
-                  Save Progress
-                </Button>
-                <Button variant="outline" size="sm" className="button-hover" data-testid="button-load-previous">
+                <Button variant="ghost" size="sm" className="button-hover text-neutral-600 dark:text-neutral-400" data-testid="button-load-previous">
                   Load Previous
                 </Button>
               </div>
               
               <div className="flex items-center space-x-3">
-                <Button variant="outline" size="sm" className="button-hover" data-testid="button-reset">
+                <Button variant="ghost" size="sm" className="button-hover text-neutral-600 dark:text-neutral-400" data-testid="button-reset">
                   Reset All
                 </Button>
                 <Button 
-                  size="sm"
+                  size="lg"
                   disabled={!session?.jobAnalysis || session?.status === 'tailoring' || tailorResumeMutation.isPending}
                   onClick={() => {
                     if (session?.tailoredContent) {
@@ -749,7 +746,7 @@ export default function Home() {
                     }
                   }}
                   data-testid="button-continue"
-                  className="bg-gradient-primary hover:opacity-90 button-hover text-white px-6 shadow-md"
+                  className="bg-gradient-primary hover:opacity-90 button-hover text-white px-8 py-2.5 text-base font-semibold shadow-lg"
                 >
                   {session?.tailoredContent ? "Download Resume" : "Continue to Tailoring"}
                 </Button>
