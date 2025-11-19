@@ -1,7 +1,7 @@
-import { type User, type InsertUser, type ResumeSession, type InsertResumeSession, type JobPosting, type InsertJobPosting, type StoredResume, type InsertStoredResume, type TailoredResume, type InsertTailoredResume, type JobApplication, type InsertJobApplication, type FollowUp, type InsertFollowUp } from "@shared/schema";
+import { type User, type InsertUser, type ResumeSession, type InsertResumeSession, type JobPosting, type InsertJobPosting, type StoredResume, type InsertStoredResume, type TailoredResume, type InsertTailoredResume, type JobApplication, type InsertJobApplication, type FollowUp, type InsertFollowUp, type InterviewSession, type InsertInterviewSession } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { users, resumeSessions, jobPostings, storedResumes, tailoredResumes, jobApplications, followUps } from "@shared/schema";
+import { users, resumeSessions, jobPostings, storedResumes, tailoredResumes, jobApplications, followUps, interviewSessions } from "@shared/schema";
 import { eq, desc, sql, and, lte, gte } from "drizzle-orm";
 
 export interface IStorage {
@@ -73,6 +73,13 @@ export interface IStorage {
     applicationsSent: number;
     followUpsScheduled: number;
   }>;
+  
+  // Interview session operations
+  createInterviewSession(session: InsertInterviewSession): Promise<InterviewSession>;
+  getInterviewSessions(userId: string): Promise<InterviewSession[]>;
+  getInterviewSession(id: string, userId: string): Promise<InterviewSession | undefined>;
+  updateInterviewSession(id: string, updates: Partial<InterviewSession>): Promise<InterviewSession | undefined>;
+  deleteInterviewSession(id: string, userId: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -907,6 +914,44 @@ export class DatabaseStorage implements IStorage {
       sent: allFollowUps.filter(f => f.status === "sent").length,
       total: allFollowUps.length,
     };
+  }
+
+  // Interview session operations
+  async createInterviewSession(insertSession: InsertInterviewSession): Promise<InterviewSession> {
+    const [session] = await db.insert(interviewSessions).values(insertSession).returning();
+    return session;
+  }
+
+  async getInterviewSessions(userId: string): Promise<InterviewSession[]> {
+    return await db
+      .select()
+      .from(interviewSessions)
+      .where(eq(interviewSessions.userId, userId))
+      .orderBy(desc(interviewSessions.updatedAt));
+  }
+
+  async getInterviewSession(id: string, userId: string): Promise<InterviewSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(interviewSessions)
+      .where(and(eq(interviewSessions.id, id), eq(interviewSessions.userId, userId)));
+    return session || undefined;
+  }
+
+  async updateInterviewSession(id: string, updates: Partial<InterviewSession>): Promise<InterviewSession | undefined> {
+    const [session] = await db
+      .update(interviewSessions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(interviewSessions.id, id))
+      .returning();
+    return session || undefined;
+  }
+
+  async deleteInterviewSession(id: string, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(interviewSessions)
+      .where(and(eq(interviewSessions.id, id), eq(interviewSessions.userId, userId)));
+    return result.rowCount! > 0;
   }
 }
 
