@@ -267,16 +267,24 @@ export default function Insights() {
               {insights?.missingSkills && insights.missingSkills.length > 0 ? (
                 <div className="space-y-4">
                   {insights.missingSkills.map((skill: SkillCoverage, idx: number) => (
-                    <div key={idx} className="border border-amber-200 bg-amber-50 rounded-lg p-4">
+                    <div key={idx} className="border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-amber-900">{skill.skill}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {skill.jobsMentioned} jobs need this
-                        </Badge>
+                        <span className="font-medium text-amber-900 dark:text-amber-100">{skill.skill}</span>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {skill.jobsMentioned} jobs
+                          </Badge>
+                          <Link href={`/interview-prep?skill=${encodeURIComponent(skill.skill)}`}>
+                            <Button variant="outline" size="sm">
+                              <Brain className="h-3 w-3 mr-1" />
+                              Prep
+                            </Button>
+                          </Link>
+                        </div>
                       </div>
                       <Progress value={skill.coveragePercent} className="h-2 mb-2" />
-                      <p className="text-xs text-amber-700">
-                        Coverage: {skill.coveragePercent}% • Consider adding to your skills
+                      <p className="text-xs text-amber-700 dark:text-amber-300">
+                        Focus on <strong>{skill.skill}</strong> — appears in {skill.jobsMentioned} job{skill.jobsMentioned > 1 ? 's' : ''}, but your coverage is {skill.coveragePercent}%
                       </p>
                     </div>
                   ))}
@@ -293,7 +301,16 @@ export default function Insights() {
                   ) : (
                     <>
                       <Target className="h-12 w-12 text-green-500/50 mx-auto mb-3" />
-                      <p className="text-muted-foreground">Great! No significant skills gaps detected.</p>
+                      <p className="text-muted-foreground mb-2">Great! No significant skills gaps detected.</p>
+                      <p className="text-sm text-muted-foreground">
+                        You're covering all the key skills for your targeted DBA roles. Use Interview Prep Hub to polish your answers and stories.
+                      </p>
+                      <Link href="/interview-prep">
+                        <Button variant="default" size="sm" className="mt-4">
+                          <Brain className="h-4 w-4 mr-2" />
+                          Go to Interview Prep Hub
+                        </Button>
+                      </Link>
                     </>
                   )}
                 </div>
@@ -317,7 +334,15 @@ export default function Insights() {
                 <div className="space-y-6">
                   {insights.learningRoadmap.map((learning: LearningResource, idx: number) => (
                     <div key={idx} className="border-l-4 border-primary pl-4">
-                      <h4 className="font-semibold mb-3">{learning.skill}</h4>
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-semibold">{learning.skill}</h4>
+                        <Link href={`/interview-prep?skill=${encodeURIComponent(learning.skill)}`}>
+                          <Button variant="ghost" size="sm">
+                            <Brain className="h-3 w-3 mr-1" />
+                            Practice
+                          </Button>
+                        </Link>
+                      </div>
                       <div className="space-y-2">
                         {learning.resources.map((resource, ridx) => (
                           <a
@@ -325,7 +350,7 @@ export default function Insights() {
                             href={resource.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:border-primary hover:shadow-sm transition-all group"
+                            className="flex items-center justify-between p-3 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg hover:border-primary hover:shadow-sm transition-all group"
                           >
                             <div className="flex items-center gap-3">
                               <span className="text-2xl">{getResourceIcon(resource.type)}</span>
@@ -358,9 +383,20 @@ export default function Insights() {
                       </p>
                     </>
                   ) : (
-                    <p className="text-muted-foreground">
-                      No learning recommendations yet. You're covering all the key skills!
-                    </p>
+                    <>
+                      <p className="text-muted-foreground mb-2">
+                        You're covering all the key skills for your targeted DBA roles!
+                      </p>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Use Interview Prep Hub to polish your answers and stories.
+                      </p>
+                      <Link href="/interview-prep">
+                        <Button variant="default" size="sm">
+                          <Brain className="h-4 w-4 mr-2" />
+                          Go to Interview Prep Hub
+                        </Button>
+                      </Link>
+                    </>
                   )}
                 </div>
               )}
