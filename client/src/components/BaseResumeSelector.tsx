@@ -24,26 +24,32 @@ interface BaseResumeSelectorProps {
   onResumeSelected: (resumeId: string | null) => void;
   onModeChange?: (mode: 'existing' | 'upload') => void;
   defaultMode?: 'existing' | 'upload';
+  manualUploadOnly?: boolean;
 }
 
 export default function BaseResumeSelector({ 
   onResumeSelected, 
   onModeChange,
-  defaultMode = 'existing'
+  defaultMode = 'existing',
+  manualUploadOnly = false
 }: BaseResumeSelectorProps) {
-  const [mode, setMode] = useState<'existing' | 'upload'>(defaultMode);
+  // When manual upload only is enabled, always use upload mode
+  const initialMode = manualUploadOnly ? 'upload' : defaultMode;
+  const [mode, setMode] = useState<'existing' | 'upload'>(initialMode);
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
 
-  // Fetch stored resumes (base resumes)
+  // Fetch stored resumes (base resumes) - only if not manual upload only
   const { data: resumes = [], isLoading } = useQuery<StoredResume[]>({
     queryKey: ['/api/resumes'],
+    enabled: !manualUploadOnly, // Don't fetch if manual upload only
   });
 
   // Find default resume
   const defaultResume = resumes.find(r => r.isDefault);
 
   // Initialize with default resume if available and mode is 'existing'
-  if (mode === 'existing' && defaultResume && !selectedResumeId && resumes.length > 0) {
+  // Skip if manual upload only is enabled
+  if (!manualUploadOnly && mode === 'existing' && defaultResume && !selectedResumeId && resumes.length > 0) {
     setSelectedResumeId(defaultResume.id);
     onResumeSelected(defaultResume.id);
   }
@@ -72,8 +78,9 @@ export default function BaseResumeSelector({
 
   return (
     <div className="space-y-6">
-      {/* Mode Selection */}
-      <RadioGroup value={mode} onValueChange={handleModeChange} className="space-y-3">
+      {/* Mode Selection - Hidden when manual upload only */}
+      {!manualUploadOnly && (
+        <RadioGroup value={mode} onValueChange={handleModeChange} className="space-y-3">
         <div className={cn(
           "flex items-center space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer",
           mode === 'existing' 
@@ -113,13 +120,16 @@ export default function BaseResumeSelector({
               <div>
                 <p className="font-semibold">Upload New Resume</p>
                 <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                  Will be saved to your library automatically
+                  {manualUploadOnly 
+                    ? "Upload a resume for this session" 
+                    : "Will be saved to your library automatically"}
                 </p>
               </div>
             </div>
           </Label>
         </div>
       </RadioGroup>
+      )}
 
       {/* Resume Selection (shown when mode is 'existing') */}
       {mode === 'existing' && (

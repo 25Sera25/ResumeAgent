@@ -316,3 +316,118 @@ The Base Resume feature successfully implements the requirements specified in th
 - ~800 lines of code added
 - 0 lines of existing functionality broken
 - 100% backward compatible
+
+## Manual Upload Only Mode (MANUAL_UPLOAD_ONLY)
+
+### Overview
+
+The `MANUAL_UPLOAD_ONLY` feature flag allows users to revert to the original manual upload workflow, disabling automatic base resume selection and auto-saving features. This mode is useful for users who prefer to manually upload their resume for each tailoring session without automatic library management.
+
+### Configuration
+
+Add the following environment variable to your `.env` file:
+
+```bash
+# Manual Upload Mode
+# Set to 'true' to force manual resume uploads for each session
+# When enabled:
+# - Disables automatic base resume selection
+# - Disables auto-saving uploads to Base Resume Library
+# - Users must manually upload resume for each session
+MANUAL_UPLOAD_ONLY=false
+```
+
+**Default:** `false` (base resume features enabled)
+
+### Behavior Changes When Enabled
+
+#### Server-Side (`MANUAL_UPLOAD_ONLY=true`)
+
+1. **Session Creation (`POST /api/sessions`)**
+   - Ignores any `baseResumeId` parameter sent by the client
+   - Always creates an empty session waiting for manual upload
+   - Logs: `[SESSION] MANUAL_UPLOAD_ONLY enabled - ignoring baseResumeId, creating empty session`
+
+2. **Resume Upload (`POST /api/sessions/:id/resume`)**
+   - Default value for `saveAsBaseResume` changed to `false`
+   - Forces `saveAsBaseResume=false` even if client sends `true`
+   - Uploaded resumes are NOT saved to the Base Resume Library
+   - Logs: `[UPLOAD] saveAsBaseResume forced to false due to MANUAL_UPLOAD_ONLY`
+
+3. **Config Endpoint (`GET /api/config`)**
+   - Exposes the `manualUploadOnly` flag to client applications
+   - Client can query this endpoint to adjust UI accordingly
+
+#### Client-Side
+
+1. **BaseResumeSelector Component**
+   - Hides the "Use Saved Base Resume" mode selection
+   - Shows only the "Upload New Resume" option
+   - Updates description text to "Upload a resume for this session"
+   - Does not fetch stored resumes from API (disabled query)
+   - Does not auto-select any default resume
+
+2. **Home Page**
+   - Uses `useConfig()` hook to fetch the `manualUploadOnly` flag
+   - Passes flag to `BaseResumeSelector` component
+   - Defaults to upload mode when flag is enabled
+
+### API Changes
+
+#### New Endpoint: `GET /api/config`
+
+**Response:**
+```json
+{
+  "manualUploadOnly": false
+}
+```
+
+**Usage:**
+```typescript
+import { useConfig } from '@/hooks/use-config';
+
+function MyComponent() {
+  const { manualUploadOnly } = useConfig();
+  // ... use the flag to adjust behavior
+}
+```
+
+### Deployment
+
+To enable manual upload only mode on your deployment (e.g., Render):
+
+1. Navigate to your service's environment variables settings
+2. Add a new environment variable:
+   - **Key:** `MANUAL_UPLOAD_ONLY`
+   - **Value:** `true`
+3. Save and redeploy the service
+
+The application will now operate in manual upload mode, requiring users to upload their resume for each new tailoring session.
+
+### Feature Compatibility
+
+- ✅ **Base Resume Library page remains accessible** - Users can still view and manage saved resumes via `/base-resumes` page
+- ✅ **No automatic writes** - Resumes uploaded during sessions will NOT be auto-saved to the library
+- ✅ **No automatic reads** - Sessions will NOT auto-load any default base resume
+- ✅ **Full backward compatibility** - Setting `MANUAL_UPLOAD_ONLY=false` (or not setting it) restores all base resume features
+
+### Logging
+
+When `MANUAL_UPLOAD_ONLY=true`, the following logs are generated:
+
+```
+[CONFIG] MANUAL_UPLOAD_ONLY=true – disabling base resume auto-load and autosave
+[SESSION] MANUAL_UPLOAD_ONLY enabled - ignoring baseResumeId, creating empty session
+[UPLOAD] saveAsBaseResume forced to false due to MANUAL_UPLOAD_ONLY
+```
+
+These logs help with debugging and monitoring the manual upload mode behavior.
+
+### Use Cases
+
+- **Privacy-conscious users** who don't want resumes stored in the library
+- **Testing environments** where you want to test the upload flow without persistence
+- **Single-use sessions** where users tailor one resume and don't need library features
+- **Reverting to original behavior** for users who prefer the pre-base-resume workflow
+

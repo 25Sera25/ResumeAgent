@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
+import { useConfig } from "@/hooks/use-config";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Database, Bot, HelpCircle, Settings, Check, Loader2, WandSparkles, FileText, Library, BookOpen, BarChart3, LogOut, User, Shield, Sparkles, Brain, Mail, ChevronRight } from "lucide-react";
@@ -28,13 +29,14 @@ interface SessionStats {
 export default function Home() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [resumeMode, setResumeMode] = useState<'existing' | 'upload'>('existing');
+  const [resumeMode, setResumeMode] = useState<'existing' | 'upload'>('upload'); // Default to upload
   const [selectedBaseResumeId, setSelectedBaseResumeId] = useState<string | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
+  const { manualUploadOnly } = useConfig();
 
   // Keyboard shortcuts
   useKeyboardShortcuts([
@@ -570,6 +572,7 @@ export default function Home() {
                       setResumeMode(mode);
                     }}
                     defaultMode={resumeMode}
+                    manualUploadOnly={manualUploadOnly}
                   />
                 ) : (
                   <div className="text-center py-4">
