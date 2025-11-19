@@ -4,7 +4,6 @@ import { Link, useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Database, Bot, HelpCircle, Settings, Check, Loader2, WandSparkles, FileText, Library, BookOpen, BarChart3, LogOut, User, Shield, Sparkles, Brain, Mail, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
