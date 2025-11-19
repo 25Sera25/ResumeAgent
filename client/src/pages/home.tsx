@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
-import { useConfig } from "@/hooks/use-config";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Database, Bot, HelpCircle, Settings, Check, Loader2, WandSparkles, FileText, Library, BookOpen, BarChart3, LogOut, User, Shield, Sparkles, Brain, Mail, ChevronRight } from "lucide-react";
@@ -13,7 +12,7 @@ import Sidebar from "@/components/Sidebar";
 import FileUpload from "@/components/FileUpload";
 import JobAnalysis from "@/components/JobAnalysis";
 import ResumePreview from "@/components/ResumePreview";
-import BaseResumeSelector from "@/components/BaseResumeSelector";
+import StoredResumeSelector from "@/components/StoredResumeSelector";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { KeyboardShortcutsDialog } from "@/components/KeyboardShortcutsDialog";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
@@ -29,14 +28,11 @@ interface SessionStats {
 export default function Home() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [resumeMode, setResumeMode] = useState<'existing' | 'upload'>('upload'); // Default to upload
-  const [selectedBaseResumeId, setSelectedBaseResumeId] = useState<string | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
-  const { manualUploadOnly } = useConfig();
 
   // Keyboard shortcuts
   useKeyboardShortcuts([
@@ -111,33 +107,19 @@ export default function Home() {
 
   // Create session mutation
   const createSessionMutation = useMutation({
-    mutationFn: async (baseResumeId?: string | null) => {
-      const body: any = {};
-      if (baseResumeId) {
-        body.baseResumeId = baseResumeId;
-      }
-      
+    mutationFn: async () => {
       const response = await apiRequest('/api/sessions', {
         method: 'POST',
-        body
+        body: {}
       });
       return response.json();
     },
     onSuccess: (data: ResumeSession) => {
       setCurrentSessionId(data.id);
-      
-      // If base resume was loaded, show success message
-      if (data.baseResumeContent) {
-        toast({
-          title: "Session created",
-          description: "Base resume loaded successfully. Ready to analyze job posting."
-        });
-      } else {
-        toast({
-          title: "Session created",
-          description: "Ready to upload your resume and start tailoring."
-        });
-      }
+      toast({
+        title: "Session created",
+        description: "Ready to upload your resume and start tailoring."
+      });
     },
     onError: (error) => {
       toast({
@@ -244,14 +226,9 @@ export default function Home() {
   // Initialize session on mount
   const handleStartSession = useCallback(() => {
     if (!currentSessionId) {
-      // Create session with base resume if selected
-      if (resumeMode === 'existing' && selectedBaseResumeId) {
-        createSessionMutation.mutate(selectedBaseResumeId);
-      } else {
-        createSessionMutation.mutate(null);
-      }
+      createSessionMutation.mutate();
     }
-  }, [currentSessionId, resumeMode, selectedBaseResumeId, createSessionMutation]);
+  }, [currentSessionId, createSessionMutation]);
 
   // File upload handler
   const handleFileUpload = useCallback((file: File) => {
@@ -533,7 +510,7 @@ export default function Home() {
                     <div className="w-10 h-10 bg-gradient-primary text-white rounded-full flex items-center justify-center text-lg font-bold shadow-lg">
                       1
                     </div>
-                    <h3 className="text-xl font-bold text-neutral-800 dark:text-neutral-100">Select Base Resume</h3>
+                    <h3 className="text-xl font-bold text-neutral-800 dark:text-neutral-100">Upload Base Resume</h3>
                   </div>
                   {!!session?.baseResumeContent && (
                     <div className="px-4 py-1.5 bg-status-success text-white text-sm font-semibold rounded-full flex items-center space-x-1 shadow-sm">
@@ -544,48 +521,11 @@ export default function Home() {
                 </div>
               </CardHeader>
               <CardContent className="p-8">
-                {!session?.baseResumeContent ? (
-                  <BaseResumeSelector
-                    onResumeSelected={(resumeId) => {
-                      setSelectedBaseResumeId(resumeId);
-                      // If a resume is selected and we have a session, load it
-                      if (resumeId && currentSessionId) {
-                        // Use the existing endpoint to load the resume
-                        apiRequest(`/api/sessions/${currentSessionId}/use-resume/${resumeId}`, {
-                          method: 'POST'
-                        }).then(() => {
-                          queryClient.invalidateQueries({ queryKey: ['/api/sessions', currentSessionId] });
-                          toast({
-                            title: "Success",
-                            description: "Base resume loaded successfully"
-                          });
-                        }).catch((error) => {
-                          toast({
-                            title: "Error",
-                            description: `Failed to load resume: ${error.message}`,
-                            variant: "destructive"
-                          });
-                        });
-                      }
-                    }}
-                    onModeChange={(mode) => {
-                      setResumeMode(mode);
-                    }}
-                    defaultMode={resumeMode}
-                    manualUploadOnly={manualUploadOnly}
-                  />
-                ) : (
-                  <div className="text-center py-4">
-                    <Check className="w-12 h-12 text-green-500 mx-auto mb-3" />
-                    <p className="text-neutral-600 dark:text-neutral-400">
-                      Base resume loaded successfully
-                    </p>
-                  </div>
-                )}
-
-                {/* Show file upload when in upload mode */}
-                {resumeMode === 'upload' && !session?.baseResumeContent && (
-                  <div className="mt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div>
+                    <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">
+                      Resume Document
+                    </label>
                     <FileUpload
                       onFileSelect={handleFileUpload}
                       currentFile={uploadedFile ? {
@@ -595,8 +535,32 @@ export default function Home() {
                       } : null}
                       disabled={uploadResumeMutation.isPending}
                     />
+                    <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-700">
+                      <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-3">Or use a stored resume:</p>
+                      {currentSessionId && (
+                        <StoredResumeSelector 
+                          sessionId={currentSessionId} 
+                          onResumeSelected={() => {
+                            queryClient.invalidateQueries({ queryKey: ['/api/sessions', currentSessionId] });
+                          }}
+                        />
+                      )}
+                    </div>
                   </div>
-                )}
+                  <div>
+                    <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">
+                      Profile JSON (Optional)
+                    </label>
+                    <FileUpload
+                      onFileSelect={(file) => {
+                        // Handle profile JSON upload
+                        console.log('Profile JSON uploaded:', file);
+                      }}
+                      acceptedTypes={['.json']}
+                      disabled={false}
+                    />
+                  </div>
+                </div>
 
                 {!!session?.baseResumeContent && (
                   <div className="mt-8 pt-8 border-t border-neutral-200 dark:border-neutral-700">
