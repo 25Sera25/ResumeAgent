@@ -1217,7 +1217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate interview questions and answers
   app.post('/api/interview-prep/questions', requireAuth, async (req, res) => {
     try {
-      const { jobId, skill, mode = 'general' } = req.body;
+      const { jobId, skill, mode = 'general', skillsContext } = req.body;
       const userId = req.user!.id;
       
       console.log('[INTERVIEW_PREP] Generating questions - Mode:', mode, 'JobId:', jobId, 'Skill:', skill);
@@ -1251,7 +1251,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         context.skills = Array.isArray(skill) ? skill : [skill];
         console.log('[INTERVIEW_PREP] Skills focus:', context.skills);
       } else {
-        console.log('[INTERVIEW_PREP] General mode - no specific context');
+        // General mode - use skills from Skills Gap Dashboard if provided
+        if (skillsContext && Array.isArray(skillsContext) && skillsContext.length > 0) {
+          context.skillsContext = skillsContext;
+          context.skills = skillsContext.map((s: any) => s.name);
+          console.log('[INTERVIEW_PREP] General mode with Skills Gap data:', context.skills.length, 'skills');
+        } else {
+          console.log('[INTERVIEW_PREP] General mode - no specific context');
+        }
       }
       
       const { generateInterviewPrepQuestions } = await import('./services/openai');

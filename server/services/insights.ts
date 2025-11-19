@@ -99,6 +99,21 @@ const LEARNING_RESOURCES: Record<string, LearningResource> = {
       }
     ]
   },
+  'Performance': {
+    skill: 'Performance Tuning',
+    resources: [
+      {
+        title: 'SQL Server Performance Tuning and Optimization',
+        url: 'https://learn.microsoft.com/en-us/sql/relational-databases/performance/performance-center-for-sql-server-database-engine-and-azure-sql-database',
+        type: 'documentation'
+      },
+      {
+        title: 'SQL Server Performance Tuning',
+        url: 'https://www.pluralsight.com/courses/sqlserver-performance-tuning',
+        type: 'course'
+      }
+    ]
+  },
   'RPO/RTO': {
     skill: 'Disaster Recovery (RPO/RTO)',
     resources: [
@@ -110,6 +125,66 @@ const LEARNING_RESOURCES: Record<string, LearningResource> = {
       {
         title: 'SQL Server Disaster Recovery',
         url: 'https://www.pluralsight.com/courses/sql-server-disaster-recovery',
+        type: 'course'
+      }
+    ]
+  },
+  'Backup': {
+    skill: 'Backup & Restore',
+    resources: [
+      {
+        title: 'SQL Server Backup and Restore',
+        url: 'https://learn.microsoft.com/en-us/sql/relational-databases/backup-restore/back-up-and-restore-of-sql-server-databases',
+        type: 'documentation'
+      },
+      {
+        title: 'SQL Server Backup Strategies',
+        url: 'https://www.pluralsight.com/courses/sql-server-backup-strategies',
+        type: 'course'
+      }
+    ]
+  },
+  'T-SQL': {
+    skill: 'T-SQL Programming',
+    resources: [
+      {
+        title: 'T-SQL Language Reference',
+        url: 'https://learn.microsoft.com/en-us/sql/t-sql/language-reference',
+        type: 'documentation'
+      },
+      {
+        title: 'Querying Data with T-SQL',
+        url: 'https://learn.microsoft.com/en-us/training/paths/get-started-querying-with-transact-sql/',
+        type: 'course'
+      }
+    ]
+  },
+  'Security': {
+    skill: 'SQL Server Security',
+    resources: [
+      {
+        title: 'SQL Server Security Best Practices',
+        url: 'https://learn.microsoft.com/en-us/sql/relational-databases/security/security-center-for-sql-server-database-engine-and-azure-sql-database',
+        type: 'documentation'
+      },
+      {
+        title: 'SQL Server Security Fundamentals',
+        url: 'https://www.pluralsight.com/courses/sql-server-security-fundamentals',
+        type: 'course'
+      }
+    ]
+  },
+  'Replication': {
+    skill: 'SQL Server Replication',
+    resources: [
+      {
+        title: 'SQL Server Replication Overview',
+        url: 'https://learn.microsoft.com/en-us/sql/relational-databases/replication/sql-server-replication',
+        type: 'documentation'
+      },
+      {
+        title: 'Implementing SQL Server Replication',
+        url: 'https://www.pluralsight.com/courses/sql-server-replication-implementing',
         type: 'course'
       }
     ]
@@ -155,6 +230,81 @@ const LEARNING_RESOURCES: Record<string, LearningResource> = {
       {
         title: 'PostgreSQL Administration',
         url: 'https://www.pluralsight.com/courses/postgresql-administration',
+        type: 'course'
+      }
+    ]
+  },
+  'SSIS': {
+    skill: 'SQL Server Integration Services (SSIS)',
+    resources: [
+      {
+        title: 'SSIS Tutorial and Documentation',
+        url: 'https://learn.microsoft.com/en-us/sql/integration-services/sql-server-integration-services',
+        type: 'documentation'
+      },
+      {
+        title: 'SSIS Fundamentals',
+        url: 'https://www.pluralsight.com/courses/ssis-fundamentals',
+        type: 'course'
+      }
+    ]
+  },
+  'SSRS': {
+    skill: 'SQL Server Reporting Services (SSRS)',
+    resources: [
+      {
+        title: 'SSRS Documentation',
+        url: 'https://learn.microsoft.com/en-us/sql/reporting-services/create-deploy-and-manage-mobile-and-paginated-reports',
+        type: 'documentation'
+      },
+      {
+        title: 'SSRS Report Development',
+        url: 'https://www.pluralsight.com/courses/ssrs-report-development',
+        type: 'course'
+      }
+    ]
+  },
+  'Index': {
+    skill: 'Index Optimization',
+    resources: [
+      {
+        title: 'SQL Server Index Architecture and Design',
+        url: 'https://learn.microsoft.com/en-us/sql/relational-databases/sql-server-index-design-guide',
+        type: 'documentation'
+      },
+      {
+        title: 'SQL Server Indexing Strategies',
+        url: 'https://www.pluralsight.com/courses/sql-server-indexing-for-performance',
+        type: 'course'
+      }
+    ]
+  },
+  'Migration': {
+    skill: 'Database Migration',
+    resources: [
+      {
+        title: 'Azure Database Migration Guide',
+        url: 'https://learn.microsoft.com/en-us/data-migration/',
+        type: 'documentation'
+      },
+      {
+        title: 'Database Migration Strategies',
+        url: 'https://www.pluralsight.com/courses/database-migration-strategies',
+        type: 'course'
+      }
+    ]
+  },
+  'Monitoring': {
+    skill: 'Database Monitoring',
+    resources: [
+      {
+        title: 'SQL Server Monitoring and Performance Tuning',
+        url: 'https://learn.microsoft.com/en-us/sql/relational-databases/performance/monitor-and-tune-for-performance',
+        type: 'documentation'
+      },
+      {
+        title: 'SQL Server Monitoring Fundamentals',
+        url: 'https://www.pluralsight.com/courses/sql-server-monitoring-ps-fundamentals',
         type: 'course'
       }
     ]
@@ -247,9 +397,10 @@ export async function getSkillsInsights(userId?: string): Promise<SkillsInsights
     // Get top 30 most requested skills
     const topRequestedSkills = skillCoverages.slice(0, 30);
     
-    // Get skills with low coverage (mentioned in jobs but missing from resumes)
+    // Get skills with low coverage (coverage < 80% and mentioned in at least 2 jobs)
+    // This provides a more meaningful threshold for skill gaps
     const missingSkills = skillCoverages
-      .filter(s => s.coveragePercent < 50 && s.jobsMentioned >= 2)
+      .filter(s => s.coveragePercent < 80 && s.jobsMentioned >= 2)
       .slice(0, 15);
     
     // Generate learning roadmap for missing skills
