@@ -307,17 +307,18 @@ export async function tailorResumeContent(
   contactInfo: ContactInformation
 ): Promise<TailoredResumeContent> {
   try {
-    const prompt = `🚨 CRITICAL HARD RULES - ABSOLUTE REQUIREMENTS (NEVER OVERRIDE):
+    const FIXED_HEADLINE = "Senior SQL Server Database Administrator / SQL Developer";
 
-1. FIXED RESUME HEADLINE (DO NOT CHANGE):
+    const prompt = `🚨 CRITICAL HARD RULES (MUST FOLLOW EXACTLY)
+
+1) FIXED HEADLINE (DO NOT CHANGE):
    - The contact.title field MUST ALWAYS be exactly:
      "Senior SQL Server Database Administrator / SQL Developer"
-   - DO NOT use the job posting title as the main headline.
-   - DO NOT replace it with any other title.
-   - The job posting title may be mentioned inside the Professional Summary text, but NOT as contact.title.
-   - NEVER add a line like "Target: Company X – Job Title Y" anywhere.
+   - Do NOT replace this with the job title.
+   - The job posting title may be mentioned only in the summary text, not as the main title.
+   - Do NOT add any "Target: Company X – Job Title Y" banner anywhere.
 
-2. PAGE LENGTH TARGET (REALISTIC 2–3 PAGES MAX):
+2) PAGE LENGTH TARGET (REALISTIC 2–3 PAGES MAX):
    - Target a clean, readable 2-page resume using normal ATS-safe formatting (11pt font, 1-inch margins).
    - Under no circumstances should the content exceed what would reasonably fit in 3 pages.
    - Concretely, to control length:
@@ -329,7 +330,7 @@ export async function tailorResumeContent(
      • Remove or merge repetitive bullets like "managed SQL Server databases" or "worked with developers" if they don’t add new information.
    - NEVER invent or alter job titles, dates, or employers. You may only trim/condense bullets.
 
-3. SINGLE SKILLS / CORE COMPETENCIES SECTION ONLY:
+3) SINGLE SKILLS / CORE COMPETENCIES SECTION ONLY:
    - The final resume will have ONE skills block (e.g., "CORE COMPETENCIES" or "CORE COMPETENCIES & TECHNICAL SKILLS").
    - This single block is populated from the "skills" array ONLY.
    - DO NOT design, imply, or assume a second visible skills section such as:
@@ -343,7 +344,7 @@ export async function tailorResumeContent(
        • It should NOT mirror the entire skills section.
        • Think of "keywords" as tags, not another visible block on the resume.
 
-4. NO "TARGET" BANNERS:
+4) NO "TARGET" BANNERS:
    - Do NOT include any header line like "Target: Company X – Job Title Y".
    - Do NOT include variants like "Target role:", "Target company:", or similar.
    - The resume must look like a standard professional resume that can be uploaded directly.
@@ -353,7 +354,7 @@ CRITICAL: PRESERVE AND ENHANCE EXISTING EXPERIENCE BULLETS
 Original Resume Content (WITH DETAILED EXPERIENCE BULLETS):
 ${resumeContent}
 
-Contact Information:
+Contact Information (USE REAL VALUES, NO PLACEHOLDERS):
 ${JSON.stringify(contactInfo, null, 2)}
 
 Job Analysis Results:
@@ -393,7 +394,7 @@ Ensure resume mentions (or marks as exposure) every bucket the JD stresses:
 - Environment specifics (Windows, virtualization, remote/location requirements).
 - Secondary data stores (MySQL/PostgreSQL, etc. – mark as "background in" or "exposure to" if light).
 
-STEP 7 - SCORING RUBRIC (100 points total, show your math in internal reasoning):
+STEP 7 - SCORING RUBRIC (100 points total, internal to you):
 - Core Tech & Platforms (35 pts) - versions/stacks, OS, HA/DR.
 - Responsibilities (25 pts) - operational work matching JD.
 - Tools/Automation (15 pts) - PowerShell, schedulers, observability.
@@ -401,120 +402,48 @@ STEP 7 - SCORING RUBRIC (100 points total, show your math in internal reasoning)
 - Compliance/Industry (10 pts) - HIPAA, audits, security.
 - Logistics & Culture (5 pts) - communication, collaboration, remote/on-site expectations.
 
-STEP 8 - SAFETY CHECKS:
-- If JD is EHR-admin but tailored as DBA, redo with EHR duties.
-- Verify role archetype alignment.
-- Ensure truthful content only.
-
-STEP 9 - AUTOMATICALLY APPLY MICRO-EDITS:
+STEP 8 - AUTOMATICALLY APPLY MICRO-EDITS:
 Identify specific requirements from the job posting and AUTOMATICALLY ADD corresponding bullet points to enhance the tailored content. Do NOT just list them as suggestions - INTEGRATE them directly into the experience section where appropriate.
 
-Examples of micro-edits (use only if they match the JD & resume truthfully):
-- "Utilized ServiceNow or similar ITSM tools for incident management, change control, and SLA adherence."
-- "Led cross-functional technical teams in critical incident response and database architecture decisions."
-- "Established comprehensive operational procedures, runbooks, and database configuration documentation."
-- "Ensured HIPAA/SOX compliance through audit trail implementation and data encryption strategies."
-- "Developed PowerShell automation scripts for routine maintenance, health checks, and deployment processes."
-- "Architected and executed cloud migration strategies using AWS RDS, Azure SQL, or other cloud data platforms."
-- "Designed and tested disaster recovery procedures with RTO/RPO targets under strict SLAs."
+STEP 9 - GENERATE OPTIMIZED CONTENT AS JSON:
 
-CRITICAL: These are not suggestions – AUTOMATICALLY incorporate relevant bullets based on this specific job posting into the "achievements" arrays for appropriate roles.
-
-STEP 10 - GENERATE OPTIMIZED CONTENT:
-
-DYNAMIC JOB ANALYSIS:
-Based on the job posting analysis, identify and address the specific requirements, technologies, and company context from THIS job posting. Do not use generic requirements from other jobs.
-
-SPECIFIC JOB REQUIREMENTS TO ADDRESS:
-Extract the actual requirements from the job analysis provided and tailor accordingly.
-
-Please respond with a JSON object containing:
-- contact:
-  • Use the REAL contact information from the provided contactInfo object.
-  • NEVER invent placeholders like "Professional Name".
-  • The title MUST be exactly: "Senior SQL Server Database Administrator / SQL Developer".
-- summary:
-  • Professional summary that MATCHES THE JOB LEVEL and requirements from the posting.
-  • You MAY mention the target job title from the posting inside the summary text (e.g., "…well-suited for Ontellus’ Database Administrator role…").
-  • DO NOT mention location preferences like "Open to Camden, NJ" or "Remote-only".
-- experience:
-  • Array of experience objects:
-    [
-      {
-        "title": "Sr. Database Administrator",
-        "company": "UnitedHealth",
-        "duration": "October 2020 - Present",
-        "achievements": [
-          "Architected and managed high-availability SQL Server environments ...",
-          "Led migration of on-premises databases to AWS ...",
-          "Implemented AlwaysOn Availability Groups and Failover Clustering ...",
-          "Optimized database performance using Extended Events, Query Store, and DMVs ...",
-          "Collaborated with InfoSec to deploy TDE, Always Encrypted, Dynamic Data Masking, and Row-Level Security ..."
-        ]
-      }
-    ]
-  • PRESERVE actual employers, titles, and dates from the original resume.
-  • Apply page-length rules above for bullet counts per role.
-
-- skills:
-  • This drives a SINGLE "CORE COMPETENCIES & TECHNICAL SKILLS" section.
-  • 8–10 bullets MAX, each bullet grouping related skills.
-  • Include the most important job-specific technologies and responsibilities here.
-
-- keywords:
-  • Compact ATS tag list only (10–15 short phrases max).
-  • Do NOT simply duplicate the entire skills section.
-  • Focus on the highest-value terms from the JD (MSSQL versions, HA/DR, SSRS/SSIS, DR, security, etc.).
-
-- certifications:
-  • Array of certification strings from original resume only (no invented certs).
-
-- professionalDevelopment:
-  • Use actual trainings from the original resume (e.g., "AWS Immersion Days – Data Lab", "Security Engineering on AWS").
-
-- education:
-  • Always include "Bachelor of Science - University of Gondar" as the primary education entry (with year if present).
-
-- improvements:
-  • COMPLETE LIST of ALL specific tailoring changes applied for this job posting (keywords added, bullets enhanced, technologies emphasized, length trims, etc.).
-
-- atsScore:
-  • Target 90–95% based on alignment with this specific job.
-
-- coreScore:
-  • Enhanced score for role-specific operational duties.
-
-- scoreBreakdown:
-  • Detailed 100-point breakdown (coreTech, responsibilities, tools, adjacentDataStores, compliance, logistics).
-
-- coverageReport:
-  • matchedKeywords, missingKeywords, truthfulnessLevel map.
-
-- appliedMicroEdits:
-  • List of micro-edits that were actually applied (not just suggested).
-
-TRUTHFULNESS & WORD VARIETY FOR EXPERIENCE LEVELS:
-- Use varied language instead of overusing "familiar":
-  • "Hands-on experience with"
-  • "Proficient in"
-  • "Experience with"
-  • "Working knowledge of"
-  • "Background in"
-  • "Exposure to"
-
-TECHNOLOGY PRIORITIZATION:
-- For traditional DBA roles, lead with:
-  • SQL Server (versions), HA/DR, backup/restore, security, performance tuning.
-- For cloud/data platform roles, lead with:
-  • Azure/AWS, modern data stacks, pipelines, governance.
-
-Remember:
-- 1 headline (fixed).
-- 1 skills/core section (skills[]).
-- keywords[] = compact ATS tags, NOT a second skills section.
-- Target 2 pages, never more than ~3 pages of content.
-
-Now generate the TailoredResumeContent JSON object.`;
+Return JSON ONLY with this shape:
+{
+  "contact": {
+    "name": string,
+    "title": string,
+    "phone": string,
+    "email": string,
+    "city": string,
+    "state": string,
+    "linkedin": string
+  },
+  "summary": string,
+  "experience": [
+    {
+      "title": string,
+      "company": string,
+      "duration": string,
+      "achievements": string[]
+    }
+  ],
+  "skills": string[],          // one combined section (8–10 grouped bullets)
+  "keywords": string[],        // compact ATS tags only (max ~12–15)
+  "certifications": string[],
+  "professionalDevelopment": string[],
+  "education": string[],
+  "improvements": string[],
+  "atsScore": number,
+  "coreScore": number,
+  "scoreBreakdown": any,
+  "coverageReport": {
+    "matchedKeywords": string[],
+    "missingKeywords": string[],
+    "truthfulnessLevel": Record<string, "hands-on" | "familiar" | "omitted">
+  },
+  "appliedMicroEdits": string[],
+  "suggestedMicroEdits": string[]
+}`;
 
     const response = await openai.chat.completions.create({
       model: MODEL,
@@ -532,57 +461,143 @@ Now generate the TailoredResumeContent JSON object.`;
       response_format: { type: "json_object" }
     });
 
-    const result = JSON.parse(response.choices[0].message.content || "{}");
+    const raw = response.choices[0].message.content || "{}";
+    const result = JSON.parse(raw);
 
-    // Ensure backward compatibility for arrays
-    const skills = Array.isArray(result.skills) ? result.skills : [];
-    const keywords = Array.isArray(result.keywords) ? result.keywords : [];
-    const certifications = Array.isArray(result.certifications) ? result.certifications : [];
-    const improvements = Array.isArray(result.improvements) ? result.improvements : [];
-    const experience = Array.isArray(result.experience) ? result.experience : [];
-    const professionalDevelopment = Array.isArray(result.professionalDevelopment) ? result.professionalDevelopment : [];
+    // ============================
+    // CODE-LEVEL SAFETY ENFORCEMENT
+    // ============================
 
-    const FIXED_HEADLINE = "Senior SQL Server Database Administrator / SQL Developer";
+    // 1) Contact: always use your real info + fixed headline
+    const contact: ContactInformation = {
+      name: contactInfo.name || result.contact?.name || "",
+      title: FIXED_HEADLINE,
+      phone: contactInfo.phone || result.contact?.phone || "",
+      email: contactInfo.email || result.contact?.email || "",
+      city: contactInfo.city || result.contact?.city || "",
+      state: contactInfo.state || result.contact?.state || "",
+      linkedin: contactInfo.linkedin || result.contact?.linkedin || ""
+    };
 
-    // SAFETY NET: Enforce fixed headline
-    if (result.contact && result.contact.title !== FIXED_HEADLINE) {
-      console.warn(`Correcting contact.title from "${result.contact.title}" to fixed headline`);
-      result.contact.title = FIXED_HEADLINE;
+    // 2) Clean summary: strip any "Target:" style junk
+    let summary: string = result.summary || "";
+    if (typeof summary === "string") {
+      const lines = summary.split("\n");
+      summary = lines
+        .filter(line => {
+          const l = line.trim().toLowerCase();
+          return (
+            !l.startsWith("target:") &&
+            !l.startsWith("target role:") &&
+            !l.startsWith("target company:")
+          );
+        })
+        .join(" ")
+        .trim();
     }
 
-    // SAFETY NET: Remove any "Target:" lines from summary
-    if (result.summary && typeof result.summary === "string") {
-      const summaryLines = result.summary.split("\n");
-      const filteredLines = summaryLines.filter(
-        (line: string) =>
-          !line.trim().toLowerCase().startsWith("target:") &&
-          !line.trim().toLowerCase().startsWith("target role:") &&
-          !line.trim().toLowerCase().startsWith("target company:")
-      );
-      if (filteredLines.length !== summaryLines.length) {
-        console.warn('Removed "Target:" lines from summary');
-        result.summary = filteredLines.join("\n").trim();
+    // 3) Experience: enforce max roles and bullet counts
+    let experience: Array<{
+      title: string;
+      company: string;
+      duration: string;
+      achievements: string[];
+    }> = Array.isArray(result.experience) ? result.experience : [];
+
+    // Remove obviously empty roles
+    experience = experience.filter(
+      (exp: any) =>
+        exp &&
+        (exp.title || exp.company || (Array.isArray(exp.achievements) && exp.achievements.length > 0))
+    );
+
+    // Max 4 roles (3 full + possibly "Earlier Experience")
+    const MAX_ROLES = 4;
+    experience = experience.slice(0, MAX_ROLES);
+
+    // Each role: max 8 achievements
+    experience = experience.map(exp => {
+      const achievements = Array.isArray(exp.achievements) ? exp.achievements : [];
+      return {
+        ...exp,
+        achievements: achievements.slice(0, 8)
+      };
+    });
+
+    // 4) Skills + keywords: dedupe, limit, and use keywords as a small subset
+    const rawSkills: string[] = Array.isArray(result.skills) ? result.skills : [];
+    const rawKeywords: string[] = Array.isArray(result.keywords) ? result.keywords : [];
+
+    const skillSet = new Set<string>();
+
+    // Add skills
+    for (const s of rawSkills) {
+      if (!s) continue;
+      const trimmed = String(s).trim();
+      if (trimmed) skillSet.add(trimmed);
+    }
+
+    // Add some high-value keywords that aren't already in skills
+    for (const k of rawKeywords) {
+      if (!k) continue;
+      const trimmed = String(k).trim();
+      if (trimmed && !skillSet.has(trimmed)) {
+        skillSet.add(trimmed);
       }
     }
 
+    const MAX_SKILLS = 20; // visible list
+    const skills = Array.from(skillSet).slice(0, MAX_SKILLS);
+
+    // Keywords = small ATS subset of skills
+    const MAX_KEYWORDS = 12;
+    const keywords = skills.slice(0, MAX_KEYWORDS);
+
+    // 5) Other arrays with safe defaults
+    const certifications: string[] = Array.isArray(result.certifications)
+      ? result.certifications
+      : [];
+    const professionalDevelopment: string[] = Array.isArray(result.professionalDevelopment)
+      ? result.professionalDevelopment
+      : [];
+    const education: string[] = Array.isArray(result.education) ? result.education : [];
+    const improvements: string[] = Array.isArray(result.improvements) ? result.improvements : [];
+    const appliedMicroEdits: string[] = Array.isArray(result.appliedMicroEdits)
+      ? result.appliedMicroEdits
+      : [];
+    const suggestedMicroEdits: string[] = Array.isArray(result.suggestedMicroEdits)
+      ? result.suggestedMicroEdits
+      : [];
+
+    // 6) Scores & coverage
+    const atsScore: number = typeof result.atsScore === "number" ? result.atsScore : 90;
+    const coreScore: number =
+      typeof result.coreScore === "number" ? result.coreScore : atsScore;
+
+    const scoreBreakdown = result.scoreBreakdown || {};
+    const coverageReport =
+      result.coverageReport || {
+        matchedKeywords: [],
+        missingKeywords: [],
+        truthfulnessLevel: {}
+      };
+
     return {
-      ...result,
+      contact,
+      summary,
+      experience,
       skills,
       keywords,
       certifications,
-      improvements,
-      experience,
       professionalDevelopment,
-      coreScore: result.coreScore || result.atsScore || 85,
-      scoreBreakdown: result.scoreBreakdown || {},
-      coverageReport:
-        result.coverageReport || {
-          matchedKeywords: [],
-          missingKeywords: [],
-          truthfulnessLevel: {}
-        },
-      appliedMicroEdits: result.appliedMicroEdits || [],
-      suggestedMicroEdits: result.suggestedMicroEdits || []
+      education,
+      improvements,
+      atsScore,
+      coreScore,
+      scoreBreakdown,
+      coverageReport,
+      appliedMicroEdits,
+      suggestedMicroEdits
     } as TailoredResumeContent;
   } catch (error) {
     throw new Error("Failed to tailor resume content: " + (error as Error).message);
