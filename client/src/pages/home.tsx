@@ -339,27 +339,27 @@ export default function Home() {
       <div className="lg:ml-[280px]">
         {/* Header - Sticky with backdrop blur */}
         <header className="sticky top-0 z-30 bg-white/80 dark:bg-neutral-800/80 backdrop-blur-lg shadow-sm border-b border-neutral-200 dark:border-neutral-700">
-          <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
-            <div className="flex justify-between items-center h-16">
+          <div className="max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-12">
+            <div className="flex justify-between items-center h-14 sm:h-16">
               <div className="flex items-center space-x-3">
                 {/* Logo/brand is in left sidebar, so no duplication needed here */}
               </div>
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-1 sm:space-x-3 overflow-x-auto">
                 <Link href="/resume-library">
-                  <Button variant="ghost" size="sm" className="button-hover" data-testid="button-resume-library">
-                    <BookOpen className="w-4 h-4 mr-2" />
+                  <Button variant="ghost" size="sm" className="button-hover h-11 min-w-[44px]" data-testid="button-resume-library">
+                    <BookOpen className="w-4 h-4 sm:mr-2" />
                     <span className="hidden sm:inline">Library</span>
                   </Button>
                 </Link>
                 <Link href="/job-tracker">
-                  <Button variant="ghost" size="sm" className="button-hover" data-testid="button-job-tracker">
-                    <BarChart3 className="w-4 h-4 mr-2" />
+                  <Button variant="ghost" size="sm" className="button-hover h-11 min-w-[44px]" data-testid="button-job-tracker">
+                    <BarChart3 className="w-4 h-4 sm:mr-2" />
                     <span className="hidden sm:inline">Tracker</span>
                   </Button>
                 </Link>
                 <Link href="/follow-ups">
-                  <Button variant="ghost" size="sm" className="button-hover relative" data-testid="button-follow-ups">
-                    <Mail className="w-4 h-4 mr-2" />
+                  <Button variant="ghost" size="sm" className="button-hover relative h-11 min-w-[44px]" data-testid="button-follow-ups">
+                    <Mail className="w-4 h-4 sm:mr-2" />
                     <span className="hidden sm:inline">Follow-Ups</span>
                     {pendingFollowUps.length > 0 && (
                       <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -369,80 +369,90 @@ export default function Home() {
                   </Button>
                 </Link>
                 <Link href="/insights">
-                  <Button variant="ghost" size="sm" className="button-hover" data-testid="button-insights">
-                    <Brain className="w-4 h-4 mr-2" />
+                  <Button variant="ghost" size="sm" className="button-hover hidden md:flex h-11 min-w-[44px]" data-testid="button-insights">
+                    <Brain className="w-4 h-4 sm:mr-2" />
                     <span className="hidden sm:inline">Insights</span>
                   </Button>
                 </Link>
                 <Link href="/interview-prep">
-                  <Button variant="ghost" size="sm" className="button-hover" data-testid="button-interview-prep">
-                    <Brain className="w-4 h-4 mr-2" />
-                    <span className="hidden sm:inline">Interview Prep</span>
+                  <Button variant="ghost" size="sm" className="button-hover h-11 min-w-[44px]" data-testid="button-interview-prep">
+                    <Brain className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden lg:inline">Prep</span>
                   </Button>
                 </Link>
                 {user?.isAdmin && (
                   <Link href="/admin/users">
-                    <Button variant="ghost" size="sm" className="button-hover" data-testid="button-admin">
-                      <Shield className="w-4 h-4 mr-2" />
+                    <Button variant="ghost" size="sm" className="button-hover hidden lg:flex h-11 min-w-[44px]" data-testid="button-admin">
+                      <Shield className="w-4 h-4 sm:mr-2" />
                       <span className="hidden sm:inline">Admin</span>
                     </Button>
                   </Link>
                 )}
                 <ThemeToggle />
-                <div className="flex items-center gap-2 pl-2 border-l border-neutral-200 dark:border-neutral-700">
+                <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-neutral-200 dark:border-neutral-700">
                   <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300">
                     <User className="w-4 h-4" />
-                    <span className="hidden sm:inline text-sm">{user?.username}</span>
+                    <span className="hidden md:inline text-sm">{user?.username}</span>
                   </div>
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={handleLogout}
                     data-testid="button-logout"
-                    className="text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100"
+                    className="text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 h-11 min-w-[44px]"
                   >
                     <LogOut className="w-4 h-4" />
                   </Button>
                 </div>
+                {/* Mobile logout button */}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleLogout}
+                  data-testid="button-logout-mobile"
+                  className="sm:hidden text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 h-11 min-w-[44px]"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
               </div>
             </div>
           </div>
         </header>
 
         {/* Main Content */}
-        <main className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 py-8">
-          <div className="space-y-8">
+        <main className="max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-12 py-4 sm:py-6 lg:py-8 pb-24">
+          <div className="space-y-4 sm:space-y-6 lg:space-y-8">
             {/* Hero Section - Eye-catching banner with gradient */}
-            <div className="relative overflow-hidden bg-gradient-animated rounded-xl p-8 text-white shadow-lg animate-scale-in">
+            <div className="relative overflow-hidden bg-gradient-animated rounded-xl p-4 sm:p-6 lg:p-8 text-white shadow-lg animate-scale-in">
               {/* Animated background effect */}
               <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-transparent to-blue-600/20 animate-pulse-glow" />
               
               <div className="relative z-10">
-                <div className="flex items-start space-x-4 mb-4">
-                  <div className="bg-white/20 backdrop-blur-sm p-3 rounded-lg animate-float">
-                    <Sparkles className="w-8 h-8" />
+                <div className="flex flex-col sm:flex-row items-start space-y-3 sm:space-y-0 sm:space-x-4 mb-4">
+                  <div className="bg-white/20 backdrop-blur-sm p-2 sm:p-3 rounded-lg animate-float">
+                    <Sparkles className="w-6 h-6 sm:w-8 sm:h-8" />
                   </div>
-                  <div>
-                    <h2 className="text-3xl font-bold mb-2">AI-Powered Resume Tailoring</h2>
-                    <p className="text-lg text-white/90">Specialized for Microsoft SQL Server DBA roles</p>
+                  <div className="flex-1">
+                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2">AI-Powered Resume Tailoring</h2>
+                    <p className="text-sm sm:text-base lg:text-lg text-white/90">Specialized for Microsoft SQL Server DBA roles</p>
                   </div>
                 </div>
                 
-                <p className="text-white/90 leading-relaxed max-w-3xl">
+                <p className="text-sm sm:text-base text-white/90 leading-relaxed max-w-3xl mb-4">
                   Upload your resume and paste a job URL to get an ATS-optimized, role-specific resume in minutes.
                 </p>
                 
-                <div className="flex flex-wrap gap-4">
-                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
-                    <Check className="w-5 h-5 text-green-300" />
+                <div className="flex flex-wrap gap-2 sm:gap-4">
+                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm">
+                    <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-300 flex-shrink-0" />
                     <span className="font-medium">ATS-Optimized</span>
                   </div>
-                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
-                    <Check className="w-5 h-5 text-green-300" />
+                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm">
+                    <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-300 flex-shrink-0" />
                     <span className="font-medium">Keyword Matching</span>
                   </div>
-                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
-                    <Check className="w-5 h-5 text-green-300" />
+                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm">
+                    <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-300 flex-shrink-0" />
                     <span className="font-medium">SQL DBA Focused</span>
                   </div>
                 </div>
@@ -451,23 +461,23 @@ export default function Home() {
 
             {/* Step 1: Resume Upload */}
             <Card className="border border-neutral-200 dark:border-neutral-700 overflow-hidden card-hover shadow-md rounded-xl animate-slide-in">
-              <CardHeader className="px-8 py-5 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-gradient-primary text-white rounded-full flex items-center justify-center text-lg font-bold shadow-lg">
+              <CardHeader className="px-4 sm:px-6 lg:px-8 py-4 sm:py-5 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                  <div className="flex items-center space-x-3 sm:space-x-4">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-primary text-white rounded-full flex items-center justify-center text-base sm:text-lg font-bold shadow-lg flex-shrink-0">
                       1
                     </div>
-                    <h3 className="text-xl font-bold text-neutral-800 dark:text-neutral-100">Upload Base Resume</h3>
+                    <h3 className="text-lg sm:text-xl font-bold text-neutral-800 dark:text-neutral-100">Upload Base Resume</h3>
                   </div>
                   {!!session?.baseResumeContent && (
-                    <div className="px-4 py-1.5 bg-status-success text-white text-sm font-semibold rounded-full flex items-center space-x-1 shadow-sm">
-                      <Check className="w-4 h-4" />
+                    <div className="px-3 sm:px-4 py-1 sm:py-1.5 bg-status-success text-white text-xs sm:text-sm font-semibold rounded-full flex items-center space-x-1 shadow-sm">
+                      <Check className="w-3 h-3 sm:w-4 sm:h-4" />
                       <span>Complete</span>
                     </div>
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="p-8">
+              <CardContent className="p-4 sm:p-6 lg:p-8">
                 <div className="max-w-2xl mx-auto">
                   <div>
                     <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">
@@ -528,63 +538,63 @@ export default function Home() {
               "border border-neutral-200 dark:border-neutral-700 overflow-hidden card-hover shadow-md rounded-xl animate-slide-in",
               !session?.jobAnalysis && "opacity-60"
             )}>
-              <CardHeader className="px-8 py-5 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
+              <CardHeader className="px-4 sm:px-6 lg:px-8 py-4 sm:py-5 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                  <div className="flex items-center space-x-3 sm:space-x-4">
                     <div className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold shadow-lg",
+                      "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-base sm:text-lg font-bold shadow-lg flex-shrink-0",
                       session?.tailoredContent ? "bg-gradient-primary text-white" : "bg-neutral-300 dark:bg-neutral-600 text-neutral-500"
                     )}>
                       3
                     </div>
                     <h3 className={cn(
-                      "text-xl font-bold",
+                      "text-lg sm:text-xl font-bold",
                       session?.tailoredContent ? "text-neutral-800 dark:text-neutral-100" : "text-neutral-600 dark:text-neutral-400"
                     )}>
                       AI Resume Tailoring
                     </h3>
                   </div>
                   {session?.tailoredContent ? (
-                    <div className="px-4 py-1.5 bg-status-success text-white text-sm font-semibold rounded-full flex items-center space-x-1 shadow-sm">
-                      <Check className="w-4 h-4" />
+                    <div className="px-3 sm:px-4 py-1 sm:py-1.5 bg-status-success text-white text-xs sm:text-sm font-semibold rounded-full flex items-center space-x-1 shadow-sm">
+                      <Check className="w-3 h-3 sm:w-4 sm:h-4" />
                       <span>Complete</span>
                     </div>
                   ) : session?.status === 'tailoring' ? (
-                    <div className="px-4 py-1.5 bg-status-warning text-white text-sm font-semibold rounded-full flex items-center space-x-1 shadow-sm animate-pulse">
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                    <div className="px-3 sm:px-4 py-1 sm:py-1.5 bg-status-warning text-white text-xs sm:text-sm font-semibold rounded-full flex items-center space-x-1 shadow-sm animate-pulse">
+                      <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
                       <span>Processing</span>
                     </div>
                   ) : (
-                    <div className="px-4 py-1.5 bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 text-sm font-semibold rounded-full">
+                    <div className="px-3 sm:px-4 py-1 sm:py-1.5 bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 text-xs sm:text-sm font-semibold rounded-full">
                       Waiting
                     </div>
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="p-8">
+              <CardContent className="p-4 sm:p-6 lg:p-8">
                 {session?.jobAnalysis && !session?.tailoredContent && session?.status !== 'tailoring' ? (
-                  <div className="text-center py-12">
-                    <div className="bg-gradient-primary p-4 rounded-full w-20 h-20 mx-auto mb-6 animate-float">
-                      <WandSparkles className="w-12 h-12 text-white" />
+                  <div className="text-center py-8 sm:py-12">
+                    <div className="bg-gradient-primary p-3 sm:p-4 rounded-full w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 animate-float">
+                      <WandSparkles className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
                     </div>
-                    <h4 className="text-2xl font-bold text-neutral-800 dark:text-neutral-100 mb-3">Ready to Tailor</h4>
-                    <p className="text-neutral-600 dark:text-neutral-400 mb-8 max-w-md mx-auto">
+                    <h4 className="text-xl sm:text-2xl font-bold text-neutral-800 dark:text-neutral-100 mb-2 sm:mb-3">Ready to Tailor</h4>
+                    <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-400 mb-6 sm:mb-8 max-w-md mx-auto px-4">
                       Your resume and job analysis are complete. Start AI tailoring to optimize your resume for this position.
                     </p>
                     <Button
                       onClick={() => tailorResumeMutation.mutate()}
                       disabled={tailorResumeMutation.isPending}
                       data-testid="button-start-tailoring"
-                      className="bg-gradient-primary hover:opacity-90 button-hover text-white px-8 py-3 text-lg h-auto shadow-lg"
+                      className="bg-gradient-primary hover:opacity-90 button-hover text-white px-6 sm:px-8 py-2.5 sm:py-3 text-base sm:text-lg h-auto shadow-lg w-full sm:w-auto min-h-[44px]"
                     >
                       {tailorResumeMutation.isPending ? (
                         <>
-                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
                           Tailoring Resume...
                         </>
                       ) : (
                         <>
-                          <WandSparkles className="w-5 h-5 mr-2" />
+                          <WandSparkles className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                           Start AI Tailoring
                         </>
                       )}
@@ -605,16 +615,16 @@ export default function Home() {
                     }}
                   />
                 ) : session?.status === 'tailoring' ? (
-                  <div className="text-center py-12">
-                    <Loader2 className="w-16 h-16 animate-spin mx-auto mb-6 text-primary" />
-                    <h4 className="text-2xl font-bold text-neutral-800 dark:text-neutral-100 mb-3">AI is Tailoring Your Resume</h4>
-                    <p className="text-neutral-600 dark:text-neutral-400">This may take a few moments...</p>
+                  <div className="text-center py-8 sm:py-12">
+                    <Loader2 className="w-12 h-12 sm:w-16 sm:h-16 animate-spin mx-auto mb-4 sm:mb-6 text-primary" />
+                    <h4 className="text-xl sm:text-2xl font-bold text-neutral-800 dark:text-neutral-100 mb-2 sm:mb-3">AI is Tailoring Your Resume</h4>
+                    <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-400">This may take a few moments...</p>
                   </div>
                 ) : (
-                  <div className="text-center py-12">
-                    <WandSparkles className="w-16 h-16 text-neutral-300 dark:text-neutral-600 mx-auto mb-6" />
-                    <h4 className="text-xl font-semibold text-neutral-600 dark:text-neutral-400 mb-3">AI Tailoring Ready</h4>
-                    <p className="text-neutral-500 dark:text-neutral-500 max-w-md mx-auto">
+                  <div className="text-center py-8 sm:py-12">
+                    <WandSparkles className="w-12 h-12 sm:w-16 sm:h-16 text-neutral-300 dark:text-neutral-600 mx-auto mb-4 sm:mb-6" />
+                    <h4 className="text-lg sm:text-xl font-semibold text-neutral-600 dark:text-neutral-400 mb-2 sm:mb-3">AI Tailoring Ready</h4>
+                    <p className="text-sm sm:text-base text-neutral-500 dark:text-neutral-500 max-w-md mx-auto px-4">
                       Complete the job analysis above to proceed with AI-powered resume optimization
                     </p>
                   </div>
@@ -626,25 +636,25 @@ export default function Home() {
 
         {/* Follow-Ups Widget - Small card with link to dedicated page */}
         {pendingFollowUps.length > 0 && (
-          <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 mt-8 mb-24">
+          <div className="max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-12 mt-4 sm:mt-6 lg:mt-8 mb-24">
             <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 border-blue-200 dark:border-blue-900">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
+              <CardContent className="pt-4 sm:pt-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                   <div className="flex items-center gap-3">
-                    <div className="bg-blue-500 p-2 rounded-lg">
-                      <Mail className="w-5 h-5 text-white" />
+                    <div className="bg-blue-500 p-2 rounded-lg flex-shrink-0">
+                      <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-neutral-800 dark:text-neutral-100">
+                      <h3 className="font-semibold text-sm sm:text-base text-neutral-800 dark:text-neutral-100">
                         You have {pendingFollowUps.length} pending follow-up{pendingFollowUps.length !== 1 ? 's' : ''}
                       </h3>
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                      <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
                         Stay top-of-mind with employers
                       </p>
                     </div>
                   </div>
                   <Link href="/follow-ups">
-                    <Button className="gap-2">
+                    <Button className="gap-2 w-full sm:w-auto min-h-[44px]">
                       View All
                       <ChevronRight className="w-4 h-4" />
                     </Button>
@@ -657,16 +667,17 @@ export default function Home() {
 
         {/* Action Bar - Fixed at bottom */}
         <div className="fixed bottom-0 left-0 lg:left-[280px] right-0 bg-white/90 dark:bg-neutral-800/90 backdrop-blur-lg border-t border-neutral-200 dark:border-neutral-700 shadow-lg z-20">
-          <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center space-x-3">
-                <Button variant="ghost" size="sm" className="button-hover text-neutral-600 dark:text-neutral-400" data-testid="button-load-previous">
-                  Load Previous
+          <div className="max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-12">
+            <div className="flex items-center justify-between h-14 sm:h-16 gap-2">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <Button variant="ghost" size="sm" className="button-hover text-neutral-600 dark:text-neutral-400 text-xs sm:text-sm h-10 sm:h-auto min-w-[44px]" data-testid="button-load-previous">
+                  <span className="hidden sm:inline">Load Previous</span>
+                  <span className="sm:hidden">Load</span>
                 </Button>
               </div>
               
-              <div className="flex items-center space-x-3">
-                <Button variant="ghost" size="sm" className="button-hover text-neutral-600 dark:text-neutral-400" data-testid="button-reset">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <Button variant="ghost" size="sm" className="button-hover text-neutral-600 dark:text-neutral-400 text-xs sm:text-sm h-10 sm:h-auto hidden sm:flex" data-testid="button-reset">
                   Reset All
                 </Button>
                 <Button 
@@ -680,9 +691,10 @@ export default function Home() {
                     }
                   }}
                   data-testid="button-continue"
-                  className="bg-gradient-primary hover:opacity-90 button-hover text-white px-8 py-2.5 text-base font-semibold shadow-lg"
+                  className="bg-gradient-primary hover:opacity-90 button-hover text-white px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 text-sm sm:text-base font-semibold shadow-lg h-10 sm:h-auto min-h-[44px]"
                 >
-                  {session?.tailoredContent ? "Download Resume" : "Continue to Tailoring"}
+                  <span className="hidden sm:inline">{session?.tailoredContent ? "Download Resume" : "Continue to Tailoring"}</span>
+                  <span className="sm:hidden">{session?.tailoredContent ? "Download" : "Continue"}</span>
                 </Button>
               </div>
             </div>
