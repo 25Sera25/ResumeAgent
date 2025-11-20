@@ -99,18 +99,18 @@ export default function FileUpload({
   if (currentFile) {
     return (
       <Card className={cn("border border-neutral-200 dark:border-neutral-700 shadow-md hover:shadow-lg transition-shadow", className)}>
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-neutral-100 dark:bg-neutral-700 rounded-lg">
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+              <div className="p-1.5 sm:p-2 bg-neutral-100 dark:bg-neutral-700 rounded-lg flex-shrink-0">
                 {getFileIcon(currentFile.name)}
               </div>
-              <div>
-                <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100" data-testid="current-filename">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-semibold text-neutral-800 dark:text-neutral-100 truncate" data-testid="current-filename">
                   {currentFile.name}
                 </p>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                  {formatFileSize(currentFile.size)} • {currentFile.type.includes('pdf') ? 'PDF' : 'DOCX'} • Uploaded
+                  {formatFileSize(currentFile.size)} • {currentFile.type.includes('pdf') ? 'PDF' : 'DOCX'}
                 </p>
               </div>
             </div>
@@ -119,7 +119,7 @@ export default function FileUpload({
                 variant="ghost"
                 size="sm"
                 onClick={onFileRemove}
-                className="h-9 w-9 p-0 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                className="h-9 w-9 p-0 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 flex-shrink-0 min-w-[36px]"
                 data-testid="button-remove-file"
               >
                 <X className="w-4 h-4" />
@@ -129,7 +129,7 @@ export default function FileUpload({
           <Button
             variant="outline"
             size="sm"
-            className="mt-4 w-full button-hover"
+            className="mt-3 sm:mt-4 w-full button-hover h-10 sm:h-auto min-h-[44px]"
             onClick={triggerFileInput}
             disabled={disabled}
             data-testid="button-replace-file"
@@ -165,19 +165,19 @@ export default function FileUpload({
       onClick={triggerFileInput}
       data-testid="file-upload-area"
     >
-      <CardContent className="p-8 text-center">
-        <div className="flex flex-col items-center space-y-3">
+      <CardContent className="p-6 sm:p-8 text-center">
+        <div className="flex flex-col items-center space-y-2 sm:space-y-3">
           <div className={cn(
             "transition-all duration-300",
             isDragOver ? "animate-float" : "group-hover:animate-float"
           )}>
             <Upload className={cn(
-              "w-12 h-12 transition-colors",
+              "w-10 h-10 sm:w-12 sm:h-12 transition-colors",
               isDragOver ? "text-primary" : "text-neutral-400 group-hover:text-primary"
             )} />
           </div>
           <div className="text-sm">
-            <p className="text-neutral-700 dark:text-neutral-300 font-medium mb-1">
+            <p className="text-neutral-700 dark:text-neutral-300 font-medium mb-1 text-xs sm:text-sm">
               Drop file here or click to browse
             </p>
             <p className="text-xs text-neutral-500 dark:text-neutral-400">

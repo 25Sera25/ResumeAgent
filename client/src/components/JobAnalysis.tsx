@@ -118,44 +118,44 @@ export default function JobAnalysis({
 
   return (
     <Card className={cn("border border-neutral-200 dark:border-neutral-700 overflow-hidden card-hover shadow-md rounded-xl animate-slide-in", className)}>
-      <CardHeader className="px-8 py-5 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="w-10 h-10 bg-gradient-primary text-white rounded-full flex items-center justify-center text-lg font-bold shadow-lg">
+      <CardHeader className="px-4 sm:px-6 lg:px-8 py-4 sm:py-5 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+          <div className="flex items-center space-x-3 sm:space-x-4">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-primary text-white rounded-full flex items-center justify-center text-base sm:text-lg font-bold shadow-lg flex-shrink-0">
               2
             </div>
-            <h3 className="text-xl font-bold text-neutral-800 dark:text-neutral-100">Job Posting Analysis</h3>
+            <h3 className="text-lg sm:text-xl font-bold text-neutral-800 dark:text-neutral-100">Job Posting Analysis</h3>
           </div>
           {getStatusBadge()}
         </div>
       </CardHeader>
       
-      <CardContent className="p-8 space-y-6">
+      <CardContent className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
         {/* Input Mode Selection */}
         <Tabs value={inputMode} onValueChange={(value) => setInputMode(value as "url" | "text")} className="w-full">
           <TabsList className="grid w-full grid-cols-2 p-1 bg-neutral-100 dark:bg-neutral-800">
-            <TabsTrigger value="url" className="flex items-center space-x-2 data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-700" data-testid="tab-url">
-              <Link className="w-4 h-4" />
+            <TabsTrigger value="url" className="flex items-center space-x-1 sm:space-x-2 data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-700 text-xs sm:text-sm" data-testid="tab-url">
+              <Link className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>Job URL</span>
             </TabsTrigger>
-            <TabsTrigger value="text" className="flex items-center space-x-2 data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-700" data-testid="tab-text">
-              <FileText className="w-4 h-4" />
-              <span>Job Description</span>
+            <TabsTrigger value="text" className="flex items-center space-x-1 sm:space-x-2 data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-700 text-xs sm:text-sm" data-testid="tab-text">
+              <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>Description</span>
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="url" className="space-y-4 mt-6">
+          <TabsContent value="url" className="space-y-3 sm:space-y-4 mt-4 sm:mt-6">
             <div>
-              <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">
+              <label className="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2 sm:mb-3">
                 Job Posting URL
               </label>
-              <div className="flex space-x-3">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                 <Input
                   type="url"
-                  placeholder="Paste job posting URL or job description text..."
+                  placeholder="Paste job posting URL..."
                   value={jobUrl}
                   onChange={handleUrlChange}
-                  className="flex-1 h-11 text-base"
+                  className="flex-1 h-11 text-sm sm:text-base"
                   disabled={isAnalyzing}
                   data-testid="input-job-url"
                 />
@@ -163,44 +163,44 @@ export default function JobAnalysis({
                   onClick={handleAnalyze}
                   disabled={!isReadyToAnalyze() || isAnalyzing}
                   size="lg"
-                  className="bg-gradient-primary hover:opacity-90 button-hover text-white px-6 h-11 shadow-md"
+                  className="bg-gradient-primary hover:opacity-90 button-hover text-white px-4 sm:px-6 h-11 shadow-md w-full sm:w-auto min-h-[44px]"
                   data-testid="button-analyze-job"
                 >
                   {isAnalyzing ? (
                     <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
                       Analyzing
                     </>
                   ) : (
                     <>
-                      <Search className="w-5 h-5 mr-2" />
+                      <Search className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                       Analyze
                     </>
                   )}
                 </Button>
               </div>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-2">
-                We'll extract role requirements after you paste a URL or description.
+                We'll extract role requirements after you paste a URL
               </p>
             </div>
           </TabsContent>
           
-          <TabsContent value="text" className="space-y-4 mt-6">
+          <TabsContent value="text" className="space-y-3 sm:space-y-4 mt-4 sm:mt-6">
             <div>
-              <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">
+              <label className="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2 sm:mb-3">
                 Job Description
               </label>
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 <Textarea
-                  placeholder="Paste the full job description here including requirements, skills, and responsibilities..."
+                  placeholder="Paste the full job description here..."
                   value={jobDescription}
                   onChange={handleDescriptionChange}
-                  rows={6}
-                  className="resize-none text-base"
+                  rows={5}
+                  className="resize-none text-sm sm:text-base"
                   disabled={isAnalyzing}
                   data-testid="textarea-job-description"
                 />
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
                   <p className="text-xs text-neutral-500 dark:text-neutral-400">
                     {jobDescription.length} characters
                   </p>
@@ -208,17 +208,17 @@ export default function JobAnalysis({
                     onClick={handleAnalyze}
                     disabled={!isReadyToAnalyze() || isAnalyzing}
                     size="lg"
-                    className="bg-gradient-primary hover:opacity-90 button-hover text-white px-6 h-11 shadow-md"
+                    className="bg-gradient-primary hover:opacity-90 button-hover text-white px-4 sm:px-6 h-11 shadow-md w-full sm:w-auto min-h-[44px]"
                     data-testid="button-analyze-job-text"
                   >
                     {isAnalyzing ? (
                       <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
                         Analyzing
                       </>
                     ) : (
                       <>
-                        <Search className="w-5 h-5 mr-2" />
+                        <Search className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                         Analyze Text
                       </>
                     )}
@@ -232,33 +232,33 @@ export default function JobAnalysis({
         {/* Analysis Results */}
         {(result || isAnalyzing) && (
           <Card className="border border-neutral-200 dark:border-neutral-700 shadow-sm rounded-lg overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 px-6 py-4 border-b border-neutral-200 dark:border-neutral-700">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 px-4 sm:px-6 py-3 sm:py-4 border-b border-neutral-200 dark:border-neutral-700">
               <div className="flex items-center justify-between">
-                <h4 className="font-bold text-neutral-800 dark:text-neutral-100 text-lg">Analysis Results</h4>
+                <h4 className="font-bold text-neutral-800 dark:text-neutral-100 text-base sm:text-lg">Analysis Results</h4>
                 {isAnalyzing && (
                   <div className="flex items-center space-x-2">
                     <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
-                    <span className="text-xs text-neutral-600 dark:text-neutral-400">Processing...</span>
+                    <span className="text-xs text-neutral-600 dark:text-neutral-400 hidden sm:inline">Processing...</span>
                   </div>
                 )}
               </div>
             </CardHeader>
             
-            <CardContent className="p-6 space-y-6">
+            <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               {result && (
                 <>
                   {/* Quality Gates & Archetype */}
                   {result.qualityGates && (
-                    <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
-                      <h5 className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider mb-3">
+                    <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 sm:p-4">
+                      <h5 className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider mb-2 sm:mb-3">
                         JD Quality Assessment
                       </h5>
-                      <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-sm">
                         <div className="flex items-center space-x-2">
                           {result.qualityGates.sufficientLength ? (
-                            <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                            <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
                           ) : (
-                            <Clock className="w-5 h-5 text-red-600 dark:text-red-400" />
+                            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
                           )}
                           <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
                             Length: {result.charCount || 0} chars
@@ -266,24 +266,24 @@ export default function JobAnalysis({
                         </div>
                         <div className="flex items-center space-x-2">
                           {result.qualityGates.roleSpecific ? (
-                            <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                            <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
                           ) : (
-                            <Clock className="w-5 h-5 text-red-600 dark:text-red-400" />
+                            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
                           )}
                           <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">Role-Specific</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           {result.qualityGates.notGeneric ? (
-                            <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                            <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
                           ) : (
-                            <Clock className="w-5 h-5 text-red-600 dark:text-red-400" />
+                            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
                           )}
                           <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">Not Generic</span>
                         </div>
                       </div>
                       {result.roleArchetype && (
-                        <div className="mt-3">
-                          <Badge variant="outline" className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700">
+                        <div className="mt-2 sm:mt-3">
+                          <Badge variant="outline" className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700 text-xs">
                             {result.roleArchetype}
                           </Badge>
                         </div>
@@ -292,20 +292,20 @@ export default function JobAnalysis({
                   )}
 
                   {/* Job Title & Company */}
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
+                    <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-3 sm:p-4">
                       <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                         Job Title
                       </label>
-                      <p className="text-base font-semibold text-neutral-800 dark:text-neutral-100 mt-2" data-testid="text-job-title">
+                      <p className="text-sm sm:text-base font-semibold text-neutral-800 dark:text-neutral-100 mt-1 sm:mt-2" data-testid="text-job-title">
                         {result.title || "Not detected"}
                       </p>
                     </div>
-                    <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-4">
+                    <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-3 sm:p-4">
                       <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                         Company
                       </label>
-                      <p className="text-base font-semibold text-neutral-800 dark:text-neutral-100 mt-2" data-testid="text-company">
+                      <p className="text-sm sm:text-base font-semibold text-neutral-800 dark:text-neutral-100 mt-1 sm:mt-2" data-testid="text-company">
                         {result.company || "Not detected"}
                       </p>
                     </div>
@@ -314,15 +314,15 @@ export default function JobAnalysis({
                   {/* Keyword Buckets */}
                   {result.keywordBuckets && (
                     <div>
-                      <label className="text-xs font-medium text-neutral-600 uppercase tracking-wide mb-3 block">
+                      <label className="text-xs font-medium text-neutral-600 uppercase tracking-wide mb-2 sm:mb-3 block">
                         Keyword Analysis Buckets
                       </label>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         {Object.entries(result.keywordBuckets).map(([bucket, keywords]) => {
                           if (!keywords || keywords.length === 0) return null;
                           return (
                             <div key={bucket} className="space-y-2">
-                              <h6 className="text-xs font-medium capitalize text-neutral-700">
+                              <h6 className="text-xs font-medium capitalize text-neutral-700 dark:text-neutral-300">
                                 {bucket.replace(/([A-Z])/g, ' $1').trim()}
                               </h6>
                               <div className="flex flex-wrap gap-1">
@@ -330,14 +330,14 @@ export default function JobAnalysis({
                                   <Badge 
                                     key={idx} 
                                     variant="secondary" 
-                                    className="text-xs px-2 py-1"
+                                    className="text-xs px-2 py-0.5"
                                   >
                                     {keyword}
                                   </Badge>
                                 ))}
                                 {keywords.length > 5 && (
-                                  <Badge variant="outline" className="text-xs px-2 py-1">
-                                    +{keywords.length - 5} more
+                                  <Badge variant="outline" className="text-xs px-2 py-0.5">
+                                    +{keywords.length - 5}
                                   </Badge>
                                 )}
                               </div>
@@ -354,12 +354,12 @@ export default function JobAnalysis({
                       <label className="text-xs font-medium text-neutral-600 uppercase tracking-wide mb-2 block">
                         Key Requirements Detected
                       </label>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
                         {result.keywords.map((keyword, index) => (
                           <Badge 
                             key={index} 
                             variant="secondary" 
-                            className="bg-blue-100 text-blue-800"
+                            className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-xs"
                             data-testid={`badge-keyword-${index}`}
                           >
                             {keyword}
@@ -390,7 +390,7 @@ export default function JobAnalysis({
                         </span>
                       </div>
                       <Progress value={result.matchScore} className="w-full h-2" />
-                      <p className="text-xs text-neutral-600 mt-1">
+                      <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">
                         {result.matchScore >= 80 ? "Excellent match" : 
                          result.matchScore >= 60 ? "Good match with room for improvement" :
                          "Needs significant improvement"}
@@ -401,10 +401,10 @@ export default function JobAnalysis({
               )}
 
               {isAnalyzing && !result && (
-                <div className="text-center py-8">
-                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
-                  <p className="text-sm text-neutral-600">Analyzing job posting...</p>
-                  <p className="text-xs text-neutral-500 mt-1">This may take a few moments</p>
+                <div className="text-center py-6 sm:py-8">
+                  <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin mx-auto mb-3 sm:mb-4 text-primary" />
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">Analyzing job posting...</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">This may take a few moments</p>
                 </div>
               )}
             </CardContent>
