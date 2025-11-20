@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+// the newest OpenAI model is "gpt-5.1" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "default_key";
 
 // Validate API key configuration
@@ -13,6 +13,7 @@ if (!apiKey || apiKey === "default_key") {
 const openai = new OpenAI({ 
   apiKey
 });
+const MODEL = "gpt-5.1";
 
 export interface JobAnalysisResult {
   title: string;
@@ -133,7 +134,7 @@ Please respond with a JSON object containing:
 If any field is not found in the resume, return an empty string for that field.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL,
       messages: [
         {
           role: "system",
@@ -194,7 +195,7 @@ Return a comprehensive JSON analysis containing:
 Focus on SQL Server, database administration, EHR systems, and related technologies.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL,
       messages: [
         {
           role: "system",
@@ -278,7 +279,7 @@ Please respond with a JSON object containing:
 Focus on SQL Server DBA specific skills, experience, and qualifications.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL,
       messages: [
         {
           role: "system",
@@ -507,7 +508,7 @@ CRITICAL REQUIREMENTS:
 5. **Role evolution** - Traditional DBA → Cloud DBA → Data Platform Engineer → Multi-Cloud Data Engineer based on job requirements`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL,
       messages: [
         {
           role: "system",
@@ -681,7 +682,7 @@ Example STAR: "When you mentioned the need for high-availability database soluti
     }
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL,
       messages: [
         {
           role: "system",
@@ -766,7 +767,7 @@ Return a JSON object with this structure:
 Focus on SQL Server DBA-specific questions that align with the job requirements and demonstrate the candidate's expertise.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL,
       messages: [
         {
           role: "system",
@@ -831,7 +832,7 @@ Return a JSON object with:
 IMPORTANT: Only suggest quantifications that are reasonable based on the resume content. Do not invent specific numbers that can't be verified.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL,
       messages: [
         {
           role: "system",
@@ -1033,7 +1034,7 @@ Return JSON in this exact format:
     console.log('[OPENAI] Generating interview prep questions with mode:', context.mode, 'Gap Analysis:', !!gapAnalysisInstruction);
     
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL,
       messages: [
         {
           role: "system",
@@ -1142,7 +1143,7 @@ Return JSON in this exact format:
     console.log('[OPENAI] Generating skill explanations for:', skillsList.join(', '));
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL,
       messages: [
         {
           role: "system",
@@ -1252,7 +1253,7 @@ Return JSON in this exact format:
     console.log('[OPENAI] Generating STAR stories from', experienceBullets.length, 'achievements');
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL,
       messages: [
         {
           role: "system",
