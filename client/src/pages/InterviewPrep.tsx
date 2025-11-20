@@ -102,7 +102,7 @@ export default function InterviewPrep() {
   const [newSessionCompany, setNewSessionCompany] = useState('');
   const [newSessionJobTitle, setNewSessionJobTitle] = useState('');
   const [newSessionJobDescription, setNewSessionJobDescription] = useState('');
-  const [selectedResumeId, setSelectedResumeId] = useState<string>('');
+  const [selectedResumeId, setSelectedResumeId] = useState<string>('none');
   
   // Fetch all sessions for current user
   const { data: sessions = [], refetch: refetchSessions } = useQuery<any[]>({
@@ -442,7 +442,7 @@ export default function InterviewPrep() {
   const handleResumeSelection = async (resumeId: string) => {
     setSelectedResumeId(resumeId);
     
-    if (!resumeId) {
+    if (!resumeId || resumeId === 'none') {
       // Clear fields if "None" is selected
       setNewSessionCompany('');
       setNewSessionJobTitle('');
@@ -479,7 +479,7 @@ export default function InterviewPrep() {
 
   const handleCloseDialog = () => {
     setShowNewSessionDialog(false);
-    setSelectedResumeId('');
+    setSelectedResumeId('none');
     setNewSessionName('');
     setNewSessionCompany('');
     setNewSessionJobTitle('');
@@ -545,12 +545,14 @@ export default function InterviewPrep() {
                   <SelectValue placeholder="Select a resume from your library..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None - Enter manually</SelectItem>
-                  {savedResumes.map((resume: any) => (
-                    <SelectItem key={resume.id} value={resume.id}>
-                      {resume.company} - {resume.jobTitle}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="none">None - Enter manually</SelectItem>
+                  {savedResumes
+                    .filter((resume: any) => resume.id && resume.id.trim() !== '')
+                    .map((resume: any) => (
+                      <SelectItem key={resume.id} value={resume.id}>
+                        {resume.company} - {resume.jobTitle}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
               <p className="text-xs text-neutral-500 dark:text-neutral-400">
