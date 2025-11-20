@@ -300,7 +300,12 @@ Focus on SQL Server DBA specific skills, experience, and qualifications.`;
   }
 }
 
-export async function tailorResumeContent(resumeContent: string, jobAnalysis: JobAnalysisResult, resumeAnalysis: ResumeAnalysis, contactInfo: ContactInformation): Promise<TailoredResumeContent> {
+export async function tailorResumeContent(
+  resumeContent: string,
+  jobAnalysis: JobAnalysisResult,
+  resumeAnalysis: ResumeAnalysis,
+  contactInfo: ContactInformation
+): Promise<TailoredResumeContent> {
   try {
     const prompt = `🚨 CRITICAL HARD RULES - ABSOLUTE REQUIREMENTS (NEVER OVERRIDE):
 
@@ -512,7 +517,8 @@ CRITICAL REQUIREMENTS:
       messages: [
         {
           role: "system",
-          content: "You are an expert resume writer specializing in SQL Server DBA positions. Create ATS-optimized, compelling resume content."
+          content:
+            "You are an expert resume writer specializing in SQL Server DBA positions. Create ATS-optimized, compelling resume content that ALWAYS fits comfortably within 2 pages and strictly respects all hard rules given in the user prompt."
         },
         {
           role: "user",
@@ -523,40 +529,87 @@ CRITICAL REQUIREMENTS:
     });
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
-    
+
     // Ensure backward compatibility for arrays
     const skills = Array.isArray(result.skills) ? result.skills : [];
     const keywords = Array.isArray(result.keywords) ? result.keywords : [];
     const certifications = Array.isArray(result.certifications) ? result.certifications : [];
     const improvements = Array.isArray(result.improvements) ? result.improvements : [];
-    const experience = Array.isArray(result.experience) ? result.experience : [];
-    const professionalDevelopment = Array.isArray(result.professionalDevelopment) ? result.professionalDevelopment : [];
-    
+    let experience = Array.isArray(result.experience) ? result.experience : [];
+    const professionalDevelopment = Array.isArray(result.professionalDevelopment)
+      ? result.professionalDevelopment
+      : [];
+
     // SAFETY NET: Enforce hard rules
     const FIXED_HEADLINE = "Senior SQL Server Database Administrator / SQL Developer";
-    
+
     // Ensure contact title is the fixed headline
     if (result.contact && result.contact.title !== FIXED_HEADLINE) {
       console.warn(`Correcting contact.title from "${result.contact.title}" to fixed headline`);
       result.contact.title = FIXED_HEADLINE;
     }
-    
-    // Remove any "Target:" lines from summary if present
-    if (result.summary && typeof result.summary === 'string') {
-      const summaryLines = result.summary.split('\n');
-      const filteredLines = summaryLines.filter((line: string) => 
-        !line.trim().toLowerCase().startsWith('target:') &&
-        !line.trim().toLowerCase().startsWith('target role:') &&
-        !line.trim().toLowerCase().startsWith('target company:')
-      );
+
+    // Clean and limit summary
+    let summary = typeof result.summary === "string" ? result.summary : "";
+    if (summary) {
+      const summaryLines = summary.split("\n");
+      const filteredLines = summaryLines.filter((line: string) => {
+        const lower = line.trim().toLowerCase();
+        return (
+          !lower.startsWith("target:") &&
+          !lower.startsWith("target role:") &&
+          !lower.startsWith("target company:")
+        );
+      });
+
       if (filteredLines.length !== summaryLines.length) {
         console.warn('Removed "Target:" lines from summary');
-        result.summary = filteredLines.join('\n').trim();
+      }
+
+      summary = filteredLines.join("\n").trim();
+
+      // Hard cap summary length to keep overall resume within ~2 pages
+      const MAX_SUMMARY_CHARS = 600; // roughly 3–4 short paragraphs
+      if (summary.length > MAX_SUMMARY_CHARS) {
+        summary = summary.slice(0, MAX_SUMMARY_CHARS).replace(/\s+\S*$/, "");
       }
     }
-    
+
+    // 2-PAGE GUARDRAIL: Trim experience to a realistic size
+
+    // Approximate limits that keep you under 2 pages in a normal ATS template
+    const MAX_ROLES = 3;            // fully detailed roles
+    const MAX_BULLETS_LATEST = 6;   // most recent role
+    const MAX_BULLETS_OTHERS = 4;   // the next roles
+    const MAX_TOTAL_BULLETS = 26;   // total bullets across all roles
+
+    // Keep only most recent roles
+    if (experience.length > MAX_ROLES) {
+      experience = experience.slice(0, MAX_ROLES);
+    }
+
+    let totalBullets = 0;
+    experience = experience.map((role: any, idx: number) => {
+      const ach = Array.isArray(role.achievements) ? role.achievements : [];
+      const maxForRole = idx === 0 ? MAX_BULLETS_LATEST : MAX_BULLETS_OTHERS;
+      const available = Math.max(0, MAX_TOTAL_BULLETS - totalBullets);
+      const hardCap = Math.min(maxForRole, available);
+
+      const trimmed = ach
+        .filter((b: any) => typeof b === "string" && b.trim().length > 0)
+        .slice(0, hardCap);
+
+      totalBullets += trimmed.length;
+
+      return {
+        ...role,
+        achievements: trimmed,
+      };
+    });
+
     return {
       ...result,
+      summary,
       skills,
       keywords,
       certifications,
@@ -566,13 +619,14 @@ CRITICAL REQUIREMENTS:
       // Provide defaults for enhanced fields if missing
       coreScore: result.coreScore || result.atsScore || 85,
       scoreBreakdown: result.scoreBreakdown || {},
-      coverageReport: result.coverageReport || {
-        matchedKeywords: [],
-        missingKeywords: [],
-        truthfulnessLevel: {}
-      },
+      coverageReport:
+        result.coverageReport || {
+          matchedKeywords: [],
+          missingKeywords: [],
+          truthfulnessLevel: {},
+        },
       appliedMicroEdits: result.appliedMicroEdits || [],
-      suggestedMicroEdits: result.suggestedMicroEdits || []
+      suggestedMicroEdits: result.suggestedMicroEdits || [],
     } as TailoredResumeContent;
   } catch (error) {
     throw new Error("Failed to tailor resume content: " + (error as Error).message);
