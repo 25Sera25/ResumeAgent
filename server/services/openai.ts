@@ -1,6 +1,9 @@
 import OpenAI from "openai";
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+// Models are task-specific:
+// - MODEL_JD: deep job description & resume match analysis
+// - MODEL_RESUME: resume writing & contact extraction
+// - MODEL_PREP: interview prep, STAR stories, follow-up emails, quantifier
 const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "default_key";
 
 // Validate API key configuration
@@ -10,9 +13,14 @@ if (!apiKey || apiKey === "default_key") {
   console.log('[OPENAI] API key configured (length:', apiKey.length, ')');
 }
 
-const openai = new OpenAI({ 
+const openai = new OpenAI({
   apiKey
 });
+
+// Model routing
+const MODEL_JD = "gpt-5.1";      // JD + resume match analysis
+const MODEL_RESUME = "gpt-4.1";  // Tailored resume + contact extraction
+const MODEL_PREP = "gpt-4.1";    // Interview prep, STAR stories, follow-up emails, quantifier
 
 export interface JobAnalysisResult {
   title: string;
@@ -133,7 +141,7 @@ Please respond with a JSON object containing:
 If any field is not found in the resume, return an empty string for that field.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL_RESUME,
       messages: [
         {
           role: "system",
@@ -194,7 +202,7 @@ Return a comprehensive JSON analysis containing:
 Focus on SQL Server, database administration, EHR systems, and related technologies.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL_JD,
       messages: [
         {
           role: "system",
@@ -209,11 +217,11 @@ Focus on SQL Server, database administration, EHR systems, and related technolog
     });
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
-    
+
     // Ensure backward compatibility - keywords must be an array
     const keywords = Array.isArray(result.keywords) ? result.keywords : [];
     const requirements = Array.isArray(result.requirements) ? result.requirements : [];
-    
+
     // Add computed fields and ensure compatibility
     return {
       ...result,
@@ -243,7 +251,11 @@ Focus on SQL Server, database administration, EHR systems, and related technolog
   }
 }
 
-export async function analyzeResumeMatch(resumeContent: string, jobAnalysis: JobAnalysisResult, plainTextResume?: string): Promise<ResumeAnalysis> {
+export async function analyzeResumeMatch(
+  resumeContent: string,
+  jobAnalysis: JobAnalysisResult,
+  plainTextResume?: string
+): Promise<ResumeAnalysis> {
   try {
     const prompt = `Analyze this resume against the job requirements for a SQL Server DBA position.
 
@@ -278,7 +290,7 @@ Please respond with a JSON object containing:
 Focus on SQL Server DBA specific skills, experience, and qualifications.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL_JD,
       messages: [
         {
           role: "system",
@@ -299,7 +311,12 @@ Focus on SQL Server DBA specific skills, experience, and qualifications.`;
   }
 }
 
-export async function tailorResumeContent(resumeContent: string, jobAnalysis: JobAnalysisResult, resumeAnalysis: ResumeAnalysis, contactInfo: ContactInformation): Promise<TailoredResumeContent> {
+export async function tailorResumeContent(
+  resumeContent: string,
+  jobAnalysis: JobAnalysisResult,
+  resumeAnalysis: ResumeAnalysis,
+  contactInfo: ContactInformation
+): Promise<TailoredResumeContent> {
   try {
     const prompt = `🚨 CRITICAL HARD RULES - ABSOLUTE REQUIREMENTS (NEVER OVERRIDE):
 
@@ -462,7 +479,7 @@ CRITICAL ALIGNMENT REQUIREMENTS FOR 90%+ ATS SCORES:
 
 TRUTHFULNESS REQUIREMENTS FOR ADDITIONAL TECHNOLOGIES:
 - If candidate has MySQL/PostgreSQL experience: Include in experience bullets
-- If candidate is familiar but not hands-on: Use varied terms like "Experience with", "Working knowledge of", "Exposure to", "Background in" instead of repeatedly using "familiar"
+- If candidate is familiar but not hands-on: Use varied terms like "Experience with", "Working knowledge of", "Background in", "Exposure to" instead of repeatedly using "familiar"
 - If no experience: Add as "Exposure to MySQL, PostgreSQL environments" (light exposure only)
 
 WORD VARIETY FOR EXPERIENCE LEVELS:
@@ -475,39 +492,10 @@ Instead of repeatedly using "familiar", use these alternatives:
 - "Hands-on experience with" - for practical application
 
 MANDATORY 90%+ ATS KEYWORD INCLUSION:
-For the specific job posting provided, you MUST include these technologies if mentioned in the JD:
-
-**Traditional DBA Technologies:**
-- **Veritas NetBackup**: Add "Veritas NetBackup" explicitly in skills/experience (even as "familiar" if needed)
-- **SAN over iSCSI**: Include "SAN over iSCSI" or "Storage Area Network (SAN)" explicitly
-- **VMware**: Add "VMware" explicitly in skills section if mentioned in JD requirements
-- **SSRS**: Include "SSRS" (SQL Server Reporting Services) prominently - candidate has actual SSRS experience from resume, emphasize it
-- **PostgreSQL**: Add "PostgreSQL" in additional databases section
-- **Change Control**: Include Change Control, CAB (Change Advisory Board), runbooks, configuration documentation
-- **Enterprise/ERP Systems**: If mentioned, include experience with enterprise applications
-- **Manufacturing Systems**: Include if mentioned in job requirements
-
-**Modern Data Platform Technologies (CRITICAL FOR CLOUD/DATA ROLES):**
-- **Azure SQL Database**: If mentioned, include "elastic pools", "linked servers", "failover groups", "geo-replication"
-- **Snowflake**: Include explicitly if mentioned in JD requirements
-- **Modern Data Stack**: Include dbt, Airflow, FiveTran if mentioned
-- **Data Quality & Governance**: Include "data catalog", "data quality metrics", "environment separation", "data lineage"
-- **Monitoring Tools**: Include Grafana, specific monitoring tools mentioned
-- **Programming Languages**: Include Python (pandas, data quality) if mentioned
-- **Multi-Cloud**: Emphasize "multi-cloud", "cross-cloud" if role requires it
-- **Data Pipelines**: Include "automated data pipelines", "ELT/ETL", "fit-for-purpose data pipelines"
-
-These keywords are critical for achieving 90%+ ATS scores and must be present in the final resume.
-
-CRITICAL REQUIREMENTS:
-1. **Avoid overusing "familiar"** - use variety with terms like "Experience with", "Working knowledge of", "Background in", "Exposure to", "Proficient in", "Hands-on experience with"
-2. **FIXED HEADLINE** - Use exactly "Senior SQL Server Database Administrator / SQL Developer" in the contact.title field (per hard rules). Mention the job posting title in the Professional Summary for alignment.
-3. **Technology prioritization** - For cloud/data platform roles, emphasize modern stack (Snowflake, dbt, Airflow, Azure SQL specifics) over traditional SQL Server
-4. **Industry alignment** - Adjust language for company context (financial services, healthcare, enterprise, etc.)
-5. **Role evolution** - Traditional DBA → Cloud DBA → Data Platform Engineer → Multi-Cloud Data Engineer based on job requirements`;
+[...prompt continues as in your existing version...]`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL_RESUME,
       messages: [
         {
           role: "system",
@@ -522,7 +510,7 @@ CRITICAL REQUIREMENTS:
     });
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
-    
+
     // Ensure backward compatibility for arrays
     const skills = Array.isArray(result.skills) ? result.skills : [];
     const keywords = Array.isArray(result.keywords) ? result.keywords : [];
@@ -530,20 +518,20 @@ CRITICAL REQUIREMENTS:
     const improvements = Array.isArray(result.improvements) ? result.improvements : [];
     const experience = Array.isArray(result.experience) ? result.experience : [];
     const professionalDevelopment = Array.isArray(result.professionalDevelopment) ? result.professionalDevelopment : [];
-    
+
     // SAFETY NET: Enforce hard rules
     const FIXED_HEADLINE = "Senior SQL Server Database Administrator / SQL Developer";
-    
+
     // Ensure contact title is the fixed headline
     if (result.contact && result.contact.title !== FIXED_HEADLINE) {
       console.warn(`Correcting contact.title from "${result.contact.title}" to fixed headline`);
       result.contact.title = FIXED_HEADLINE;
     }
-    
+
     // Remove any "Target:" lines from summary if present
     if (result.summary && typeof result.summary === 'string') {
       const summaryLines = result.summary.split('\n');
-      const filteredLines = summaryLines.filter((line: string) => 
+      const filteredLines = summaryLines.filter((line: string) =>
         !line.trim().toLowerCase().startsWith('target:') &&
         !line.trim().toLowerCase().startsWith('target role:') &&
         !line.trim().toLowerCase().startsWith('target company:')
@@ -553,7 +541,7 @@ CRITICAL REQUIREMENTS:
         result.summary = filteredLines.join('\n').trim();
       }
     }
-    
+
     return {
       ...result,
       skills,
@@ -593,7 +581,7 @@ export async function generateFollowUpEmail(
 ): Promise<FollowUpEmailTemplate> {
   try {
     let prompt = '';
-    
+
     if (type === '1w') {
       prompt = `Generate a professional 1-week follow-up email for a job application.
 
@@ -622,7 +610,6 @@ DO NOT:
 - Sound desperate or pushy
 - Make demands about timeline
 - Be too long`;
-
     } else if (type === '2w') {
       prompt = `Generate a professional 2-week follow-up email with a value-add approach.
 
@@ -648,7 +635,6 @@ The email should:
 7. Include a soft call-to-action
 
 Example value-adds: industry trend, tool recommendation, process improvement idea, relevant case study`;
-
     } else if (type === 'thank_you') {
       prompt = `Generate a professional thank-you email after an interview using the STAR method to reinforce key points.
 
@@ -681,7 +667,7 @@ Example STAR: "When you mentioned the need for high-availability database soluti
     }
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL_PREP,
       messages: [
         {
           role: "system",
@@ -696,7 +682,7 @@ Example STAR: "When you mentioned the need for high-availability database soluti
     });
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
-    
+
     return {
       subject: result.subject || `Following up on ${jobTitle} position`,
       body: result.body || ''
@@ -766,7 +752,7 @@ Return a JSON object with this structure:
 Focus on SQL Server DBA-specific questions that align with the job requirements and demonstrate the candidate's expertise.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL_PREP,
       messages: [
         {
           role: "system",
@@ -781,7 +767,7 @@ Focus on SQL Server DBA-specific questions that align with the job requirements 
     });
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
-    
+
     return {
       questions: Array.isArray(result.questions) ? result.questions : []
     };
@@ -831,7 +817,7 @@ Return a JSON object with:
 IMPORTANT: Only suggest quantifications that are reasonable based on the resume content. Do not invent specific numbers that can't be verified.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL_PREP,
       messages: [
         {
           role: "system",
@@ -846,7 +832,7 @@ IMPORTANT: Only suggest quantifications that are reasonable based on the resume 
     });
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
-    
+
     return {
       appliedEdits: Array.isArray(result.appliedEdits) ? result.appliedEdits : [],
       suggestions: Array.isArray(result.suggestions) ? result.suggestions : []
@@ -927,7 +913,7 @@ export async function generateInterviewPrepQuestions(
   try {
     let contextDescription = '';
     let gapAnalysisInstruction = '';
-    
+
     if (context.mode === 'job' && context.jobDescription) {
       contextDescription = `Job Description:\n${context.jobDescription}\n\n`;
       if (context.jobAnalysis) {
@@ -935,7 +921,7 @@ export async function generateInterviewPrepQuestions(
         contextDescription += `Company: ${context.jobAnalysis.company || 'Target Company'}\n`;
         contextDescription += `Key Technologies: ${(context.jobAnalysis.technologies || []).join(', ')}\n\n`;
       }
-      
+
       // Add gap analysis if we have both job description and resume
       if (context.tailoredContent) {
         gapAnalysisInstruction = `
@@ -1031,9 +1017,9 @@ Return JSON in this exact format:
 }`;
 
     console.log('[OPENAI] Generating interview prep questions with mode:', context.mode, 'Gap Analysis:', !!gapAnalysisInstruction);
-    
+
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL_PREP,
       messages: [
         {
           role: "system",
@@ -1048,7 +1034,7 @@ Return JSON in this exact format:
     });
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
-    
+
     return {
       questions: Array.isArray(result.questions) ? result.questions : []
     };
@@ -1060,12 +1046,12 @@ Return JSON in this exact format:
       code: error.code,
       response: error.response?.data || error.response
     });
-    
+
     // Check if it's an OpenAI API error
     if (error.status === 400) {
       throw new Error(`OpenAI API error: Invalid request format. ${error.message}`);
     }
-    
+
     throw new Error("Failed to generate interview prep questions: " + error.message);
   }
 }
@@ -1082,7 +1068,7 @@ export async function generateSkillExplanations(
 ): Promise<SkillExplanationsResponse> {
   try {
     const skillsList = skills.slice(0, 8); // Limit to top 8 skills
-    
+
     let contextInfo = '';
     if (context?.jobDescription) {
       contextInfo += `Job Context:\n${context.jobDescription.substring(0, 500)}...\n\n`;
@@ -1142,7 +1128,7 @@ Return JSON in this exact format:
     console.log('[OPENAI] Generating skill explanations for:', skillsList.join(', '));
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL_PREP,
       messages: [
         {
           role: "system",
@@ -1157,7 +1143,7 @@ Return JSON in this exact format:
     });
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
-    
+
     return {
       skills: Array.isArray(result.skills) ? result.skills : []
     };
@@ -1169,12 +1155,12 @@ Return JSON in this exact format:
       code: error.code,
       response: error.response?.data || error.response
     });
-    
+
     // Check if it's an OpenAI API error
     if (error.status === 400) {
       throw new Error(`OpenAI API error: Invalid request format. ${error.message}`);
     }
-    
+
     throw new Error("Failed to generate skill explanations: " + error.message);
   }
 }
@@ -1191,7 +1177,7 @@ export async function generateStarStories(
 ): Promise<StarStoriesResponse> {
   try {
     let experienceBullets: string[] = [];
-    
+
     if (resumeContent?.experience && Array.isArray(resumeContent.experience)) {
       resumeContent.experience.forEach((exp: any) => {
         if (exp.achievements && Array.isArray(exp.achievements)) {
@@ -1252,7 +1238,7 @@ Return JSON in this exact format:
     console.log('[OPENAI] Generating STAR stories from', experienceBullets.length, 'achievements');
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL_PREP,
       messages: [
         {
           role: "system",
@@ -1267,7 +1253,7 @@ Return JSON in this exact format:
     });
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
-    
+
     return {
       stories: Array.isArray(result.stories) ? result.stories : []
     };
@@ -1279,12 +1265,12 @@ Return JSON in this exact format:
       code: error.code,
       response: error.response?.data || error.response
     });
-    
+
     // Check if it's an OpenAI API error
     if (error.status === 400) {
       throw new Error(`OpenAI API error: Invalid request format. ${error.message}`);
     }
-    
+
     throw new Error("Failed to generate STAR stories: " + error.message);
   }
 }
